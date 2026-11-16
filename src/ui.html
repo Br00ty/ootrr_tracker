@@ -831,7 +831,8 @@ document.addEventListener("keydown", (e) => {
 const fixOf = (n) => (DEV && S.pinFix && n in S.pinFix ? S.pinFix[n] : PIN_FIXES[n]);
 let pinPlace = null;  // edit mode: the check waiting for a click on the map
 // The age that can get a check, or null for both: where the game has its object (OOTRR's pins: an object in
-// only the child or only the adult version of a map), else its rule (a rule that needs one age), else its
+// only the child or only the adult version of a map), else the logic with every item (which ages can reach it
+// at all), else its rule (a rule that needs one age), else its
 // name (OOTRR names one-age objects "Child …" / "Adult …").
 const AGES = new Map();
 // ages set by hand: "child", "adult", or null for both (OOTRR's data is unclear for these)
@@ -841,15 +842,38 @@ const AGE_FIXES = {
   // reachable as adult too in game, though OOTRR's logic and data have it child only; both until OOTRR fixes it
   "HF Tunnel Ledge Chest": null,
 };
+// every location's possible ages with every item ([child, adult]), for the current settings
+let FULL = null, FULLkey = "";
+function fullAges() {
+  ensureWorlds();
+  if (FULL && FULLkey === worldKey) return FULL;
+  FULL = new Map(); AGES.clear();
+  for (const w of worlds) {
+    const counts = [];
+    w.items.names.forEach((_, i) => { if (!w.items.event[i]) counts.push([i, 99]); });
+    const s = new Engine.Search(w, counts).run(new Array(w.locs.length).fill(null));
+    for (const [n, l] of w.lix) { const f = FULL.get(n) || [false, false]; f[0] = f[0] || s.locAccess(l, 1); f[1] = f[1] || s.locAccess(l, 0); FULL.set(n, f); }
+  }
+  FULLkey = worldKey;
+  return FULL;
+}
 function ageOf(n) {
   if (n in AGE_FIXES) return AGE_FIXES[n];
+  fullAges();
   if (AGES.has(n)) return AGES.get(n);
   let a = null;
   const ages = new Set();
   if (PINS) for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) { const m = /_(Child|Adult)$/.exec(p[0]); if (m) ages.add(m[1].toLowerCase()); }
   if (ages.size === 1) a = [...ages][0];
-  if (!a) { try { a = pinnedAge(Engine.parse(DATA.checks[n][3] || "True")); } catch (e) { a = null; } }
-  if (!a) { const m = / (Child|Adult) /.exec(` ${n} `); if (m) a = m[1].toLowerCase(); }
+  else {
+    // the logic with every item: which ages can get it at all (the adult Market is in ruins, for example)
+    const f = fullAges().get(n);
+    if (f && f[0] !== f[1]) a = f[0] ? "child" : "adult";
+    else if (!f) {
+      try { a = pinnedAge(Engine.parse(DATA.checks[n][3] || "True")); } catch (e) { a = null; }
+      if (!a) { const m = / (Child|Adult) /.exec(` ${n} `); if (m) a = m[1].toLowerCase(); }
+    }
+  }
   AGES.set(n, a);
   return a;
 }
