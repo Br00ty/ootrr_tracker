@@ -2316,6 +2316,7 @@ async function useIconFiles(files) {
   if (set) try { const d = JSON.parse(await set.text()); if (d && d.game_dir) localStorage.setItem(MAP_PATH_KEY, d.game_dir); } catch (e) {}
   iconView = "main"; iconMsg = "Reading pictures…"; openIcons();
   const n = await takeIcons(files.filter((f) => /\.png$/i.test(f.name)));
+  if (n || idx) assetsLoaded();
   iconMsg = n ? `Loaded ${n} pictures.` : NONE_FOUND;
   openIcons();
 }
@@ -2352,9 +2353,33 @@ async function droppedFolderFiles(entries) {
   for (const e of entries) await walk(e, 0);
   return out;
 }
+// What the item pictures and OOTRR's map index were loaded for. When the tracker needs more from OOTRR's folder
+// (ASSET_VERSION goes up) or comes with a newer OOTRR, a browser that loaded them for an older one is asked to
+// load them again, once per new version.
+const ASSET_VERSION = 2;  // 2: the map index's world positions and map frames (pins across maps)
+const ASSET_KEY = "ootrr-tracker-assets";
+const assetsNow = () => ({ v: ASSET_VERSION, ootrr: DATA.generator });
+function assetsLoaded() { try { localStorage.setItem(ASSET_KEY, JSON.stringify(assetsNow())); } catch (e) {} }
+function assetsStale() {
+  if (!nPics() && !PINS) return null;
+  let had = null; try { had = JSON.parse(localStorage.getItem(ASSET_KEY) || "null"); } catch (e) {}
+  // loaded before this check existed: version 1, or 2 when the index already has map frames
+  if (!had) had = { v: PINS && Object.keys(CAPS).length ? 2 : 1, ootrr: DATA.generator };
+  if (had.v >= ASSET_VERSION && had.ootrr === DATA.generator) return null;
+  return had.ootrr !== DATA.generator ? `This tracker now follows ${DATA.generator.replace("ootrr-core", "OOTRR")}. Its pictures and map data may have changed, so load them again from the ootrr folder.`
+    : "The tracker was updated and needs more of OOTRR's map data for its pins. Load the item pictures again from the ootrr folder and it's read along with them.";
+}
 function restoreIcons() {
   let ask = null; try { ask = localStorage.getItem(ASK_KEY); } catch (e) {}
-  if (!nPics() && ask !== "no" && !$("#dlg").open) { iconMsg = ""; iconView = "main"; openIcons(); }
+  if ($("#dlg").open) return;
+  if (!nPics() && ask !== "no") { iconMsg = ""; iconView = "main"; openIcons(); return; }
+  const stale = assetsStale();
+  let told = null; try { told = localStorage.getItem(ASSET_KEY + "-told"); } catch (e) {}
+  const key = `${ASSET_VERSION}|${DATA.generator}`;
+  if (stale && told !== key) {
+    try { localStorage.setItem(ASSET_KEY + "-told", key); } catch (e) {}
+    iconMsg = stale; iconView = "main"; openIcons();
+  }
 }
 function openIcons() {
   const n = nPics(), close = () => { iconMsg = ""; iconView = "main"; $("#dlg").close(); };
@@ -2393,7 +2418,7 @@ function openIcons() {
         h("button", { class: "btn", onclick: () => pickIcons(false) }, "Pick folder"))];
   } else {
     const first = !n;
-    body = [h("h3", {}, first ? "Show item pictures?" : "Item pictures and maps"),
+    body = [h("h3", {}, first ? "Show item pictures?" : iconMsg && /load them again|Load the item pictures again/.test(iconMsg) ? "Update the item pictures and map data" : "Item pictures and maps"),
       h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys. They come from your copy of the game, so they aren't included with the tracker: OOTRR saves them on your PC the first time its tracker runs with your game folder set."),
       msg,
       h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser.` : "No pictures stored yet."),
