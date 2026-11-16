@@ -961,6 +961,7 @@ function openWatchHelp() {
   const code = (t) => [h("code", { class: "q", style: "word-break:break-all" }, t), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(t) }, "Copy")];
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Watching your saves"),
+    canWatch ? null : h("p", { style: "color:var(--gold)" }, "This browser can't watch folders: that needs Chrome, Edge or another Chromium browser (Brave, Opera). Here, use Load saves, which reads the newest save each time you click it. The steps below are for Chrome or Edge."),
     h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where Lichii keeps its saves, so picking them says the folder contains system files. A folder link doesn't help either: the browser follows it back into AppData. Two things work:"),
     h("p", { style: "margin-top:10px" }, h("b", {}, "1. Move Lichii's data folder out of AppData (once, recommended)")),
     h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
@@ -1053,7 +1054,7 @@ function paintAuto() {
   else kids.push(h("span", {}, "Auto-tracking off"));
   if (W.saved && !W.dir) kids.push(h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
   else if (canWatch && !W.blocked && !watching) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
-  if (canWatch && !watching) kids.push(h("button", { class: "btn", style: "padding:5px 8px", onclick: openWatchHelp, title: "Can't pick your save folder? (Chrome refuses folders inside AppData)" }, "?"));
+  if (!watching) kids.push(h("button", { class: "btn", style: "padding:5px 8px", onclick: openWatchHelp, title: canWatch ? "Can't pick your save folder? (Chrome refuses folders inside AppData)" : "Why can't this browser watch the save folder?" }, "?"));
   kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick the save folder (or any folder above the slots) to read the newest save of all slots once. Click again to read it again. You can also drop the folder here." }, watching ? "Load saves once" : "Load saves"));
   kids.push(h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
     (() => { const c = h("input", { type: "checkbox" }); c.checked = S.follow; c.onchange = () => { S.follow = c.checked; save(); }; return c; })(), "Follow Link"));
