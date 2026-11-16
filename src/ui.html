@@ -917,6 +917,12 @@ const OWN_FLAGS = {
   // confirmed in a real save: Sheik's song scenes, each with a Piece of Heart in the user's seed
   "Sheik at Colossus": ["HavePlayedEvent.Dm_MelodyGet_Spilit"],
   "Sheik at Temple": ["HavePlayedEvent.Dm_MelodyGet_Shine"],
+  // confirmed in a real save: the first bowling win (with First Prize's item)
+  "Market Bombchu Bowling First Prize": ["MiniGame_BombchuBowling_ClearFirstTime"],
+  // the later wins by the same flags (not seen yet). They replace OOTRR's rule, whose "got a Piece of
+  // Heart / Bombchus" events also fire for those items found anywhere else
+  "Market Bombchu Bowling Second Prize": ["MiniGame_BombchuBowling_ClearSecondTime"],
+  "Market Bombchu Bowling Bombchus": ["MiniGame_BombchuBowling_ClearThirdTime"],
 };
 const EXTRA_FLAGS = {
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
@@ -924,6 +930,7 @@ const EXTRA_FLAGS = {
   "Market Lost Dog": ["SubEvent_FindRichard_GetHeartPiece"],
   "Kak Shooting Gallery Reward": ["MiniGame_HitTarget_Kakariko_Get_Quiver"],
   "GF HBA 1500 Points": ["MiniGame_HorseBackArchery_Get_Quiver"],
+
   // each song spot's "learn the song" scene, like the windmill's (Dm_MelodyGet_Zelda was also set in the
   // same save after Song from Impa)
   "Song from Impa": ["HavePlayedEvent.Dm_MelodyGet_Zelda"],
