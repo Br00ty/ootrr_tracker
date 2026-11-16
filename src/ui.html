@@ -838,6 +838,8 @@ const AGES = new Map();
 const AGE_FIXES = {
   // the two Know-it-All Brothers' house pots share an object in OOTRR's data; both ages until checked in game
   "KF Know it All House Pot 1": null, "KF Know it All House Pot 2": null,
+  // reachable as adult too in game, though OOTRR's logic and data have it child only; both until OOTRR fixes it
+  "HF Tunnel Ledge Chest": null,
 };
 function ageOf(n) {
   if (n in AGE_FIXES) return AGE_FIXES[n];
