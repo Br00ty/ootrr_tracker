@@ -780,14 +780,8 @@ const PIN_FIXES = {
   "KF Top of Sarias Recovery Heart 2": { place: "KokiriForest", u: 0.4902, v: 0.6439 },
   "KF Top of Sarias Recovery Heart 3": { place: "KokiriForest", u: 0.4842, v: 0.6507 },
   "KF West Ledge Chest": { place: "KokiriForest", u: 0.5867, v: 0.4832 },
-  // the Kokiri Shop: items 1 and 8 placed by the player, the other shelves share the spot
+  // the Kokiri Shop: items 1 and 8 placed by the player (the other shelves take a placed shelf's spot)
   "KF Shop Item 1": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 2": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 3": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 4": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 5": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 6": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
-  "KF Shop Item 7": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
   "KF Shop Item 8": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
   // Lost Woods, placed in game by the player (2026-11-16)
   "Deku Theater Mask of Truth": { place: "LostWood", u: 0.5038, v: 0.3769 },
@@ -881,7 +875,18 @@ function ageOf(n) {
   AGES.set(n, a);
   return a;
 }
-function pinOf(n, mapKey) {
+// A shop shelf without a spot of its own goes where another shelf of the same shop is pinned: they're all
+// on the same counter.
+function pinOf(n, mapKey, shelf = true) {
+  const own = pinOwn(n, mapKey);
+  if (own || !shelf) return own;
+  const m = / Item \d+$/.exec(n);
+  if (!m || !DATA.checks[n] || DATA.checks[n][1] !== "shop" || fixOf(n) !== undefined) return null;
+  const shop = n.slice(0, m.index);
+  for (let i = 1; i <= 8; i++) { const o = `${shop} Item ${i}`; if (o !== n && DATA.checks[o]) { const p = pinOwn(o, mapKey); if (p) return p; } }
+  return null;
+}
+function pinOwn(n, mapKey) {
   const place = mapKey.replace(/_(Child|Adult)$/, "");
   const fix = fixOf(n);
   if (fix !== undefined) return fix && !fix.hide && fix.place === place ? [mapKey, fix.u, fix.v, null, false] : null;
