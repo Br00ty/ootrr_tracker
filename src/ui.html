@@ -910,7 +910,6 @@ const PIN_FIXES = {
   "DMT Cow Grotto Cow": { place: "DeathMountainTrail", u: 0.5279, v: 0.6009 },
   "DMT GS Above Dodongos Cavern": { place: "DeathMountainTrail", u: 0.4691, v: 0.576 },
   "DMT Great Fairy Reward": { place: "DeathMountainTrail", u: 0.5204, v: 0.119 },
-  "DMT Trade Broken Sword": { place: "DeathMountainTrail", u: 0.5837, v: 0.1167 },
   // Goron City, placed in game by the player (2026-11-16)
   "GC Maze Center Chest": { place: "GoronCity", u: 0.2278, v: 0.481 },
   "GC Maze Right Chest": { place: "GoronCity", u: 0.2293, v: 0.4493 },
@@ -986,6 +985,11 @@ const PIN_FIXES = {
   // Outside Ganon's Castle, placed in game by the player (2026-11-16)
   "OGC GS": { place: "GanonCastle", u: 0.6094, v: 0.3068 },
   "OGC Great Fairy Reward": { place: "GanonCastle", u: 0.7104, v: 0.2027 },
+  // Biggoron and the Gerudo Valley cow, placed in game by the player (2026-11-16)
+  "DMT Biggoron": { place: "DeathMountainTrail", u: 0.5833, v: 0.148 },
+  "DMT Trade Broken Sword": { place: "DeathMountainTrail", u: 0.5874, v: 0.148 },
+  "DMT Trade Eyedrops": { place: "DeathMountainTrail", u: 0.586, v: 0.148 },
+  "GV Cow": { place: "GerudoValley", u: 0.4516, v: 0.523 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
