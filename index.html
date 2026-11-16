@@ -2497,6 +2497,29 @@ const PIN_FIXES = {
   "KF Shop Item 6": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
   "KF Shop Item 7": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
   "KF Shop Item 8": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  // Lost Woods, placed in game by the player (2026-11-16)
+  "Deku Theater Mask of Truth": { place: "LostWood", u: 0.5038, v: 0.3769 },
+  "Deku Theater Skull Mask": { place: "LostWood", u: 0.5053, v: 0.3792 },
+  "LW Deku Scrub Grotto Front": { place: "LostWood", u: 0.5038, v: 0.2479 },
+  "LW Deku Scrub Grotto Rear": { place: "LostWood", u: 0.5038, v: 0.2502 },
+  "LW Deku Scrub Near Bridge": { place: "LostWood", u: 0.3741, v: 0.8384 },
+  "LW GS Bean Patch Near Bridge": { place: "LostWood", u: 0.3756, v: 0.7774 },
+  "LW Ocarina Memory Game": { place: "LostWood", u: 0.6335, v: 0.8271 },
+  "LW Skull Kid": { place: "LostWood", u: 0.3771, v: 0.714 },
+  "LW Target in Woods": { place: "LostWood", u: 0.6305, v: 0.705 },
+  "LW Trade Cojiro": { place: "LostWood", u: 0.3756, v: 0.714 },
+  "LW Trade Odd Potion": { place: "LostWood", u: 0.3771, v: 0.714 },
+  // Sacred Forest Meadow, placed in game by the player (2026-11-16)
+  "SFM Time Block Grotto Chest": { place: "SacredForestMeadow", u: 0.543, v: 0.2253 },
+  "SFM Wolfos Grotto Chest": { place: "SacredForestMeadow", u: 0.5294, v: 0.843 },
+  "Sheik in Forest": { place: "SacredForestMeadow", u: 0.5173, v: 0.1869 },
+  "Song from Saria": { place: "SacredForestMeadow", u: 0.5354, v: 0.1575 },
+  // Hyrule Field, placed in game by the player (2026-11-16)
+  "HF Cow Grotto Cow": { place: "HyruleField", u: 0.178, v: 0.4199 },
+  "HF GS Near Kak Grotto": { place: "HyruleField", u: 0.5867, v: 0.7525 },
+  "HF Ocarina of Time Item": { place: "HyruleField", u: 0.5324, v: 0.2412 }, // the same Ocarina of Time scene as the song
+  "HF South Poe Chest": { place: "HyruleField", u: 0.5309, v: 0.8927 },
+  "Song from Ocarina of Time": { place: "HyruleField", u: 0.5324, v: 0.2412 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
