@@ -1838,6 +1838,8 @@ const OWN_FLAGS = {
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
   "Kak Anju as Child": ["MiniGame_CatchCucco_IsCompleted"],
+  // confirmed in a real save: the windmill's "learn Song of Storms" scene, played whatever the item is
+  "Song from Windmill": ["HavePlayedEvent.Dm_MelodyGet_Storm"],
 };
 const EXTRA_FLAGS = {
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
@@ -1847,6 +1849,19 @@ const EXTRA_FLAGS = {
   "Kak Shooting Gallery Reward": ["MiniGame_HitTarget_Kakariko_Get_Quiver"],
   "GF HBA 1500 Points": ["MiniGame_HorseBackArchery_Get_Quiver"],
   "LH Lab Dive": ["MiniGame_Diving_Cleared"],
+  // each song spot's "learn the song" scene, like the windmill's (Dm_MelodyGet_Zelda was also set in the
+  // same save after Song from Impa)
+  "Song from Impa": ["HavePlayedEvent.Dm_MelodyGet_Zelda"],
+  "Song from Malon": ["HavePlayedEvent.Dm_MelodyGet_Epona"],
+  "Song from Saria": ["HavePlayedEvent.Dm_MelodyGet_Saria"],
+  "Song from Royal Familys Tomb": ["HavePlayedEvent.Dm_MelodyGet_Sun"],
+  "Song from Ocarina of Time": ["HavePlayedEvent.Dm_MelodyGet_Time"],
+  "Sheik in Forest": ["HavePlayedEvent.Dm_MelodyGet_Forest"],
+  "Sheik in Crater": ["HavePlayedEvent.Dm_MelodyGet_Fire"],
+  "Sheik in Ice Cavern": ["HavePlayedEvent.Dm_MelodyGet_Water"],
+  "Sheik in Kakariko": ["HavePlayedEvent.Dm_MelodyGet_Shadow"],
+  "Sheik at Colossus": ["HavePlayedEvent.Dm_MelodyGet_Spilit"],
+  "Sheik at Temple": ["HavePlayedEvent.Dm_MelodyGet_Shine"],
 };
 function detectMap() {
   const out = detectMapBase();
