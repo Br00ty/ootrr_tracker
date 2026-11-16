@@ -6,6 +6,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is.
 - **Item tracker.** Click to add, right-click to remove. Items read from the save are underlined in green.
+- **Item pictures.** Show the game's own item, song, stone, medallion and key icons, taken from OOTRR's icon cache on your PC.
 
 ## Use it
 
@@ -14,6 +15,8 @@ Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link i
 1. **Load seed** → pick your `.ootrr` file.
 2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
 3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo. A **C→A** or **A→C** badge marks a check that needs something done as the other age first (a magic bean planted as a child, the adult visit before the HF Deku Scrub Grotto).
+
+4. Optional: **Icons** → pick `%LOCALAPPDATA%\ootrr\tracker-cache` (or the `icons-v1` folder inside it) to show item pictures. OOTRR's own tracker fills that folder from your game files the first time it runs with your game folder set. The pictures are the game's art, so this repo doesn't include them; they're copied, shrunk, into your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Stone of Agony) keep their names.
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 

@@ -39,6 +39,13 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .it{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.1;padding:2px;cursor:pointer;user-select:none;color:var(--faint);transition:background .1s}
 .it:hover{border-color:var(--gold)}
 .it.on{background:#33301f;color:var(--ink);border-color:#6a5c32}
+.it img{width:82%;height:82%;object-fit:contain;filter:grayscale(1) brightness(1.1);opacity:.38;pointer-events:none}
+.it.on img{filter:none;opacity:1}
+.it.pic{padding:0}
+.ico{width:18px;height:18px;object-fit:contain;vertical-align:middle;margin-right:5px}
+.bk.pic{padding:0 3px;display:inline-flex;align-items:center}
+.bk.pic img{width:18px;height:18px;object-fit:contain;filter:grayscale(1) brightness(1.1);opacity:.38}
+.bk.pic.on img{filter:none;opacity:1}
 .it .n{position:absolute;right:3px;bottom:2px;font-size:10px;font-weight:700;color:var(--gold)}
 .it.arrow.on{background:#33261c;border-color:#7a5a32}
 .it.song.on{background:#2a2633;border-color:#5b4f7a}
@@ -127,6 +134,8 @@ body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;ins
   <input type="file" id="saveFile" accept=".sav" multiple hidden>
   <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
+  <button class="btn" id="iconBtn" title="Show item pictures from OOTRR's icon cache">Icons</button>
+  <input type="file" id="iconFile" accept=".png" multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
 </header>
@@ -338,16 +347,119 @@ const TIERS = {
   "Progressive Scale": ["Silver Scale", "Golden Scale"],
   "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
 };
+// ---------- item pictures ----------
+// The pictures are the game's own art, so they aren't shipped with the tracker. OOTRR's tracker decodes
+// them from your game files and caches them as PNGs (%LOCALAPPDATA%\\ootrr\\tracker-cache\\<game>\\icons-v1);
+// picking that folder (or any folder above it) copies small versions into this browser.
+// item name -> OOTRR icon id, or one id per tier for items whose picture changes as they upgrade
+const ICON = {
+  "Slingshot": "Weapon_Range_SlingShot", "Ocarina": ["Item_Ocarina_Fairy", "Item_Ocarina_Time"], "Bomb Bag": "Item_Bomb",
+  "Boomerang": "Item_Boomerang", "Bow": "Weapon_Range_Bow", "Progressive Hookshot": ["Item_Hookshot", "Item_Longshot"],
+  "Megaton Hammer": "Item_Hammer_PouchIcon", "Lens of Truth": "Armor_GlassTruth", "Magic Meter": "Item_Bottle_GreenPotion",
+  "Dins Fire": "Item_DinFire", "Farores Wind": "Item_FaroreWind", "Nayrus Love": "Item_NayruLove",
+  "Bombchus": "Item_Bombchu", "Magic Bean": "Item_MagicBean", "Bottle": "Item_Bottle",
+  "Fire Arrows": "Item_Arrow_Fire_PouchIcon", "Ice Arrows": "Item_Arrow_Ice_PouchIcon", "Light Arrows": "Item_Arrow_Light_PouchIcon",
+  "Kokiri Sword": "Weapon_Sword_Kokiri", "Biggoron Sword": "Weapon_Sword_Biggoron", "Mirror Shield": "Weapon_Shield_Mirror",
+  "Goron Tunic": "Armor_Adult_Goron", "Zora Tunic": "Armor_Adult_Zora", "Iron Boots": "Armor_Adult_HeavyBoot", "Hover Boots": "Armor_Adult_HoverBoot",
+  "Progressive Strength Upgrade": ["Armor_Child_Gauntlet_Goron", "Armor_Adult_Gauntlet_Silver", "Armor_Adult_Gauntlet_Gold"],
+  "Progressive Scale": ["Item_Scale_Silver", "Item_Scale_Gold"], "Progressive Wallet": ["Item_Wallet_Medium", "Item_Wallet_Large"],
+  "Gerudo Membership Card": "Item_Token_Gerudo",
+  "Zeldas Lullaby": "Item_Melody_ZeldaLullaby", "Eponas Song": "Item_Melody_EponaSong", "Sarias Song": "Item_Melody_SariaSong",
+  "Suns Song": "Item_Melody_SunSong", "Song of Time": "Item_Melody_TimeSong", "Song of Storms": "Item_Melody_StormSong",
+  "Minuet of Forest": "Item_Melody_ForestMinuet", "Bolero of Fire": "Item_Melody_FireBolero", "Serenade of Water": "Item_Melody_WaterSerenade",
+  "Requiem of Spirit": "Item_Melody_SpiritRequiem", "Nocturne of Shadow": "Item_Melody_ShadowNocturne", "Prelude of Light": "Item_Melody_LightPrelude",
+  "Kokiri Emerald": "Item_Stone_Forest", "Goron Ruby": "Item_Stone_Fire", "Zora Sapphire": "Item_Stone_Water",
+  "Light Medallion": "Item_Medal_Light", "Forest Medallion": "Item_Medal_Forest", "Fire Medallion": "Item_Medal_Fire",
+  "Water Medallion": "Item_Medal_Water", "Shadow Medallion": "Item_Medal_Shadow", "Spirit Medallion": "Item_Medal_Spirit",
+  "Gold Skulltula Token": "Item_Token_Gold", "Piece of Heart": "Obj_Heart_Piece", "Heart Container": "Obj_Heart_Piece",
+  "small key": "Item_Dungeon_SmallKey", "boss key": "Item_Dungeon_BossKey",
+};
+const ICON_IDS = new Set(Object.values(ICON).flat());
+const ICON_KEY = "ootrr-tracker-icons";
+let PICS = {};
+try { PICS = JSON.parse(localStorage.getItem(ICON_KEY) || "{}") || {}; } catch (e) { PICS = {}; }
+function picOf(name, v) {
+  const id = ICON[name];
+  if (!id) return null;
+  return PICS[Array.isArray(id) ? id[Math.max(0, Math.min(v, id.length) - 1)] : id] || null;
+}
+// shrink a PNG to at most 64px so all of them fit comfortably in browser storage
+async function shrink(blob) {
+  const bm = await createImageBitmap(blob);
+  const k = Math.min(1, 64 / Math.max(bm.width, bm.height));
+  const c = document.createElement("canvas");
+  c.width = Math.max(1, Math.round(bm.width * k)); c.height = Math.max(1, Math.round(bm.height * k));
+  const g = c.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(bm, 0, 0, c.width, c.height);
+  bm.close && bm.close();
+  const webp = c.toDataURL("image/webp", 0.9);
+  return webp.startsWith("data:image/webp") ? webp : c.toDataURL("image/png");
+}
+// files: [{ id, file }]; when the same picture turns up twice (two game versions), the newest wins
+async function takeIcons(files) {
+  const best = new Map();
+  for (const f of files) {
+    const id = f.name.replace(/\.png$/i, "");
+    if (!ICON_IDS.has(id)) continue;
+    if (!best.has(id) || f.lastModified > best.get(id).lastModified) best.set(id, f);
+  }
+  if (!best.size) return 0;
+  const next = { ...PICS };
+  for (const [id, f] of best) { try { next[id] = await shrink(f); } catch (e) {} }
+  PICS = next;
+  try { localStorage.setItem(ICON_KEY, JSON.stringify(PICS)); } catch (e) {}
+  render();
+  return best.size;
+}
+async function walkPngs(dir, depth = 0, out = []) {
+  for await (const [name, hd] of dir.entries()) {
+    if (hd.kind === "file" && /\.png$/i.test(name) && ICON_IDS.has(name.slice(0, -4))) out.push(await hd.getFile());
+    else if (hd.kind === "directory" && depth < 5) await walkPngs(hd, depth + 1, out);
+  }
+  return out;
+}
+let iconMsg = "";
+async function pickIcons() {
+  if (typeof window.showDirectoryPicker !== "function") { $("#iconFile").click(); return; }
+  let dir;
+  try { dir = await window.showDirectoryPicker({ id: "ootrr-icons", mode: "read" }); }
+  catch (e) { if (e && e.name !== "AbortError") $("#iconFile").click(); return; } // folder picking blocked here: pick the files instead
+  iconMsg = "Reading pictures…"; openIcons();
+  try {
+    const n = await takeIcons(await walkPngs(dir));
+    iconMsg = n ? `Loaded ${n} pictures.` : "No OOTRR icon pictures were found in that folder. Pick the ootrr folder in AppData\\Local, or the icons-v1 folder inside it.";
+  } catch (e) { iconMsg = `Couldn't read that folder: ${e.message || e}`; }
+  openIcons();
+}
+function openIcons() {
+  const n = Object.keys(PICS).filter((k) => ICON_IDS.has(k)).length;
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "Item pictures"),
+    h("p", {}, "The pictures come from your own copy of the game, so they aren't included with the tracker. OOTRR saves them the first time you open its tracker with your game folder set."),
+    h("p", {}, "Pick this folder, or any folder above it:"),
+    h("p", {}, h("code", { class: "q" }, "%LOCALAPPDATA%\\ootrr\\tracker-cache")),
+    h("p", { class: "hint", style: "padding:0" }, "Tip: paste %LOCALAPPDATA% into the folder picker's address bar to jump there. You can also drop the PNG files onto the tracker."),
+    iconMsg ? h("p", { style: "color:var(--gold)" }, iconMsg) : null,
+    h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser.` : "No pictures stored yet."),
+    h("div", { style: "display:flex;gap:8px;justify-content:flex-end;margin-top:12px" },
+      n ? h("button", { class: "btn", onclick: () => { PICS = {}; try { localStorage.removeItem(ICON_KEY); } catch (e) {} iconMsg = "Pictures removed."; render(); openIcons(); } }, "Remove pictures") : null,
+      h("button", { class: "btn", onclick: pickIcons }, n ? "Pick folder again" : "Pick folder"),
+      h("button", { class: "btn", onclick: () => { iconMsg = ""; $("#dlg").close(); } }, "Close")),
+  ));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
 function tile([name, label, max, cls]) {
   const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
   const tiers = TIERS[name];
   const text = tiers ? tiers[Math.max(0, Math.min(v, tiers.length) - 1)] : label.replace("-", "­");
-  const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${name}${max > 1 ? ` (${v}/${max})` : ""}`;
+  const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${label.replace("-", "")}${max > 1 ? ` (${v}/${max})` : ""}`;
+  const pic = picOf(name, v);
   return h("div", {
-    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""}`, title: `${tip}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
+    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""} ${pic ? "pic" : ""}`, "data-name": name, title: `${tip}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
     onclick: () => bump(name, max, max === 1 && v ? -1 : 1),
     oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); },
-  }, text, max > 1 && v && !tiers ? h("span", { class: "n" }, v) : null);
+  }, pic ? h("img", { src: pic, alt: text }) : text,
+    // counts always show; a picture that stays the same through the tiers (Bow, Bomb Bag...) gets the tier number
+    max > 1 && v && (!tiers || (pic && !Array.isArray(ICON[name]))) ? h("span", { class: "n" }, v) : null);
 }
 function counter(name, max, step = 1) {
   const v = have(name);
@@ -370,11 +482,11 @@ function renderItems() {
     h("h2", {}, "Child trade"), h("div", { class: "grid" }, CHILD_TRADE.map(tile)),
     h("h2", {}, "Adult trade"), h("div", { class: "grid" }, ADULT_TRADE.map(tile)),
     h("h2", {}, "Counters"),
-    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, l), h("td", { style: "text-align:right" }, counter(n, m))))),
+    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, m))))),
     h("h2", {}, "Dungeon keys"),
     h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
-      h("td", {}, d), h("td", {}, counter(sk, m)),
-      h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""}`, onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, "Boss key") : "")))),
+      h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
+      h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""} ${PICS.Item_Dungeon_BossKey ? "pic" : ""}`, title: "Boss key", onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "Boss key" }) : "Boss key") : "")))),
     h("p", { class: "hint" }, "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too."),
   ));
   el.scrollTop = top;
@@ -578,6 +690,8 @@ function openSettings() {
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 $("#setBtn").onclick = openSettings;
+$("#iconBtn").onclick = () => { iconMsg = ""; openIcons(); };
+$("#iconFile").onchange = async (e) => { const n = await takeIcons([...e.target.files]); e.target.value = ""; iconMsg = n ? `Loaded ${n} pictures.` : "None of those files are OOTRR icon pictures."; openIcons(); };
 let armed = 0;
 $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
@@ -751,6 +865,7 @@ document.addEventListener("drop", (e) => {
   e.preventDefault(); document.body.classList.remove("drag");
   const files = [...e.dataTransfer.files];
   const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
+  if (files.some((f) => /\.png$/i.test(f.name))) { takeIcons(files.filter((f) => /\.png$/i.test(f.name))).then((n) => { iconMsg = n ? `Loaded ${n} pictures.` : "None of those files are OOTRR icon pictures."; openIcons(); }); return; }
   if (seed) loadSeedFile(seed); else loadFile(newestOf(files));
 });
 
