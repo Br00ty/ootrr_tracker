@@ -1236,7 +1236,10 @@ function renderItems() {
     h("h2", {}, "Magic arrows"), h("div", { class: "grid" }, ARROWS.map(tile)),
     h("h2", {}, "Equipment"), h("div", { class: "grid" }, GEAR.map(tile)),
     h("h2", {}, "Songs"), h("div", { class: "grid" }, SONGS.map(tile)),
-    h("h2", {}, "Stones & medallions"), h("div", { class: "grid" }, REWARDS.map(tile)),
+    h("h2", {}, "Stones & medallions"),
+    // the three Spiritual Stones on their own row, the six Medallions in a row below them
+    h("div", { class: "grid" }, REWARDS.filter((r) => r[3] === "stone").map(tile)),
+    h("div", { class: "grid", style: "margin-top:4px" }, REWARDS.filter((r) => r[3] === "med").map(tile)),
     h("h2", {}, "Trade & masks"), h("div", { class: "grid" }, TRADE.map(tile)),
     h("h2", {}, "Counters"),
     h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, l), h("td", { style: "text-align:right" }, counter(n, m))))),
