@@ -128,14 +128,14 @@ dialog::backdrop{background:#0009}
 .sv-list div{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px solid #2a271e}
 .sv-list span:last-child{color:var(--ink);text-align:right}
 .auto{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:12px}
-.auto .live{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.auto .live{flex:none;width:8px;height:8px;border-radius:50%;background:var(--faint)}
 .auto .live.on{background:var(--green);box-shadow:0 0 6px var(--green)}
 .auto .live.err{background:var(--red)}
 .auto label{white-space:nowrap}
 .auto b{color:var(--ink);font-weight:600}
 .it.auto{box-shadow:inset 0 -2px 0 var(--green)}
 .ck .sv{font-size:10px;color:var(--green);border:1px solid #2e5a3e;border-radius:3px;padding:0 4px}
-body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
+body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
 </style>
 </head>
 <body>
@@ -144,7 +144,7 @@ body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;ins
   <div class="stats" id="stats"></div>
   <div class="spacer"></div>
   <div class="auto" id="autoBox"></div>
-  <input type="file" id="saveFile" accept=".sav" multiple hidden>
+  <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
   <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
   <button class="btn" id="iconBtn" title="Show item pictures from OOTRR's icon cache">Icons</button>
@@ -475,7 +475,11 @@ async function pickIcons(auto) {
 async function droppedFolderFiles(entries) {
   const out = [];
   const walk = (entry, depth) => new Promise((done) => {
-    if (entry.isFile) { if (/\.png$/i.test(entry.name)) entry.file((f) => { out.push(f); done(); }, () => done()); else done(); return; }
+    if (entry.isFile) {
+      if (/\.(png|sav)$/i.test(entry.name)) entry.file((f) => { f.slot = (entry.fullPath || "").split("/").slice(-2, -1)[0]; out.push(f); done(); }, () => done());
+      else done();
+      return;
+    }
     if (!entry.isDirectory || depth > 5) { done(); return; }
     const rd = entry.createReader(), all = [];
     const more = () => rd.readEntries(async (es) => { if (es.length) { all.push(...es); more(); } else { for (const x of all) await walk(x, depth + 1); done(); } }, () => done());
@@ -945,6 +949,30 @@ function startWatch(dir) {
   W.dir = dir; W.mode = "watch"; lastSig = "";
   clearInterval(W.timer); W.timer = setInterval(poll, 2000); poll();
 }
+// Chrome won't let a page watch any folder inside AppData ("contains system files"), and Lichii keeps its
+// saves in %APPDATA%\lichii\nand\user\save. A folder link (junction) outside AppData that points to it
+// can be watched instead; Load saves works on the folder itself, but reads it once per click.
+const SAVE_DIR = "%APPDATA%\\lichii\\nand\\user\\save";
+const LINK_DIR = "%USERPROFILE%\\Lichii saves";
+const LINK_CMD = `cmd /c mklink /J "${LINK_DIR}" "${SAVE_DIR}"`;
+function openWatchHelp() {
+  const copy = (text) => async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; } catch (x) { b.textContent = "Select it and copy"; } };
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "Watching your saves"),
+    h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where Lichii keeps its saves, so picking it says the folder contains system files."),
+    h("p", {}, h("b", {}, "Fix it once with a folder link:"), " a folder in your user folder that leads to the save folder. Nothing is moved or copied."),
+    h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
+      h("li", {}, "Press ", h("b", {}, "Windows + R"), "."),
+      h("li", {}, "Paste this and press ", h("b", {}, "Enter"), ":", h("br"),
+        h("code", { class: "q", style: "word-break:break-all" }, LINK_CMD), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(LINK_CMD) }, "Copy")),
+      h("li", {}, "Click ", h("b", {}, "Watch save folder"), ", click the folder window's address bar (", h("b", {}, "Alt + D"), "), paste ",
+        h("code", { class: "q" }, LINK_DIR), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(LINK_DIR) }, "Copy"), " and press Enter, then ", h("b", {}, "Select Folder"), ".")),
+    h("p", { class: "hint", style: "padding:6px 0 0" }, "To remove the link later, delete the Lichii saves folder in your user folder (C:\\Users\\<you>); your real saves stay where they are. If your saves are somewhere else, change the second path in the command."),
+    h("p", {}, h("b", {}, "Or without watching:"), " click ", h("b", {}, "Load saves"), " and pick ", h("code", { class: "q" }, SAVE_DIR), " (paste it into the folder window's address bar). It reads the newest save of all slots; click it again whenever you want to update."),
+    h("div", { style: "display:flex;justify-content:flex-end;margin-top:12px" }, h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")),
+  ));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
 async function watchFolder() {
   try {
     const dir = await window.showDirectoryPicker({ id: "ootrr-saves", mode: "read" });
@@ -974,14 +1002,26 @@ async function reconnect() {
   try { if ((await W.saved.requestPermission({ mode: "read" })) === "granted") startWatch(W.saved); } catch (e) { W.err = e.message; paintAuto(); }
 }
 
-async function loadFile(f) {
+async function loadFile(f, label) {
   if (!f) return;
-  try { applyPeek(Auto.peek(await f.arrayBuffer()), f.name); }
-  catch (e) { W.err = `Couldn't read ${f.name}: ${e.message}`; paintAuto(); }
+  try { applyPeek(Auto.peek(await f.arrayBuffer()), label || f.name); }
+  catch (e) { W.err = `Couldn't read ${label ? label + "/" : ""}${f.name}: ${e.message}`; paintAuto(); }
 }
 // With several saves picked or dropped (one per slot), the newest one is read.
-const newestOf = (files) => [...files].filter((f) => /\.sav$/i.test(f.name)).sort((a, b) => b.lastModified - a.lastModified)[0];
-$("#saveFile").onchange = (e) => { loadFile(newestOf(e.target.files)); e.target.value = ""; };
+// Picking the save folder reads every slot in it; the newest progress.sav wins (any .sav if none is called that).
+function newestOf(files) {
+  const all = [...files].filter((f) => /\.sav$/i.test(f.name));
+  const prog = all.filter((f) => f.name.toLowerCase() === "progress.sav");
+  return (prog.length ? prog : all).sort((a, b) => b.lastModified - a.lastModified)[0];
+}
+// the slot a picked file came from: its folder in webkitRelativePath (save/slot_01/progress.sav → slot_01)
+const slotOf = (f) => { const p = (f.webkitRelativePath || "").split("/"); return p.length > 1 ? p[p.length - 2] : f.name; };
+$("#saveFile").onchange = (e) => {
+  const files = [...e.target.files]; e.target.value = "";
+  const f = newestOf(files);
+  if (!f) { W.err = "No save in that folder. Pick the save folder that holds slot_00, slot_01 …"; paintAuto(); return; }
+  loadFile(f, slotOf(f));
+};
 document.addEventListener("dragover", (e) => { e.preventDefault(); document.body.classList.add("drag"); });
 document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.body.classList.remove("drag"); });
 document.addEventListener("drop", (e) => {
@@ -991,9 +1031,11 @@ document.addEventListener("drop", (e) => {
   // entries must be taken now: the drop's items are gone once anything is awaited
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);
-  if (folder || files.some((f) => /\.png$/i.test(f.name))) {
-    (folder ? droppedFolderFiles(entries) : Promise.resolve(files)).then(useIconFiles); return;
+  if (folder) {  // a dropped folder: saves if it holds any, otherwise item pictures
+    droppedFolderFiles(entries).then((got) => { const f = newestOf(got); if (f) loadFile(f, f.slot || f.name); else useIconFiles(got); });
+    return;
   }
+  if (files.some((f) => /\.png$/i.test(f.name))) { useIconFiles(files); return; }
   if (seed) loadSeedFile(seed); else loadFile(newestOf(files));
 });
 
@@ -1006,7 +1048,8 @@ function paintAuto() {
   else kids.push(h("span", {}, "Auto-tracking off"));
   if (W.saved && !W.dir) kids.push(h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
   else if (canWatch && !W.blocked && !watching) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
-  kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick or drop progress.sav (pick several and the newest is read)" }, watching ? "Load file" : "Load save"));
+  if (canWatch && !watching) kids.push(h("button", { class: "btn", style: "padding:5px 8px", onclick: openWatchHelp, title: "Can't pick your save folder? (Chrome refuses folders inside AppData)" }, "?"));
+  kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick the save folder (or any folder above the slots) to read the newest save of all slots once. Click again to read it again. You can also drop the folder here." }, watching ? "Load saves once" : "Load saves"));
   kids.push(h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
     (() => { const c = h("input", { type: "checkbox" }); c.checked = S.follow; c.onchange = () => { S.follow = c.checked; save(); }; return c; })(), "Follow Link"));
   $("#autoBox").replaceChildren(...kids);

@@ -16,7 +16,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 Open the tracker in Chrome or Edge: use **[the online version](https://br00ty.github.io/ootrr_tracker/)**, or download `index.html` from this repo and open it. Both work the same, and your progress is saved in whichever one you use (the two don't share it).
 
 1. **Load seed** → pick your `.ootrr` file.
-2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
+2. **Watch save folder** → pick your emulator's save folder, and the tracker rereads the newest save of all slots every 2 seconds. Chrome and Edge refuse folders inside AppData, where Lichii keeps its saves (`%APPDATA%\lichii\nand\user\save`), so make a folder link outside AppData once: press Windows + R and run `cmd /c mklink /J "%USERPROFILE%\Lichii saves" "%APPDATA%\lichii\nand\user\save"`, then watch `%USERPROFILE%\Lichii saves`. The **?** button next to Watch save folder walks you through it. Without watching, **Load saves** reads the save folder itself (all slots, newest wins) each time you click it; you can also drop the folder on the page.
 3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo. A **C→A** or **A→C** badge marks a check that needs something done as the other age first (a magic bean planted as a child, the adult visit before the HF Deku Scrub Grotto).
 
 4. Item pictures: the first time you open the tracker it asks whether to show them.
@@ -26,7 +26,7 @@ Open the tracker in Chrome or Edge: use **[the online version](https://br00ty.gi
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 
-Folder watching needs Chrome or Edge (the File System Access API). In other browsers use Load save.
+Folder watching needs Chrome or Edge (the File System Access API). In other browsers use Load saves.
 
 ## Logic corrections
 
