@@ -1188,6 +1188,12 @@ const RENAMES = {
   // OOTRR's skull_names gives it this name only as a "tour" placeholder; its catalog had pooled it with
   // LH GS Small Island. It stays in Hyrule Field; only the name changes.
   "HF GS Cow Grotto": { name: "HF GS Grotto Near Lake Entrance" },
+  // OOTRR's catalog puts these two names the other way round from the spots in the game (its own tracker
+  // targets agree with the game): key 13584527502619061465 is the skulltula behind the tent, which the catalog
+  // and the seed's placements call GV GS Pillar. Only the labels swap, so each one still shows the item that
+  // drops there; both have the same rule.
+  "GV GS Pillar": { name: "GV GS Behind Tent" },
+  "GV GS Behind Tent": { name: "GV GS Pillar" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 const shownName = (n) => (RENAMES[n] ? RENAMES[n].name : n);
