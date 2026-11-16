@@ -251,6 +251,15 @@ const Seed = (() => {
     }
     for (const n of rems) set.delete(n);
     for (const n of adds) set.add(n);
+    // junk_spots.rs: in "matched" skulltula shuffle the unsure skulltulas take only junk, so they join only when
+    // enough other shuffled locations hold junk a skulltula can drop (the measured "matched" delta has them out)
+    if (P.unsure_skulls && v.shuffle_skulltulas === "matched") {
+      const spots = P.unsure_skulls.filter((n) => data.checks[n]), junk = new Set(P.junk_locs);
+      for (const n of spots) set.delete(n);
+      let have = 0;
+      for (const n of set) if (junk.has(n)) have++;
+      if (have >= (P.junk_slack || 2) * spots.length) for (const n of spots) set.add(n);
+    }
     return set;
   }
   return { enabled, poolOf, kakarikoSkip, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };

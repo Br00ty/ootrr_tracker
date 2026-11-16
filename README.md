@@ -83,7 +83,7 @@ After editing anything in `src/`, run `python tools/assemble.py`.
 2. Copy the three `.rs` programs in `tools/ootrr-export/` (not `zs_stub.rs`) into its `crates/core/examples/`. If crates.io isn't reachable, replace `crates/core/src/zs.rs` with `tools/ootrr-export/zs_stub.rs` and remove `ruzstd` from `crates/core/Cargo.toml` (the export never unpacks game files).
 3. `cargo run -p ootrr-core --example tracker_export > <this repo>/tools/out/logic.json`
 4. `cargo run -p ootrr-core --example settings_schema > <this repo>/tools/out/schema.json`
-5. `python tools/pool_matrix.py <path to the ootrr CLI>` (a few minutes), then `python tools/build_data.py <ootrr>/data` and `python tools/assemble.py`.
+5. Copy `tools/ootrr-export/vanilla_dump.rs` into `crates/core/examples/` too and run `cargo run -p ootrr-core --example vanilla_dump < names.txt > <this repo>/tools/out/vanilla_gen.json` (names.txt: every location name in `data/data.json`'s `checks`, one per line). Then `python tools/pool_matrix.py <path to the ootrr CLI>` (a few minutes), then `python tools/build_data.py <ootrr>/data` and `python tools/assemble.py`.
    If OOTRR renames or moves a check listed under [Renamed checks](#renamed-checks), update its key in `RENAMES`.
 6. Generate a few seeds with the `ootrr` CLI (`ootrr generate <preset or settings.json> <seed> out.ootrr`; `tools/seeds/wild.json` turns on many shuffles), build `tracker_check`, and run `node tools/crosscheck.js tools/seeds <path to tracker_check>` (it expects `default`, `keysanity`, `wild`, `dungeons` and `dungeons_plain` seeds; `tools/seeds/dungeons.json` is wild with dungeon entrances shuffled). It should print `all match`: the tracker's in-logic locations equal ootrr's own search for every seed and inventory.
 

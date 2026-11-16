@@ -210,6 +210,19 @@ maps = {m: c.most_common(1)[0][0] for m, c in mapc.items()}
 # which locations each setting adds to or takes from the shuffle, measured with OOTRR's own generator
 # (tools/pool_matrix.py); the tracker builds the manual settings' location list from it
 POOLS = json.load(open('tools/out/pools.json')) if os.path.exists('tools/out/pools.json') else None
+if POOLS:
+    # OOTRR's junk_spots.rs: with skulltula shuffle "matched", the skulltulas whose name is only a guess
+    # (skull_names grade lean/tour) join the shuffle only when at least twice as many other shuffled locations
+    # hold a junk item a skulltula can drop (not progression, not a token, with a skulltula pickup)
+    _it = {i['name']: i for i in json.load(open(os.path.join(D, 'items.json')))['items']}
+    _pk = json.load(open(os.path.join(D, 'skulltulas.json')))['pickups']
+    _fits = {n for n in _pk if n != 'Gold Skulltula Token' and n in _it and not _it[n].get('adv')}
+    # the vanilla item of every location as the generator sees it: the remake's own, else OoTR's (data.rs vanilla_of)
+    # (tools/out/vanilla_gen.json, from the vanilla_dump example: it includes the remake's pots, rocks and grass)
+    _van = json.load(open('tools/out/vanilla_gen.json'))
+    POOLS['junk_locs'] = sorted(n for n in checks if _van.get(n) in _fits)
+    POOLS['unsure_skulls'] = sorted({r['name'] for r in json.load(open(os.path.join(D, 'skull_names.json')))['spots'] if r.get('grade') != 'release'})
+    POOLS['junk_slack'] = 2
 schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],
