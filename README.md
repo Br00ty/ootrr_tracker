@@ -45,6 +45,7 @@ A few checks are listed under a different name and area than OOTRR gives them, b
 |---|---|---|
 | LH Open Grotto Chest (Lake Hylia) | HF Open Grotto Chest | The chest is in a hidden hole in Lake Hylia |
 | LH Poe Chest (Lake Hylia) | HF Lake Poe Chest | A remake-only chest on the Lake Hylia shore |
+| LH GS Near Lake Entrance (Lake Hylia) | HF GS Cow Grotto | A Gold Skulltula near where Hyrule Field meets the lake; OOTRR uses this name only as a placeholder for it |
 
 ## Not handled yet
 
