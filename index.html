@@ -2411,7 +2411,7 @@ function openIcons() {
 // the first level/state of each floor. All textures are 2000x1440 and the game shows them 3:2.
 const MAP_ZONES = {
   "Kokiri Forest": "KokiriForest", "Lost Woods": "LostWood", "Sacred Forest Meadow": "SacredForestMeadow",
-  "Hyrule Field": "HyruleField", "Lon Lon Ranch": "LonLonRanch", "Market": "Market", "Hyrule Castle": ["HyruleCastle", "GanonCastle"],
+  "Hyrule Field": "HyruleField", "Lon Lon Ranch": "LonLonRanch", "Market": "Market", "Hyrule Castle": "HyruleCastle",
   "Temple of Time": "Market",  // the game has no map of its own for the Temple of Time: the Market's, which shows its plaza
   "Kakariko Village": "KakarikoVillage", "Graveyard": "Graveyard", "Death Mountain Trail": "DeathMountainTrail",
   "Goron City": "GoronCity", "Death Mountain Crater": "DeathMountainCrater", "Zora's River": "ZoraRiver",
@@ -2419,6 +2419,10 @@ const MAP_ZONES = {
   "Gerudo's Fortress": "GerudoFortress", "Haunted Wasteland": "HountedWasteland", "Desert Colossus": "DesertColossus",
   "Outside Ganon's Castle": "GanonCastle",
 };
+// areas whose map is for one age only: Hyrule Castle's adult side is Outside Ganon's Castle, and the game has
+// one map each for Gerudo's Fortress and Outside Ganon's Castle
+const ZONE_AGE = { "Hyrule Castle": "child", "Outside Ganon's Castle": "adult", "Gerudo's Fortress": "adult" };
+const mapAgeOf = (area) => ZONE_AGE[area] || S.mapAge;
 const MAP_DUNGEONS = {
   "Deku Tree": "InsideTheDekuTree", "Dodongo's Cavern": "DodongoCavern", "Jabu Jabu's Belly": "InsideJabuJabuBelly",
   "Forest Temple": "ForestTemple", "Fire Temple": "FireTemple", "Water Temple": "WaterTemple", "Shadow Temple": "ShadowTemple",
@@ -2708,7 +2712,7 @@ function mapFor(area) {
     return { floors, floor: fl, key: fl ? `${d}_${fl}` : null };
   }
   const zs = [].concat(MAP_ZONES[area] || []);
-  const age = S.mapAge === "adult" ? "Adult" : "Child", other = age === "Adult" ? "Child" : "Adult";
+  const age = mapAgeOf(area) === "adult" ? "Adult" : "Child", other = age === "Adult" ? "Child" : "Adult";
   for (const z of zs) if (MAPS.has(`${z}_${age}`)) return { key: `${z}_${age}` };
   for (const z of zs) if (MAPS.has(`${z}_${other}`)) return { key: `${z}_${other}`, note: `The game has no ${age.toLowerCase()} map here; this is the ${other.toLowerCase()} one.` };
   return { key: null };
@@ -2734,6 +2738,7 @@ function renderMap() {
   const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
   const bar = h("div", { class: "mapbar" }, sel,
     dungeon ? (m.floors.length ? seg(m.floors.map((f) => [f, f]), m.floor, (v) => { S.floor[area] = v; }) : null)
+      : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
     list.length ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
