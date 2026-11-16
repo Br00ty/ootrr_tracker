@@ -1,0 +1,88 @@
+name: Bug report
+description: Something in the tracker is wrong, missing or broken.
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting! The more of this you fill in, the faster it can be fixed.
+        If the bug is about the randomizer itself (the seed or the game, not this tracker), please report it to [OOTRR](https://github.com/realazk/ootrr/issues) instead.
+
+  - type: dropdown
+    id: kind
+    attributes:
+      label: What kind of problem is it?
+      options:
+        - "Logic: a check shows the wrong colour (green / yellow / red)"
+        - "Auto-tracking: items or checks from my save are wrong or missing"
+        - "Seed file: loading my .ootrr file fails or its settings look wrong"
+        - "Dungeon entrances: a door or dungeon is wrong"
+        - "Item pictures"
+        - "Layout or display"
+        - "Something else"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you saw, and what you expected instead.
+      placeholder: "Example: KF Midos Top Left Chest was red, but I could open it as child with only the Kokiri Sword."
+    validations:
+      required: true
+
+  - type: input
+    id: check
+    attributes:
+      label: Check or item name
+      description: The exact name shown in the tracker, if it's about one check or item.
+      placeholder: "KF Midos Top Left Chest"
+
+  - type: textarea
+    id: items
+    attributes:
+      label: Items you had
+      description: For logic problems, the items, songs and medallions you had at the time. A screenshot of the tracker works too (drag it in here).
+      placeholder: "Kokiri Sword, Fairy Slingshot, Zelda's Lullaby, Saria's Song …"
+
+  - type: textarea
+    id: seed
+    attributes:
+      label: Seed
+      description: |
+        Paste the settings string (it starts with OOTRR1-, you can copy it from the tracker's Settings window) and the seed name.
+        Or attach the seed file: GitHub doesn't accept .ootrr files, so zip it first, or rename it to end in .txt, then drag it in here.
+      placeholder: "Seed: my-seed-123\nSettings: OOTRR1-…"
+
+  - type: dropdown
+    id: where
+    attributes:
+      label: Which copy of the tracker?
+      options:
+        - "Online (br00ty.github.io/ootrr_tracker)"
+        - "Downloaded index.html"
+        - "Other"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: browser
+    attributes:
+      label: Browser
+      options:
+        - Chrome
+        - Edge
+        - Firefox
+        - Safari
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: ootrr
+    attributes:
+      label: OOTRR version
+      description: The randomizer version that made the seed.
+      placeholder: "0.6.0"

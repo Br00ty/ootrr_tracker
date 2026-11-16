@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Problem with the randomizer itself (OOTRR)
+    url: https://github.com/realazk/ootrr/issues
+    about: Seeds that don't generate, or bugs inside the game, belong to OOTRR, not this tracker.
