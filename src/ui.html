@@ -938,7 +938,7 @@ async function poll() {
   if (!W.dir) return;
   try {
     const b = await newestSave(W.dir);
-    if (!b) { W.err = "No progress.sav in that folder. Pick the save folder that holds slot_00, slot_01 …"; paintAuto(); return; }
+    if (!b) { W.err = "No progress.sav in that folder yet. If it's the copy folder, is the copy window running? Otherwise pick the save folder that holds slot_00, slot_01 …"; paintAuto(); return; }
     const sig = `${b.label}:${b.f.lastModified}:${b.f.size}`;
     if (sig !== lastSig) { lastSig = sig; applyPeek(Auto.peek(await b.f.arrayBuffer()), b.label); }
     else paintAuto();
@@ -979,7 +979,34 @@ function openWatchHelp() {
   ));
   if (!$("#dlg").open) $("#dlg").showModal();
 }
-async function watchFolder() {
+// Watch save folder opens this guide: a web page can't run commands on the PC, so the start command is
+// copied for the player to paste into Windows + R, and the folder address is copied before the folder
+// window opens. "My saves aren't in AppData" picks a folder directly (e.g. a moved NAND folder).
+const copyText = async (t) => { try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } };
+let watchStep = { cmd: false, dir: false };
+function openWatchGuide() {
+  const step = (n, done, title, ...body) => h("div", { style: "display:flex;gap:10px;margin-top:12px" },
+    h("div", { style: `flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;${done ? "background:var(--green);color:#111" : "border:1px solid var(--gold);color:var(--gold)"}` }, done ? "✓" : n),
+    h("div", { style: "flex:1" }, h("b", {}, title), ...body));
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "Watch your saves"),
+    h("p", { style: "color:var(--dim)" }, "Chrome won't watch folders inside AppData, where Lichii keeps its saves, so a small window keeps a copy of them outside AppData while you play."),
+    step(1, watchStep.cmd, "Start copying your saves",
+      h("div", { style: "color:var(--dim);margin:2px 0 6px" }, watchStep.cmd ? "Copied. Press Windows + R, then Ctrl + V and Enter. Leave the window that opens running while you play." : "Copies the start command. Then press Windows + R, Ctrl + V and Enter."),
+      h("button", { class: "btn", onclick: async () => { const ok = await copyText(COPY_CMD); watchStep.cmd = true; if (ok) openWatchGuide(); else openWatchHelp(); } }, watchStep.cmd ? "Copy it again" : "Copy start command")),
+    step(2, watchStep.dir, "Pick the copy folder",
+      h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "Copies the folder's address and opens the folder window: press Alt + D, Ctrl + V and Enter, then Select Folder."),
+      h("button", { class: "btn", style: "border-color:var(--gold)", onclick: async () => { await copyText(COPY_DIR); watchStep.dir = true; $("#dlg").close(); pickWatchFolder(); } }, "Pick the copy folder")),
+    h("p", { class: "hint", style: "padding:14px 0 0" }, "Next time: run the start command again (it's under the ", h("b", {}, "?"), " button too), then click Reconnect."),
+    h("div", { style: "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px" },
+      h("button", { class: "btn", title: "For saves outside AppData, e.g. after moving Lichii's NAND folder", onclick: () => { $("#dlg").close(); pickWatchFolder(); } }, "My saves aren't in AppData"),
+      h("button", { class: "btn", onclick: () => { $("#dlg").close(); openWatchHelp(); } }, "More help"),
+      h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")),
+  ));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
+function watchFolder() { watchStep = { cmd: false, dir: false }; openWatchGuide(); }
+async function pickWatchFolder() {
   try {
     const dir = await window.showDirectoryPicker({ id: "ootrr-saves", mode: "read" });
     try { const db = await idb(); db.transaction("h", "readwrite").objectStore("h").put(dir, "dir"); } catch (e) {}
@@ -1052,7 +1079,9 @@ function paintAuto() {
   if (W.err) kids.push(h("span", { style: "color:var(--red);max-width:340px" }, W.err));
   else if (W.read) kids.push(h("span", {}, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
   else kids.push(h("span", {}, "Auto-tracking off"));
-  if (W.saved && !W.dir) kids.push(h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
+  if (W.saved && !W.dir) kids.push(
+    h("button", { class: "btn", title: "Copies the command that starts copying your saves (press Windows + R, Ctrl + V, Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "See ? for the command"; } }, "Copy start command"),
+    h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
   else if (canWatch && !W.blocked && !watching) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
   if (!watching) kids.push(h("button", { class: "btn", style: "padding:5px 8px", onclick: openWatchHelp, title: canWatch ? "Can't pick your save folder? (Chrome refuses folders inside AppData)" : "Why can't this browser watch the save folder?" }, "?"));
   kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick the save folder (or any folder above the slots) to read the newest save of all slots once. Click again to read it again. You can also drop the folder here." }, watching ? "Load saves once" : "Load saves"));
