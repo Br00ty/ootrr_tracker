@@ -30,6 +30,8 @@ header h1 small{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6p
 .spacer{flex:1}
 .btn{white-space:nowrap;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
 .btn:hover{border-color:var(--gold)}
+a.btn{color:inherit;text-decoration:none;display:inline-block}
+@media (max-width:1800px){h1 small{display:none}}
 main{flex:1;display:grid;grid-template-columns:minmax(330px,390px) 250px 1fr;min-height:0}
 /* wide screens (1920x1080 and up): counters, keys and trade items get their own column, and the dungeons sit
    beside the overworld, so nothing needs scrolling; narrower screens keep three columns */
@@ -149,6 +151,7 @@ body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;ins
   <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
+  <a class="btn" id="bugBtn" href="https://github.com/Br00ty/ootrr_tracker/issues/new" target="_blank" rel="noopener" title="Found something wrong? Open a bug report on GitHub (needs a GitHub account)">Report a bug</a>
 </header>
 <div class="banner" id="banner" hidden></div>
 <main>
