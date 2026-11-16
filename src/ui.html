@@ -184,6 +184,7 @@ main.mapmode #mapview{display:flex}
 .pin.sel{outline:2px solid var(--gold);outline-offset:2px;z-index:3}
 .pinpop{position:absolute;z-index:4;min-width:260px;max-width:360px;background:var(--panel);border:1px solid var(--gold);border-radius:8px;box-shadow:0 4px 18px #000c;max-height:60%;overflow:auto}
 .pinpop .ck{padding:4px 10px}
+.vsong{color:var(--faint);font-size:11px}
 .pinpop .desc{padding:4px 10px 8px 26px}
 .pinpop{max-width:440px}
 body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
@@ -446,21 +447,26 @@ function compute() {
     return { w, s: new Engine.Search(w, counts).run(place) };
   });
   const out = new Map();
-  for (const n of names) {
+  // song spots the seed doesn't shuffle: not checks, but the map still shows them (with their vanilla song)
+  VSONGS = new Map();
+  const vsongs = Object.keys(DATA.checks).filter((n) => DATA.checks[n][1] === "song" && !tracked.has(n));
+  for (const n of [...names, ...vsongs]) {
     const [a, k] = DATA.checks[n];
     const c = { n, a, k };
+    const dest = tracked.has(n) ? out : VSONGS;
+    if (!tracked.has(n)) c.vanilla = DATA.vanilla[n] || "";
     const [L, T] = res.map(({ w, s }) => { const l = w.lix.get(n); return l === undefined ? null : [s.locAccess(l, 1), s.locAccess(l, 0)]; });
     let st = "r";
     if (isDone(n)) st = "done";
     else if (L && (L[0] || L[1])) st = "g";
     else if (T && (T[0] || T[1])) st = "y";
-    out.set(n, { ...c, st, fromSave: !!S.auto.done[n] && !S.ignore[n] && !S.done[n], child: L && L[0] ? "ok" : T && T[0] ? "ol" : "", adult: L && L[1] ? "ok" : T && T[1] ? "ol" : "" });
+    dest.set(n, { ...c, st, fromSave: !!S.auto.done[n] && !S.ignore[n] && !S.done[n], child: L && L[0] ? "ok" : T && T[0] ? "ol" : "", adult: L && L[1] ? "ok" : T && T[1] ? "ol" : "" });
   }
   return out;
 }
 
 // ---------- render ----------
-let R = new Map();
+let R = new Map(), VSONGS = new Map();
 function render() {
   R = compute();
   if (typeof paintAuto === "function") paintAuto();
@@ -1125,6 +1131,7 @@ function renderMap() {
   const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
   const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
   const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
+  const songs = [...VSONGS.values()].filter((c) => c.a === area);
   const bar = h("div", { class: "mapbar" }, sel,
     dungeon ? (m.floors.length ? seg(m.floors.map((f) => [f, f]), m.floor, (v) => { S.floor[area] = v; }) : null)
       : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
@@ -1136,7 +1143,7 @@ function renderMap() {
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
   // on a child or adult map, only the checks that age can get (dungeon maps have no age)
   const age = /_(Child|Adult)$/.exec(m.key || "");
-  const shown = age ? list.filter((c) => { const a = ageOf(c.n); return !a || a === age[1].toLowerCase(); }) : list;
+  const shown = (age ? [...list, ...songs].filter((c) => { const a = ageOf(c.n); return !a || a === age[1].toLowerCase(); }) : [...list, ...songs]);
   let body;
   if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, "Load the game's maps"));
@@ -1201,7 +1208,7 @@ function mapWithPins(area, key, list) {
     const n = g.cs.length, open = pinOpen === g.id;
     fit.append(h("div", {
       class: `pin ${g.st} ${n > 1 ? "many" : ""} ${open ? "sel" : ""}`, style: `left:${g.u * 100}%;top:${g.v * 100}%`,
-      title: g.cs.map((c) => shownName(c.n)).join("\n") + (n === 1 ? "\nDouble-click to mark it done" : ""),
+      title: g.cs.map((c) => shownName(c.n) + (c.vanilla ? ` (${c.vanilla})` : "")).join("\n") + (n === 1 ? "\nDouble-click to mark it done" : ""),
       onclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); const id = g.id; clickTimer = setTimeout(() => { pinOpen = pinOpen === id ? null : id; openCheck = null; renderMap(); }, 230); },
       ondblclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); if (n === 1) toggleDone(g.cs[0].n); },
     }, n > 1 ? String(n) : ""));
@@ -1429,7 +1436,7 @@ function ckRow(c, again, open = false) {
     // one click opens the description; a double click marks the check done and cancels the pending click
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; again(); }, 230); },
     ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
-  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
+  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null),
     h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
     c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
     crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
