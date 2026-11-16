@@ -154,6 +154,20 @@ main.mapmode #mapview{display:flex}
 .mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b}
 .mapbox img{max-width:100%;max-height:100%;aspect-ratio:3/2;object-fit:fill;width:auto;height:auto;display:block}
 .mapbox .empty{max-width:520px;text-align:center;line-height:1.6}
+.mapwrap{flex:1;min-height:0;display:flex}
+.mapside{width:300px;flex:none;border-left:1px solid var(--line);overflow:auto}
+.mapside h2{margin-top:12px}
+.mapside .ck{padding:4px 12px}
+.mapside .desc{padding-left:24px}
+.mapfit{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;width:100%}
+.mapfit img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
+.pin{position:absolute;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:2px solid #111;box-shadow:0 0 0 1px #0008,0 1px 4px #000c;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#111;z-index:1}
+.pin.many{width:20px;height:20px}
+.pin:hover{transform:translate(-50%,-50%) scale(1.25);z-index:3}
+.pin.g{background:var(--green)}.pin.y{background:var(--yellow)}.pin.r{background:var(--red);color:#fff}.pin.done{background:var(--grey);opacity:.75}
+.pin.sel{outline:2px solid var(--gold);outline-offset:2px;z-index:3}
+.pinpop{position:absolute;z-index:4;min-width:260px;max-width:360px;background:var(--panel);border:1px solid var(--gold);border-radius:8px;box-shadow:0 4px 18px #000c;max-height:60%;overflow:auto}
+.pinpop .ck{padding:4px 10px}
 body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
 </style>
 </head>
@@ -1916,7 +1930,7 @@ const h = (tag, attrs = {}, ...kids) => {
     else if (k === "class") e.className = v;
     else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
   }
-  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : String(c));
+  for (const c of kids.flat(Infinity)) if (c != null && c !== false) e.append(c.nodeType ? c : String(c));
   return e;
 };
 
@@ -2214,6 +2228,9 @@ function usePicked(files) {
   return useIconFiles(files);
 }
 async function useIconFiles(files) {
+  const idx = files.filter((f) => f.name === "index.json" && /tracker-cache/i.test(f.webkitRelativePath || f.name)).sort((a, b) => b.lastModified - a.lastModified)[0]
+    || files.find((f) => f.name === "index.json");
+  if (idx) try { takePins(JSON.parse(await idx.text())); } catch (e) {}
   const set = files.find((f) => f.name === "settings.json");
   if (set) try { const d = JSON.parse(await set.text()); if (d && d.game_dir) localStorage.setItem(MAP_PATH_KEY, d.game_dir); } catch (e) {}
   iconView = "main"; iconMsg = "Reading pictures…"; openIcons();
@@ -2347,6 +2364,50 @@ const floorRank = (f) => (f[0] === "B" ? -+f[1] : +f[0]);  // 5F … 1F, B1 … 
 let MAPS = new Map();      // texture key → Blob
 const MAP_URL = new Map(); // texture key → object URL
 let mapMsg = "", mapBusy = false;
+// Pins: OOTRR's own map index (tracker-cache\<game>\index.json, made by OOTRR's tracker from the game files)
+// gives each location object its spot on the game's maps as fractions of the map picture (u across, v down).
+// The tracker finds a check's objects through the hashes in its save detection, and keeps the spots in the browser.
+const PIN_KEY = "ootrr-tracker-pins";
+const PIN_AREAS = new Set(["Kokiri Forest"]);  // areas whose pins are shown so far
+let PINS = null;  // hash → [[map id, u, v, floor label, tray]]
+try { PINS = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); } catch (e) { PINS = null; }
+let pinOpen = null;  // the open pin's key
+function takePins(idx) {
+  if (!idx || !Array.isArray(idx.locations)) return 0;
+  const out = {};
+  for (const l of idx.locations) {
+    const hsh = String(l.id || "").split(":").pop();
+    if (!hsh || !Array.isArray(l.pins)) continue;
+    for (const p of l.pins) if (p && p.map) (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray]);
+  }
+  PINS = out;
+  try { localStorage.setItem(PIN_KEY, JSON.stringify(out)); } catch (e) {}
+  return Object.keys(out).length;
+}
+// the object hashes behind a check: its save keys and the hashes at the end of its flags
+const HASHES = new Map();
+function hashesOf(n) {
+  if (HASHES.has(n)) return HASHES.get(n);
+  const hs = new Set();
+  for (const r of (DATA.detect || {})[n] || []) {
+    for (const k of r.k || []) hs.add(String(k));
+    for (const f of r.f || []) { const m = /\.(\d{6,})$/.exec(f); if (m) hs.add(m[1]); }
+  }
+  HASHES.set(n, [...hs]);
+  return HASHES.get(n);
+}
+// a check's spot on a map: its pin on that map, or on the same place's other-age map (same picture frame)
+function pinOf(n, mapKey) {
+  if (!PINS) return null;
+  const place = mapKey.replace(/_(Child|Adult)$/, "");
+  let other = null;
+  for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) {
+    if (p[4] || p[1] == null || p[2] == null) continue;
+    if (p[0] === mapKey) return p;
+    if (!other && p[0].replace(/_(Child|Adult)$/, "") === place) other = p;
+  }
+  return other;
+}
 function mapDb() {
   return new Promise((ok, no) => {
     try {
@@ -2475,8 +2536,61 @@ function renderMap() {
   if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, "Load the game's maps"));
   else if (!m.key) body = h("div", { class: "empty" }, (MAP_ZONES[area] || MAP_DUNGEONS[area]) ? `No map for ${area} was loaded. Load the maps again from the game's Map folder.` : `The game has no map for ${area}.`);
-  else body = h("img", { src: mapUrl(m.key), alt: `Map of ${area}`, draggable: "false" });
-  el.replaceChildren(...K(bar, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null, h("div", { class: "mapbox" }, body)));
+  else body = mapWithPins(area, m.key, list);
+  const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, list) : null;
+  el.replaceChildren(...K(bar, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
+    h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side)));
+}
+const ORDER = { g: 0, y: 1, r: 2, done: 3 };
+// pins for the area's checks; checks close together share one pin
+function pinGroups(key, list) {
+  const groups = [];
+  for (const c of list) {
+    const p = pinOf(c.n, key);
+    if (!p) continue;
+    let g = groups.find((x) => Math.hypot(x.u - p[1], (x.v - p[2]) / 1.5) < 0.02);
+    if (!g) { g = { u: p[1], v: p[2], cs: [] }; groups.push(g); }
+    g.cs.push(c);
+  }
+  for (const g of groups) {
+    g.cs.sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+    g.st = g.cs[0].st;  // the best state among them: green if any is in logic
+    g.id = g.cs.map((c) => c.n).join("|");
+  }
+  return groups;
+}
+function mapWithPins(area, key, list) {
+  const fit = h("div", { class: "mapfit" }, h("img", { src: mapUrl(key), alt: `Map of ${area}`, draggable: "false" }));
+  if (!PIN_AREAS.has(area) || !PINS) return fit;
+  const groups = pinGroups(key, list.filter((c) => S.show[c.st]));
+  for (const g of groups) {
+    const n = g.cs.length, open = pinOpen === g.id;
+    fit.append(h("div", {
+      class: `pin ${g.st} ${n > 1 ? "many" : ""} ${open ? "sel" : ""}`, style: `left:${g.u * 100}%;top:${g.v * 100}%`,
+      title: g.cs.map((c) => shownName(c.n)).join("\n") + (n === 1 ? "\nDouble-click to mark it done" : ""),
+      onclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); const id = g.id; clickTimer = setTimeout(() => { pinOpen = pinOpen === id ? null : id; openCheck = null; renderMap(); }, 230); },
+      ondblclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); if (n === 1) toggleDone(g.cs[0].n); },
+    }, n > 1 ? String(n) : ""));
+    if (open) {
+      const left = g.u > 0.6, top = g.v > 0.6;
+      fit.append(h("div", { class: "pinpop", style: `${left ? "right" : "left"}:${(left ? 1 - g.u : g.u) * 100 + 1.5}%;${top ? "bottom" : "top"}:${(top ? 1 - g.v : g.v) * 100 + 1.5}%`, onclick: (e) => e.stopPropagation() },
+        g.cs.map((c) => ckRow(c, renderMap))));
+    }
+  }
+  fit.onclick = () => { if (pinOpen) { pinOpen = null; renderMap(); } };
+  return fit;
+}
+// the side list: filters, and the checks that have no spot on the map (NPCs, shops, grotto insides…)
+function mapSide(area, key, list) {
+  const t = tally(list);
+  const chip = (k, label) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label);
+  const off = list.filter((c) => !pinOf(c.n, key) && S.show[c.st]).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  return h("div", { class: "mapside" },
+    h("div", { class: "chips", style: "padding:10px 12px 4px" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
+    PINS ? null : h("p", { class: "hint" }, "Pins need OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps) and it's read along with them."),
+    h("h2", {}, `Not on the map (${off.length})`),
+    off.length ? off.map((c) => ckRow(c, renderMap)) : h("div", { class: "hint" }, "Every check shown here has a pin."),
+    h("div", { class: "hint" }, "Click a pin to list its checks; double-click a single pin, or a check in a list, to mark it done."));
 }
 function tile([name, label, max, cls]) {
   const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
@@ -2669,6 +2783,22 @@ function describe(n) {
 
 const dealPrice = (n) => { const sh = S.seed && S.seed.shops && S.seed.shops[n]; return sh && sh.deal && S.seed.placements[n] ? sh.price : null; };
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
+// one check's row (and its description when open); again() redraws the list it sits in
+function ckRow(c, again) {
+  return [h("div", {
+    class: `ck st-${c.st} ${openCheck === c.n ? "open" : ""}`, title: "Click for its logic · double-click to mark it done",
+    // one click opens the description; a double click marks the check done and cancels the pending click
+    onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; again(); }, 230); },
+    ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
+  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
+    h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
+    c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
+    crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
+    // a shop deal: its price in this seed
+    dealPrice(c.n) != null ? h("span", { class: "price", title: "Price in this seed" }, `${dealPrice(c.n)} rupees`) : null,
+    h("span", { class: "kind" }, KIND[c.k])),
+    openCheck === c.n ? describe(c.n) : null];
+}
 function renderChecks() {
   const el = $("#checks"); const top = el.scrollTop;
   const list = [...R.values()].filter((c) => c.a === S.area);
@@ -2681,19 +2811,7 @@ function renderChecks() {
     h("div", { class: "ckhead" }, h("h3", {}, S.area), h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`),
       h("span", { class: "spacer" }), list.some((c) => c.st === "g") ? h("button", { class: "btn", onclick: () => { list.filter((c) => c.st === "g").forEach((c) => (S.done[c.n] = 1)); render(); } }, "Mark all in-logic done") : null),
     h("div", { class: "chips" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    vis.length ? vis.map((c) => [h("div", {
-      class: `ck st-${c.st} ${openCheck === c.n ? "open" : ""}`, title: "Click for its logic · double-click to mark it done",
-      // one click opens the description; a double click marks the check done and cancels the pending click
-      onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; renderChecks(); }, 230); },
-      ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
-    }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
-      h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
-      c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
-      crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
-      // a shop deal: its price in this seed
-      dealPrice(c.n) != null ? h("span", { class: "price", title: "Price in this seed" }, `${dealPrice(c.n)} rupees`) : null,
-      h("span", { class: "kind" }, KIND[c.k])),
-      openCheck === c.n ? describe(c.n) : null]) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
+    vis.length ? vis.map((c) => ckRow(c, renderChecks)) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
     h("div", { class: "legend" },
       h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
       h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),

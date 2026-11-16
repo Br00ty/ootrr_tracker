@@ -10,7 +10,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is.
 - **Item tracker.** Click to add, right-click to remove. Items read from the save are underlined in green.
 - **Item pictures.** Show the game's own item, song, stone, medallion and key icons, taken from OOTRR's icon cache on your PC.
-- **Map Tracker.** Switch the location lists for the game's own pause-menu maps: every overworld zone (child and adult) and every dungeon floor, read from your game files. Placing the checks on the maps comes next.
+- **Map Tracker.** Switch the location lists for the game's own pause-menu maps: every overworld zone (child and adult) and every dungeon floor, read from your game files. Kokiri Forest has pins for its checks (green, yellow, red, grey like the list), placed where OOTRR's own map index puts them; more areas follow.
 
 ## Use it
 
@@ -25,7 +25,7 @@ Open the tracker in Chrome or Edge: use **[the online version](https://br00ty.gi
    - **I'll do it myself** lets you pick the folder yourself (or any folder inside it that holds the pictures), or drag the folder onto the tracker.
    - The **Icons & Maps** button brings this back at any time. The pictures are made by OOTRR's own tracker from your game files the first time it runs with your game folder set. They're the game's art, so this repo doesn't include them; they're shrunk and kept in your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Echo Gem) keep their names.
 
-5. Game maps: switch to **Map Tracker** at the top, then **Load the game's maps** (also in **Icons & Maps**). Pick the `Map` folder inside your extracted game files: `romfs\UI\CustomTex\Map`. If you loaded the item pictures first, the tracker knows your game folder from OOTRR's settings and copies the Map folder's address for you. About 70 maps are read, shrunk and kept in your browser (IndexedDB); this takes a little while once. The map follows the area you pick, and with **Follow Link** on, Link's area and age.
+5. Game maps: switch to **Map Tracker** at the top, then **Load the game's maps** (also in **Icons & Maps**). Pick the `Map` folder inside your extracted game files: `romfs\UI\CustomTex\Map`. If you loaded the item pictures first, the tracker knows your game folder from OOTRR's settings and copies the Map folder's address for you. About 70 maps are read, shrunk and kept in your browser (IndexedDB); this takes a little while once. The pins come from OOTRR's map index (`tracker-cache\<game>\index.json`, made by OOTRR's tracker from your game files), which is read whenever you load the item pictures from the `ootrr` folder. The map follows the area you pick, and with **Follow Link** on, Link's area and age.
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 
