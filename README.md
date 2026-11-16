@@ -19,7 +19,7 @@ Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link i
 4. Item pictures: the first time you open the tracker it asks whether to show them.
    - **Find them for me** copies the folder's address (`%LOCALAPPDATA%\ootrr`) and opens the folder window: click the address bar (Alt+D), paste, Enter, then Upload, and confirm. You only pick the folder; every picture inside it is found, however deep.
    - **I'll do it myself** lets you pick the folder yourself (or any folder inside it that holds the pictures), or drag the folder onto the tracker.
-   - The **Icons** button brings this back at any time. The pictures are made by OOTRR's own tracker from your game files the first time it runs with your game folder set. They're the game's art, so this repo doesn't include them; they're shrunk and kept in your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Stone of Agony) keep their names.
+   - The **Icons** button brings this back at any time. The pictures are made by OOTRR's own tracker from your game files the first time it runs with your game folder set. They're the game's art, so this repo doesn't include them; they're shrunk and kept in your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Echo Gem) keep their names.
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 
