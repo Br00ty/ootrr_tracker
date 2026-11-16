@@ -1173,6 +1173,20 @@ if (typeof module !== "undefined") module.exports = Seed;
 <script>
 "use strict";
 const KEY = "ootrr-tracker-v1";
+// ---------- tracker-only renames ----------
+// Checks the tracker shows under another name or area than OOTRR/OoTR give them, because in the
+// remake they are somewhere else. Only the label and the list they sit in change: the logic, the seed's
+// placements, the save detection and everything read from OOTRR keep the original name (the key here).
+// When updating from a new OOTRR release, search for the original name: it is still the real one.
+const RENAMES = {
+  // The remake's hidden hole in Lake Hylia (save flag LakeHylia_secretHole_appearTreasureBox) holds the
+  // chest OOTRR's catalog pins to this name (IsTreasureBoxOpen.6900843020594897860).
+  "HF Open Grotto Chest": { name: "LH Open Grotto Chest", area: "Lake Hylia" },
+  // A remake-only chest that a Poe guards on the Lake Hylia shore (IsTreasureBoxOpen.17023457248274633121).
+  "HF Lake Poe Chest": { name: "LH Poe Chest", area: "Lake Hylia" },
+};
+for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
+const shownName = (n) => (RENAMES[n] ? RENAMES[n].name : n);
 const $ = (s, r = document) => r.querySelector(s);
 const K = (...a) => a.flat(3).filter((x) => x != null && x !== false);
 const h = (tag, attrs = {}, ...kids) => {
@@ -1728,6 +1742,7 @@ function describe(n) {
     cross.map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
     // Skulltulas whose OoTR name is OOTRR's guess or placeholder for a remake spot: OOTRR's own note on where it is
     skullNote(n),
+    RENAMES[n] ? h("div", { class: "cross" }, `OOTRR name: ${n} (in its ${region} region; the tracker lists it here)`) : null,
     h("div", {}, "Region: ", h("b", {}, region)),
     h("code", { class: "q" }, rule || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
@@ -1754,7 +1769,7 @@ function renderChecks() {
       // one click opens the description; a double click marks the check done and cancels the pending click
       onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; renderChecks(); }, 230); },
       ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
-    }, h("span", { class: "dot" }), h("span", { class: "nm" }, c.n),
+    }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
       h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
       c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
       crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),

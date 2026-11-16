@@ -37,6 +37,15 @@ The tracker follows OOTRR's own logic, except in two places where that logic let
 
 `node tools/crosscheck.js` compares the tracker's logic *without* these corrections against OOTRR, so it still checks the port itself.
 
+## Renamed checks
+
+A few checks are listed under a different name and area than OOTRR gives them, because in the remake they sit somewhere else. Only the label and the area list change; the logic, the seed's placements and save detection all keep OOTRR's name. They're in `RENAMES` near the top of the script in `src/ui.html`, and each one's details panel shows its OOTRR name.
+
+| Shown as | OOTRR name | Why |
+|---|---|---|
+| LH Open Grotto Chest (Lake Hylia) | HF Open Grotto Chest | The chest is in a hidden hole in Lake Hylia |
+| LH Poe Chest (Lake Hylia) | HF Lake Poe Chest | A remake-only chest on the Lake Hylia shore |
+
 ## Not handled yet
 
 - Shuffled entrances: only **dungeon entrance shuffle** is followed (the only kind OOTRR 0.6.0 can generate besides vanilla). Overworld and other entrance pools will come when OOTRR builds them.
@@ -66,6 +75,7 @@ After editing anything in `src/`, run `python tools/assemble.py`.
 3. `cargo run -p ootrr-core --example tracker_export > <this repo>/tools/out/logic.json`
 4. `cargo run -p ootrr-core --example settings_schema > <this repo>/tools/out/schema.json`
 5. `python tools/build_data.py <ootrr>/data` then `python tools/assemble.py`.
+   If OOTRR renames or moves a check listed under [Renamed checks](#renamed-checks), update its key in `RENAMES`.
 6. Generate a few seeds with the `ootrr` CLI (`ootrr generate <preset or settings.json> <seed> out.ootrr`; `tools/seeds/wild.json` turns on many shuffles), build `tracker_check`, and run `node tools/crosscheck.js tools/seeds <path to tracker_check>` (it expects `default`, `keysanity`, `wild`, `dungeons` and `dungeons_plain` seeds; `tools/seeds/dungeons.json` is wild with dungeon entrances shuffled). It should print `all match`: the tracker's in-logic locations equal ootrr's own search for every seed and inventory.
 
 ## License
