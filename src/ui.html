@@ -92,6 +92,7 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck:hover{background:var(--panel)}
 .ck .nm{flex:1}
 .ck.st-done .nm{color:var(--faint);text-decoration:line-through}
+.ck .price{font-size:11px;color:var(--gold);white-space:nowrap}
 .ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
 .age{font-size:10px;font-weight:700;border-radius:3px;padding:0 4px;border:1px solid var(--line);color:var(--faint)}
 .age.ok{color:#111;background:var(--green);border-color:var(--green)}
@@ -289,7 +290,7 @@ function ensureWorlds() {
   if (worlds && k === worldKey) return;
   const p = Seed.patchesOf(sw);
   // the tracker's corrections to OOTRR's logic (Seed.withFixes): bottles for shop goods, a Bomb Bag for Bombchus
-  const D = Seed.withFixes(DATA, S.seed ? S.seed.vals : S.settings, S.seed ? S.seed.placements : null);
+  const D = Seed.withFixes(DATA, S.seed ? S.seed.vals : S.settings, S.seed ? S.seed.placements : null, S.seed ? S.seed.shops : null);
   worlds = [Engine.buildWorld(D, settingsFor(false), p), Engine.buildWorld(D, settingsFor(true), p)];
   LAYOUT = {}; ENTR_ERR = "";
   try { for (const w of worlds) LAYOUT = Seed.applyEntrances(w, DATA.entrances, ent); }
@@ -723,6 +724,7 @@ function describe(n) {
     ways.length > shown.length ? h("div", { class: "way" }, `+ ${ways.length - shown.length} more`) : null);
 }
 
+const dealPrice = (n) => { const sh = S.seed && S.seed.shops && S.seed.shops[n]; return sh && sh.deal && S.seed.placements[n] ? sh.price : null; };
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
 function renderChecks() {
   const el = $("#checks"); const top = el.scrollTop;
@@ -745,6 +747,8 @@ function renderChecks() {
       h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
       c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
       crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
+      // a shop deal: its price in this seed
+      dealPrice(c.n) != null ? h("span", { class: "price", title: "Price in this seed" }, `${dealPrice(c.n)} rupees`) : null,
       h("span", { class: "kind" }, KIND[c.k])),
       openCheck === c.n ? describe(c.n) : null]) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
     h("div", { class: "legend" },

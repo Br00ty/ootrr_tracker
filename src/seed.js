@@ -201,12 +201,16 @@ const Seed = (() => {
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
   // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
   // whether or not shops are shuffled (with shop deals on, most shelves stay vanilla).
-  function withFixes(data, vals, placed) {
+  // shops: the seed's shelves ({ loc: { item, price, deal } }). A shuffled shelf (a deal) needs the wallet
+  // for its price, as OOTRR's extra() asks (shops/price.rs rule(): over 200 Adult's, over 500 Giant's Wallet).
+  function priceRule(p) { return p > 500 ? "(Progressive_Wallet, 2)" : p > 200 ? "Progressive_Wallet" : null; }
+  function withFixes(data, vals, placed, shops) {
     const helpers = { ...data.helpers };
     if (helpers.found_bombchus) helpers.found_bombchus = `Bomb_Bag and (${helpers.found_bombchus})`;
     if (helpers.has_bombchus) helpers.has_bombchus = `Bomb_Bag and (${helpers.has_bombchus})`;
     const loc_fixes = {};
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
+    for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
     return { ...data, helpers, loc_fixes };
   }
 

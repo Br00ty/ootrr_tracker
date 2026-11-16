@@ -110,7 +110,9 @@ for n, rn in seen.items():
     if not a:
         noarea.append(n); a = 'Other'
     # area, kind, logic region, and the location's own logic rule (for the check's description)
-    checks[n] = [a, kind_of.get(base_n) or guess_kind(base_n), rn, ' '.join(rules[n].split())]
+    k = kind_of.get(base_n) or guess_kind(base_n)
+    if ' Bazaar Item ' in n: k = 'shop'  # the bazaars' shelves are shops too (OOTRR's catalog files them as NPCs)
+    checks[n] = [a, k, rn, ' '.join(rules[n].split())]
 print('catalog', len(checks), 'no area', len(noarea), noarea[:20], file=sys.stderr)
 print(collections.Counter(k for _, k, *_ in checks.values()), file=sys.stderr)
 
