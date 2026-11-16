@@ -117,6 +117,9 @@ const Auto = (() => {
     for (const [n, a] of Object.entries(SONG)) set(n, p.on(`IsGet.Item_Melody_${a}`) ? 1 : 0);
     set("Magic Bean", p.int("PouchData.Item_MagicBean.StockNum"));
     set("Gold Skulltula Token", p.int("PouchData.Item_Token_Gold.StockNum"));
+    // the poe collector's card: read as Big Poes, or as points at 100 a Poe
+    const poe = Math.max(0, Math.min(100000, (p.val("GhostShop_CouponNum") || 0) | 0));
+    set("Big Poes Sold", poe >= 100 ? (poe / 100) | 0 : poe);
     // The logic counts hearts as pieces: has_hearts(n) is (Piece_of_Heart, (n - 3) * 4).
     const quarters = p.int("PlayerStatus.MaxLife") / 4 | 0;
     set("Piece of Heart", Math.max(0, quarters - 3) * 4 + Math.min(3, p.int("PouchData.Obj_Heart_Piece.StockNum")));

@@ -215,7 +215,10 @@ const REWARDS = [
   // Light first: Rauru gives it before any other Medallion
   ["Light Medallion","Light Medallion",1,"med"],["Forest Medallion","Forest Medallion",1,"med"],["Fire Medallion","Fire Medallion",1,"med"],["Water Medallion","Water Medallion",1,"med"],["Shadow Medallion","Shadow Medallion",1,"med"],["Spirit Medallion","Spirit Medallion",1,"med"],
 ];
-const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Heart","Pieces of Heart",36],["Heart Container","Heart Containers",9]];
+const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Heart","Pieces of Heart",36],["Heart Container","Heart Containers",9],["Big Poes Sold","Big Poes turned in",() => bigPoes()]];
+// the seed's Big Poe target for the Market 10 Big Poes check (big_poe_count, 1 with big_poe_one)
+function bigPoes() { const v = S.seed ? S.seed.vals : S.settings; return v && v.big_poe_one === true ? 1 : Math.max(1, +(v && v.big_poe_count) || 10); }
+const maxOf = (m) => (typeof m === "function" ? m() : m);
 // dungeon, small key item, max keys, boss key item
 const DUNGEONS = [
   ["Forest Temple","Small Key (Forest Temple)",5,"Boss Key (Forest Temple)"],
@@ -418,7 +421,7 @@ const ICON = {
   "Kokiri Emerald": "Item_Stone_Forest", "Goron Ruby": "Item_Stone_Fire", "Zora Sapphire": "Item_Stone_Water",
   "Light Medallion": "Item_Medal_Light", "Forest Medallion": "Item_Medal_Forest", "Fire Medallion": "Item_Medal_Fire",
   "Water Medallion": "Item_Medal_Water", "Shadow Medallion": "Item_Medal_Shadow", "Spirit Medallion": "Item_Medal_Spirit",
-  "Gold Skulltula Token": "Item_Token_Gold", "Piece of Heart": "Obj_Heart_Piece", "Heart Container": "Obj_Heart_Piece",
+  "Gold Skulltula Token": "Item_Token_Gold", "Piece of Heart": "Obj_Heart_Piece", "Heart Container": "Obj_Heart_Piece", "Big Poes Sold": "Item_Bottle_BigPoe",
   "small key": "Item_Dungeon_SmallKey", "boss key": "Item_Dungeon_BossKey",
 };
 const ICON_IDS = new Set(Object.values(ICON).flat());
@@ -582,7 +585,7 @@ function renderItems() {
   const g = wide ? "grid g5" : "grid";
   const more = [
     h("h2", {}, "Counters"),
-    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, m))))),
+    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, maxOf(m)))))),
     h("h2", {}, "Dungeon keys"),
     h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
@@ -987,13 +990,14 @@ const canWatch = typeof window.showDirectoryPicker === "function";
 
 const MAX = {};
 for (const L of [INV, ARROWS, GEAR, CHILD_TRADE, ADULT_TRADE, SONGS, REWARDS]) for (const [n, , m] of L) MAX[n] = m;
-for (const [n, , m] of COUNTERS) MAX[n] = m;
+for (const [n, , m] of COUNTERS) if (typeof m !== "function") MAX[n] = m;
 for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
 
 function applyPeek(p, label) {
   // Items and found checks stay once seen: keys are spent and trade items are swapped,
   // so a later save can show less than you collected.
   for (let [n, v] of Object.entries(Auto.items(p))) {
+    if (n === "Big Poes Sold") v = Math.min(v, bigPoes());
     if (MAX[n] != null) v = Math.min(v, MAX[n]);
     S.auto.items[n] = Math.max(S.auto.items[n] || 0, v);
   }
