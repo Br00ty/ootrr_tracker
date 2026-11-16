@@ -16,7 +16,10 @@ Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link i
 2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
 3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo. A **C→A** or **A→C** badge marks a check that needs something done as the other age first (a magic bean planted as a child, the adult visit before the HF Deku Scrub Grotto).
 
-4. Optional: **Icons** → pick `%LOCALAPPDATA%\ootrr\tracker-cache` (or the `icons-v1` folder inside it) to show item pictures. OOTRR's own tracker fills that folder from your game files the first time it runs with your game folder set. The pictures are the game's art, so this repo doesn't include them; they're copied, shrunk, into your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Stone of Agony) keep their names.
+4. Item pictures: the first time you open the tracker it asks whether to show them.
+   - **Find them for me** copies the folder's address (`%LOCALAPPDATA%\ootrr`) and opens the folder window: press Ctrl+L, Ctrl+V, Enter, then Select Folder. Browsers don't let a page open a folder by itself, so you confirm it this once. After that the tracker remembers the folder and refreshes the pictures from it whenever the browser still allows it.
+   - **I'll do it myself** lets you pick the folder (or the `icons-v1` folder inside it) or the PNG files, or drag the PNGs onto the tracker.
+   - The **Icons** button brings this back at any time. The pictures are made by OOTRR's own tracker from your game files the first time it runs with your game folder set. They're the game's art, so this repo doesn't include them; they're shrunk and kept in your browser only. Items without an OOTRR icon (trade items, Ruto's Letter, Stone of Agony) keep their names.
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 
