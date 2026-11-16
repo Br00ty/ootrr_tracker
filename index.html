@@ -1061,7 +1061,7 @@ const INV = [
 const ARROWS = [["Fire Arrows","Fire Arrows",1,"arrow"],["Ice Arrows","Ice Arrows",1,"arrow"],["Light Arrows","Light Arrows",1,"arrow"]];
 const GEAR = [
   ["Kokiri Sword","Kokiri Sword",1],["Biggoron Sword","Biggoron Sword",1],["Mirror Shield","Mirror Shield",1],["Goron Tunic","Goron Tunic",1],["Zora Tunic","Zora Tunic",1],["Iron Boots","Iron Boots",1],
-  ["Hover Boots","Hover Boots",1],["Progressive Strength Upgrade","Strength",3],["Progressive Scale","Scale",2],["Progressive Wallet","Wallet",3],["Stone of Agony","Agony",1],["Gerudo Membership Card","Gerudo Card",1],
+  ["Hover Boots","Hover Boots",1],["Progressive Strength Upgrade","Strength",3],["Progressive Scale","Scale",2],["Progressive Wallet","Wallet",2],["Stone of Agony","Agony",1],["Gerudo Membership Card","Gerudo Card",1],
 ];
 const CHILD_TRADE = [
   ["Weird Egg","Weird Egg",1],["Zeldas Letter","Zelda's Letter",1],["Keaton Mask","Keaton",1],["Skull Mask","Skull Mask",1],["Spooky Mask","Spooky Mask",1],["Bunny Hood","Bunny Hood",1],
@@ -1218,13 +1218,29 @@ function bump(name, max, d) {
   if (v) S.items[name] = v; else delete S.items[name];
   render();
 }
+// Progressive items show the name of the tier you have instead of a number
+// (the remake's tiers, from items.json: e.g. Item_Hookshot then Item_Longshot).
+const TIERS = {
+  "Slingshot": ["Fairy Slingshot", "Big Bullet Bag", "Biggest Bullet Bag"],
+  "Ocarina": ["Fairy Ocarina", "Ocarina of Time"],
+  "Bomb Bag": ["Bomb Bag", "Big Bomb Bag", "Biggest Bomb Bag"],
+  "Bow": ["Fairy Bow", "Big Quiver", "Biggest Quiver"],
+  "Progressive Hookshot": ["Hookshot", "Longshot"],
+  "Magic Meter": ["Magic Meter", "Double Magic"],
+  "Progressive Strength Upgrade": ["Goron's Bracelet", "Silver Gauntlets", "Golden Gauntlets"],
+  "Progressive Scale": ["Silver Scale", "Golden Scale"],
+  "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
+};
 function tile([name, label, max, cls]) {
   const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
+  const tiers = TIERS[name];
+  const text = tiers ? tiers[Math.max(0, Math.min(v, tiers.length) - 1)] : label.replace("-", "­");
+  const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${name}${max > 1 ? ` (${v}/${max})` : ""}`;
   return h("div", {
-    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""}`, title: `${name}${max > 1 ? ` (${v}/${max})` : ""}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
+    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""}`, title: `${tip}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
     onclick: () => bump(name, max, max === 1 && v ? -1 : 1),
     oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); },
-  }, label.replace("-", "­"), max > 1 && v ? h("span", { class: "n" }, v) : null);
+  }, text, max > 1 && v && !tiers ? h("span", { class: "n" }, v) : null);
 }
 function counter(name, max, step = 1) {
   const v = have(name);
