@@ -2462,12 +2462,13 @@ const MAP_ZONES = {
   "Kakariko Village": "KakarikoVillage", "Graveyard": "Graveyard", "Death Mountain Trail": "DeathMountainTrail",
   "Goron City": "GoronCity", "Death Mountain Crater": "DeathMountainCrater", "Zora's River": "ZoraRiver",
   "Zora's Domain": "ZoraDomain", "Zora's Fountain": "ZoraFountain", "Lake Hylia": "LakeHylia", "Gerudo Valley": "GerudoValley",
-  "Gerudo's Fortress": "GerudoFortress", "Haunted Wasteland": "HountedWasteland", "Desert Colossus": "DesertColossus",
+  "Gerudo's Fortress": "GerudoFortress", "Thieves' Hideout": "GerudoFortress",  // the hideout is inside the fortress
+  "Haunted Wasteland": "HountedWasteland", "Desert Colossus": "DesertColossus",
   "Outside Ganon's Castle": "GanonCastle",
 };
 // areas whose map is for one age only: Hyrule Castle's adult side is Outside Ganon's Castle, and the game has
 // one map each for Gerudo's Fortress and Outside Ganon's Castle
-const ZONE_AGE = { "Hyrule Castle": "child", "Outside Ganon's Castle": "adult", "Gerudo's Fortress": "adult" };
+const ZONE_AGE = { "Hyrule Castle": "child", "Outside Ganon's Castle": "adult", "Gerudo's Fortress": "adult", "Thieves' Hideout": "adult" };
 const mapAgeOf = (area) => ZONE_AGE[area] || S.mapAge;
 const MAP_DUNGEONS = {
   "Deku Tree": "InsideTheDekuTree", "Dodongo's Cavern": "DodongoCavern", "Jabu Jabu's Belly": "InsideJabuJabuBelly",
@@ -2487,7 +2488,8 @@ let mapMsg = "", mapBusy = false;
 const PIN_KEY = "ootrr-tracker-pins";
 const PIN_AREAS = new Set(["Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field", "Lon Lon Ranch", "Market",
   "Temple of Time", "Hyrule Castle", "Kakariko Village", "Graveyard", "Death Mountain Trail", "Goron City", "Death Mountain Crater",
-  "Zora's River", "Zora's Domain", "Zora's Fountain"]);  // areas whose pins are shown so far
+  "Zora's River", "Zora's Domain", "Zora's Fountain", "Lake Hylia", "Gerudo Valley", "Gerudo's Fortress", "Thieves' Hideout",
+  "Haunted Wasteland", "Desert Colossus", "Outside Ganon's Castle"]);  // areas whose pins are shown so far
 let PINS = null;  // hash → [[map id, u, v, floor label, tray, world x, world z]]
 let CAPS = {};    // map id → [camera x, camera z, height]: the map picture's frame in the world
 try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; } else PINS = j; } catch (e) { PINS = null; }
