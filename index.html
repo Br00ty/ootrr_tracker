@@ -2691,6 +2691,33 @@ const PIN_FIXES = {
   // Zora's Fountain, placed in game by the player (2026-11-16)
   "ZF GS Hidden Cave": { place: "ZoraFountain", u: 0.7376, v: 0.6054 },
   "ZF Great Fairy Reward": { place: "ZoraFountain", u: 0.6621, v: 0.9199 },
+  // Lake Hylia, placed in game by the player (2026-11-16)
+  "HF Open Grotto Chest": { place: "LakeHylia", u: 0.4857, v: 0.3814 },
+  "LH Adult Fishing": { place: "LakeHylia", u: 0.7979, v: 0.5624 },
+  "LH Child Fishing": { place: "LakeHylia", u: 0.7979, v: 0.5602 },
+  "LH GS Lab Crate": { place: "LakeHylia", u: 0.549, v: 0.2457 },
+  "LH Lab Dive": { place: "LakeHylia", u: 0.549, v: 0.2479 },
+  "LH Trade Eyeball Frog": { place: "LakeHylia", u: 0.5475, v: 0.2479 },
+  // Gerudo Valley (GV GS Pillar is the one shown as GV GS Behind Tent), placed in game by the player (2026-11-16)
+  "GV GS Pillar": { place: "GerudoValley", u: 0.3228, v: 0.3565 },
+  "GV Octorok Grotto Chest": { place: "GerudoValley", u: 0.543, v: 0.7955 },
+  "GV Storms Grotto Chest": { place: "GerudoValley", u: 0.3062, v: 0.4018 },
+  "GV Storms Grotto Lens Chest": { place: "GerudoValley", u: 0.3092, v: 0.4041 },
+  "GV Trade Poachers Saw": { place: "GerudoValley", u: 0.3107, v: 0.5217 },
+  // Gerudo's Fortress and the Thieves' Hideout, placed in game by the player (2026-11-16)
+  "GF Cow": { place: "GerudoFortress", u: 0.4148, v: 0.7909 },
+  "GF HBA 1000 Points": { place: "GerudoFortress", u: 0.4449, v: 0.7253 },
+  "GF HBA 1500 Points": { place: "GerudoFortress", u: 0.4449, v: 0.7299 },
+  "GF Hideout Hole Chest": { place: "GerudoFortress", u: 0.3228, v: 0.3068 },
+  "Hideout Gerudo Membership Card": { place: "GerudoFortress", u: 0.2956, v: 0.2185 },
+  // Haunted Wasteland, placed in game by the player (2026-11-16)
+  "Wasteland Chest": { place: "HountedWasteland", u: 0.5173, v: 0.3973 },
+  // Desert Colossus, placed in game by the player (2026-11-16)
+  "Colossus Great Fairy Reward": { place: "DesertColossus", u: 0.635, v: 0.3203 },
+  "Sheik at Colossus": { place: "DesertColossus", u: 0.2941, v: 0.4923 },
+  // Outside Ganon's Castle, placed in game by the player (2026-11-16)
+  "OGC GS": { place: "GanonCastle", u: 0.6094, v: 0.3068 },
+  "OGC Great Fairy Reward": { place: "GanonCastle", u: 0.7104, v: 0.2027 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
