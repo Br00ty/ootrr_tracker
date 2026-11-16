@@ -11,7 +11,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is.
 - **Item tracker.** Click to add, right-click to remove. Items read from the save are underlined in green.
 - **Item pictures.** Show the game's own item, song, stone, medallion and key icons, taken from OOTRR's icon cache on your PC.
-- **Map Tracker.** Switch the location lists for the game's own pause-menu maps: every overworld zone (child and adult) and every dungeon floor, read from your game files. Kokiri Forest, the Lost Woods, Sacred Forest Meadow and Hyrule Field have pins for their checks (green, yellow, red, grey like the list), placed where OOTRR's own map index puts them; more areas follow.
+- **Map Tracker.** Switch the location lists for the game's own pause-menu maps: every overworld zone (child and adult) and every dungeon floor, read from your game files. Kokiri Forest through the Graveyard (in the area list's order) have pins for their checks (green, yellow, red, grey like the list), placed where OOTRR's own map index puts them; more areas follow.
 
 ## Use it
 

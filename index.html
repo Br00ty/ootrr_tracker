@@ -2409,6 +2409,7 @@ function openIcons() {
 const MAP_ZONES = {
   "Kokiri Forest": "KokiriForest", "Lost Woods": "LostWood", "Sacred Forest Meadow": "SacredForestMeadow",
   "Hyrule Field": "HyruleField", "Lon Lon Ranch": "LonLonRanch", "Market": "Market", "Hyrule Castle": ["HyruleCastle", "GanonCastle"],
+  "Temple of Time": "Market",  // the game has no map of its own for the Temple of Time: the Market's, which shows its plaza
   "Kakariko Village": "KakarikoVillage", "Graveyard": "Graveyard", "Death Mountain Trail": "DeathMountainTrail",
   "Goron City": "GoronCity", "Death Mountain Crater": "DeathMountainCrater", "Zora's River": "ZoraRiver",
   "Zora's Domain": "ZoraDomain", "Zora's Fountain": "ZoraFountain", "Lake Hylia": "LakeHylia", "Gerudo Valley": "GerudoValley",
@@ -2431,7 +2432,8 @@ let mapMsg = "", mapBusy = false;
 // gives each location object its spot on the game's maps as fractions of the map picture (u across, v down).
 // The tracker finds a check's objects through the hashes in its save detection, and keeps the spots in the browser.
 const PIN_KEY = "ootrr-tracker-pins";
-const PIN_AREAS = new Set(["Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field"]);  // areas whose pins are shown so far
+const PIN_AREAS = new Set(["Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field", "Lon Lon Ranch", "Market",
+  "Temple of Time", "Hyrule Castle", "Kakariko Village", "Graveyard"]);  // areas whose pins are shown so far
 let PINS = null;  // hash → [[map id, u, v, floor label, tray, world x, world z]]
 let CAPS = {};    // map id → [camera x, camera z, height]: the map picture's frame in the world
 try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; } else PINS = j; } catch (e) { PINS = null; }
@@ -2570,7 +2572,7 @@ function pinOf(n, mapKey) {
   if (!PINS) return null;
   // OOTRR pins each object on one map; Lake Hylia and Lon Lon Ranch lie inside Hyrule Field's picture too,
   // so an object is also placed on any other map whose frame holds its spot (OOTRR's projection.rs)
-  const cap = CAPS[mapKey];
+  const cap = CAPS[mapKey] || CAPS[place];  // Hyrule Castle's maps have no age in OOTRR's index
   let other = null, seen = null;
   for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) {
     if (p[4] || p[1] == null || p[2] == null) continue;
