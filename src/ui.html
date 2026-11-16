@@ -981,12 +981,13 @@ function applyPeek(p, label) {
     S.auto.items[n] = Math.max(S.auto.items[n] || 0, v);
   }
   for (const n of Auto.checks(p, detectMap())) S.auto.done[n] = 1;
-  const area = Auto.areaOf(p.map, DATA.maps);
+  const area = Auto.areaOf(p.map, DATA.maps, p.pos);
   W.where = area || ""; W.child = p.child; W.read = new Date(); W.err = ""; W.name = label;
-  if (S.follow && area && p.map !== lastMap) S.area = area;
+  // follow the area, not the map: Lake Hylia and Lon Lon Ranch share the Hyrule Field map
+  if (S.follow && area && area !== lastMap) S.area = area;
   // Link inside a dungeon has walked through its door, so that door is no secret any more
   if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
-  lastMap = p.map || "";
+  lastMap = area || "";
   render();
 }
 

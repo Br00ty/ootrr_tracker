@@ -52,7 +52,10 @@ const Auto = (() => {
     const val = (name) => rows.get(hash(name));
     const text = (o) => { if (o == null || o >= b.length) return null; let e = o; while (e < b.length && b[e]) e++; const t = new TextDecoder().decode(b.subarray(o, e)); return t || null; };
     const map = text(val("Sequence_CurrentBanc")) || text(rows.get(0x4a6bdb7d));
-    return { rows, keys, val, on: (n) => (val(n) || 0) !== 0, int: (n) => Math.max(0, Math.min(999, (val(n) || 0) | 0)), map, child: (val("Sequence_IsChildhood") || 0) !== 0, size: b.length };
+    // Player_Pos_For_Map (Vector3): Link's position on the current map, three floats at the row's offset
+    const vec = (o) => (o == null || o + 12 > b.length ? null : [dv.getFloat32(o, true), dv.getFloat32(o + 4, true), dv.getFloat32(o + 8, true)]);
+    const pos = vec(rows.get(0x960ad56a));
+    return { rows, keys, val, on: (n) => (val(n) || 0) !== 0, int: (n) => Math.max(0, Math.min(999, (val(n) || 0) | 0)), map, pos, child: (val("Sequence_IsChildhood") || 0) !== 0, size: b.length };
   }
 
   // The same reader interface, built from the Lichii bridge's live rows: [[hash, value], …] and set keys.
@@ -135,8 +138,22 @@ const Auto = (() => {
     InsideJabuJabuBelly: "Jabu Jabu's Belly", ForestTemple: "Forest Temple", FireTemple: "Fire Temple", WaterTemple: "Water Temple", ShadowTemple: "Shadow Temple",
     SpiritTemple: "Spirit Temple", BottomOfTheWell: "Bottom of the Well", IceCavern: "Ice Cavern", GerudoTrainingGround: "Gerudo Training Ground", InsideGanonCastle: "Ganon's Castle",
   };
-  function areaOf(map, fallback) {
+  // Lake Hylia and Lon Lon Ranch are part of the Hyrule Field map in the remake. OOTRR's tracker
+  // (tracker/index.rs pin()) moves a Hyrule Field position into one of them when it falls inside that
+  // area's map capture rectangle (MapCaptureInfo: centre x, z and height; project.rs uv(), ASPECT 2000/1440).
+  const SUB_AREAS = [["Lake Hylia", -200, 490, 422], ["Lon Lon Ranch", -86, 239, 276]];
+  const ASPECT = 2000 / 1440;
+  function subArea(pos) {
+    if (!pos) return null;
+    for (const [name, cx, cz, h] of SUB_AREAS) {
+      const u = 0.5 + (pos[0] - cx) / h, v = 0.5 + ((pos[2] - cz) / h) * ASPECT;
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1) return name;
+    }
+    return null;
+  }
+  function areaOf(map, fallback, pos) {
     if (!map) return null;
+    if (/^HyruleField/.test(map)) { const sub = subArea(pos); if (sub) return sub; }
     const base = map.replace(/_(Child|Adult|Alternative)$/g, "").replace(/_(Child|Adult)$/, "");
     for (const [k, a] of Object.entries(MAPS)) if (base === k || base.startsWith(k)) return a;
     return (fallback && fallback[map]) || null;
