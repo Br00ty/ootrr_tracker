@@ -135,7 +135,7 @@ body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;ins
   <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
   <button class="btn" id="iconBtn" title="Show item pictures from OOTRR's icon cache">Icons</button>
-  <input type="file" id="iconFile" accept=".png" multiple hidden>
+  <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
 </header>
@@ -1312,54 +1312,41 @@ async function takeIcons(files) {
   render();
   return best.size;
 }
-async function walkPngs(dir, depth = 0, out = []) {
-  for await (const [name, hd] of dir.entries()) {
-    if (hd.kind === "file" && /\.png$/i.test(name) && ICON_IDS.has(name.slice(0, -4))) out.push(await hd.getFile());
-    else if (hd.kind === "directory" && depth < 5) await walkPngs(hd, depth + 1, out);
-  }
-  return out;
-}
-// Browsers can't open a folder by path on their own, so the first time the user confirms the folder
-// once in the picker. "Find them for me" copies the folder's address so that is paste + Enter; the folder
-// is then remembered, and whenever the browser still allows it the pictures refresh by themselves on start.
+// The pictures are read with the browser's plain folder picker (<input webkitdirectory>): it works inside the
+// claude.ai page and for folders under AppData, which Chrome's newer folder API refuses. Pick any folder that
+// has the PNGs somewhere inside it and every picture in it is read. "Find them for me" copies the folder's
+// address first, so picking it is paste + Enter. The pictures stay stored in the browser afterwards.
 const ICON_PATH = "%LOCALAPPDATA%\\ootrr";
 const ASK_KEY = "ootrr-tracker-icons-ask";
-let iconMsg = "", iconView = "main", iconDir = null, copied = false;
+let iconMsg = "", iconView = "main", copied = false;
 const nPics = () => Object.keys(PICS).filter((k) => ICON_IDS.has(k)).length;
-async function idbGet(k) { try { const db = await idb(); return await new Promise((ok) => { const q = db.transaction("h").objectStore("h").get(k); q.onsuccess = () => ok(q.result || null); q.onerror = () => ok(null); }); } catch (e) { return null; } }
-async function idbPut(k, v) { try { const db = await idb(); db.transaction("h", "readwrite").objectStore("h").put(v, k); } catch (e) {} }
-async function scanIcons(dir, quiet) {
-  if (!quiet) { iconMsg = "Reading pictures…"; openIcons(); }
-  try {
-    const n = await takeIcons(await walkPngs(dir));
-    if (n) { iconDir = dir; idbPut("icons", dir); }
-    iconMsg = n ? `Loaded ${n} pictures.` : `No OOTRR pictures were found in "${dir.name}". Pick the ootrr folder in AppData\\Local (${ICON_PATH}), or the icons-v1 folder inside it. If OOTRR has never shown its tracker with your game folder set, open it once so it saves the pictures.`;
-  } catch (e) { iconMsg = `Couldn't read that folder: ${e.message || e}`; }
-  if (!quiet) openIcons();
+const NONE_FOUND = `No OOTRR pictures were found in that folder. Pick the ootrr folder in AppData\\Local (${ICON_PATH}). If OOTRR has never shown its tracker with your game folder set, open it once so it saves the pictures.`;
+async function useIconFiles(files) {
+  iconView = "main"; iconMsg = "Reading pictures…"; openIcons();
+  const n = await takeIcons(files.filter((f) => /\.png$/i.test(f.name)));
+  iconMsg = n ? `Loaded ${n} pictures.` : NONE_FOUND;
+  openIcons();
 }
-// auto: copy the folder's address first, so the picker only needs paste + Enter
+// auto: copy the folder's address first, so the folder window only needs paste + Enter
 async function pickIcons(auto) {
-  if (auto) { copied = false; try { await navigator.clipboard.writeText(ICON_PATH); copied = true; } catch (e) {} }
-  if (typeof window.showDirectoryPicker !== "function") { $("#iconFile").click(); return; }
-  if (auto) { iconMsg = ""; iconView = "finding"; openIcons(); }
-  let dir;
-  try { dir = await window.showDirectoryPicker({ id: "ootrr-icons", mode: "read", ...(iconDir ? { startIn: iconDir } : {}) }); }
-  catch (e) {
-    iconView = "main";
-    if (e && e.name !== "AbortError") { $("#iconFile").click(); return; } // folder picking blocked here: pick the files instead
-    openIcons(); return;
-  }
-  iconView = "main";
-  await scanIcons(dir);
+  copied = false;
+  if (auto) { try { await navigator.clipboard.writeText(ICON_PATH); copied = true; } catch (e) {} iconMsg = ""; iconView = "finding"; openIcons(); }
+  $("#iconFile").click();
 }
-async function reuseIconDir() {
-  try { if ((await iconDir.requestPermission({ mode: "read" })) === "granted") return scanIcons(iconDir); } catch (e) {}
-  iconMsg = "The browser didn't allow that folder again. Pick it below."; openIcons();
+// a folder dropped on the page: walk it for the PNGs
+async function droppedFolderFiles(entries) {
+  const out = [];
+  const walk = (entry, depth) => new Promise((done) => {
+    if (entry.isFile) { if (/\.png$/i.test(entry.name)) entry.file((f) => { out.push(f); done(); }, () => done()); else done(); return; }
+    if (!entry.isDirectory || depth > 5) { done(); return; }
+    const rd = entry.createReader(), all = [];
+    const more = () => rd.readEntries(async (es) => { if (es.length) { all.push(...es); more(); } else { for (const x of all) await walk(x, depth + 1); done(); } }, () => done());
+    more();
+  });
+  for (const e of entries) await walk(e, 0);
+  return out;
 }
-// on start: refresh from the remembered folder if allowed, otherwise ask once (unless told not to)
-async function restoreIcons() {
-  iconDir = await idbGet("icons");
-  try { if (iconDir && (await iconDir.queryPermission({ mode: "read" })) === "granted") { await scanIcons(iconDir, true); return; } } catch (e) {}
+function restoreIcons() {
   let ask = null; try { ask = localStorage.getItem(ASK_KEY); } catch (e) {}
   if (!nPics() && ask !== "no" && !$("#dlg").open) { iconMsg = ""; iconView = "main"; openIcons(); }
 }
@@ -1371,35 +1358,34 @@ function openIcons() {
   let body;
   if (iconView === "finding") {
     body = [h("h3", {}, "Finding the pictures"),
-      h("p", {}, copied ? "The folder's address is copied. In the window that just opened:" : "In the window that just opened, go to this folder:"),
+      h("p", {}, copied ? "The folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:"),
       copied ? null : path,
       h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
-        h("li", {}, "Press ", h("b", {}, "Ctrl + L"), " (or click the address bar)."),
+        h("li", {}, "Click the address bar at the top (or press ", h("b", {}, "Alt + D"), ")."),
         h("li", {}, copied ? h("span", {}, "Press ", h("b", {}, "Ctrl + V"), " to paste, then ", h("b", {}, "Enter"), ".") : "Type the address above, then press Enter."),
-        h("li", {}, "Click ", h("b", {}, "Select Folder"), " and allow the tracker to view it.")),
-      h("p", { class: "hint", style: "padding:6px 0 0" }, "You only do this once: the tracker remembers the folder and updates the pictures from it.")];
+        h("li", {}, "Click ", h("b", {}, "Upload"), " (", h("b", {}, "Select Folder"), " in some browsers), then ", h("b", {}, "Upload"), " again when the browser asks to confirm.")),
+      h("p", { class: "hint", style: "padding:6px 0 0" }, "The pictures are only read into this page and kept in your browser; nothing is sent anywhere."),
+      row(h("button", { class: "btn", onclick: () => pickIcons(false) }, "Open the folder window again"), h("button", { class: "btn", onclick: close }, "Cancel"))];
   } else if (iconView === "manual") {
     body = [h("h3", {}, "Add the pictures yourself"),
-      h("p", {}, "OOTRR keeps them as PNG files in this folder (inside it: tracker-cache → your game → icons-v1):"), path,
-      h("p", {}, "Pick that folder or any folder inside it, pick the PNG files, or drag the PNGs onto the tracker."),
+      h("p", {}, "OOTRR keeps them in this folder:"), path,
+      h("p", {}, "Pick that folder, or any folder inside it that holds the pictures (tracker-cache → your game → icons-v1). You can also drag the folder onto the tracker."),
       msg,
       row(h("button", { class: "btn", onclick: () => { iconView = "main"; iconMsg = ""; openIcons(); } }, "Back"),
-        h("button", { class: "btn", onclick: () => $("#iconFile").click() }, "Pick PNG files"),
         h("button", { class: "btn", onclick: () => pickIcons(false) }, "Pick folder"))];
   } else {
     const first = !n;
     body = [h("h3", {}, first ? "Show item pictures?" : "Item pictures"),
       h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys. They come from your copy of the game, so they aren't included with the tracker: OOTRR saves them on your PC the first time its tracker runs with your game folder set."),
       msg,
-      h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser${iconDir ? `, from "${iconDir.name}"` : ""}.` : "No pictures stored yet."),
-      iconDir && !n ? h("p", {}, h("button", { class: "btn", onclick: reuseIconDir }, `Use "${iconDir.name}" again`)) : null,
+      h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser.` : "No pictures stored yet."),
       h("div", { style: "display:grid;gap:8px;margin-top:8px" },
         h("button", { class: "btn", style: "text-align:left;padding:8px 12px;border-color:var(--gold)", onclick: () => pickIcons(true) },
           h("b", {}, n ? "Find them again for me" : "Find them for me (recommended)"), h("br"),
-          h("span", { style: "color:var(--dim);font-size:12px" }, "Copies the folder's address and opens the folder window: paste, Enter, Select Folder.")),
+          h("span", { style: "color:var(--dim);font-size:12px" }, "Copies the folder's address and opens the folder window: paste it, press Enter, then Upload.")),
         h("button", { class: "btn", style: "text-align:left;padding:8px 12px", onclick: () => { iconView = "manual"; iconMsg = ""; openIcons(); } },
           h("b", {}, "I'll do it myself"), h("br"),
-          h("span", { style: "color:var(--dim);font-size:12px" }, "Pick the folder or the PNG files, or drag them onto the tracker."))),
+          h("span", { style: "color:var(--dim);font-size:12px" }, "Pick the folder with the pictures, or drag it onto the tracker."))),
       row(n ? h("button", { class: "btn", onclick: () => { PICS = {}; try { localStorage.removeItem(ICON_KEY); } catch (e) {} iconMsg = "Pictures removed."; render(); openIcons(); } }, "Remove pictures") : null,
         first ? h("button", { class: "btn", title: "You can still add them from the Icons button", onclick: () => { try { localStorage.setItem(ASK_KEY, "no"); } catch (e) {} close(); } }, "Don't ask again") : null,
         h("button", { class: "btn", onclick: close }, first ? "Not now" : "Close"))];
@@ -1651,7 +1637,9 @@ function openSettings() {
 }
 $("#setBtn").onclick = openSettings;
 $("#iconBtn").onclick = () => { iconMsg = ""; openIcons(); };
-$("#iconFile").onchange = async (e) => { const n = await takeIcons([...e.target.files]); e.target.value = ""; iconMsg = n ? `Loaded ${n} pictures.` : "None of those files are OOTRR icon pictures."; openIcons(); };
+$("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; useIconFiles(files); };
+// the folder window was closed without picking
+$("#iconFile").addEventListener("cancel", () => { if (iconView === "finding") { iconView = "main"; openIcons(); } });
 let armed = 0;
 $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
@@ -1825,7 +1813,12 @@ document.addEventListener("drop", (e) => {
   e.preventDefault(); document.body.classList.remove("drag");
   const files = [...e.dataTransfer.files];
   const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
-  if (files.some((f) => /\.png$/i.test(f.name))) { takeIcons(files.filter((f) => /\.png$/i.test(f.name))).then((n) => { iconMsg = n ? `Loaded ${n} pictures.` : "None of those files are OOTRR icon pictures."; openIcons(); }); return; }
+  // entries must be taken now: the drop's items are gone once anything is awaited
+  const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
+  const folder = entries.some((x) => x.isDirectory);
+  if (folder || files.some((f) => /\.png$/i.test(f.name))) {
+    (folder ? droppedFolderFiles(entries) : Promise.resolve(files)).then(useIconFiles); return;
+  }
   if (seed) loadSeedFile(seed); else loadFile(newestOf(files));
 });
 
