@@ -731,7 +731,7 @@ function takePins(idx) {
       (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray, ...pos]);
     }
   }
-  PINS = out; CAPS = caps;
+  PINS = out; CAPS = caps; AGES.clear();
   try { localStorage.setItem(PIN_KEY, JSON.stringify({ pins: out, caps })); } catch (e) {}
   return Object.keys(out).length;
 }
@@ -802,6 +802,21 @@ document.addEventListener("keydown", (e) => {
 });
 const fixOf = (n) => (DEV && S.pinFix && n in S.pinFix ? S.pinFix[n] : PIN_FIXES[n]);
 let pinPlace = null;  // edit mode: the check waiting for a click on the map
+// The age that can get a check, or null for both: where the game has its object (OOTRR's pins: an object in
+// only the child or only the adult version of a map), else its rule (a rule that needs one age), else its
+// name (OOTRR names one-age objects "Child …" / "Adult …").
+const AGES = new Map();
+function ageOf(n) {
+  if (AGES.has(n)) return AGES.get(n);
+  let a = null;
+  const ages = new Set();
+  if (PINS) for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) { const m = /_(Child|Adult)$/.exec(p[0]); if (m) ages.add(m[1].toLowerCase()); }
+  if (ages.size === 1) a = [...ages][0];
+  if (!a) { try { a = pinnedAge(Engine.parse(DATA.checks[n][3] || "True")); } catch (e) { a = null; } }
+  if (!a) { const m = / (Child|Adult) /.exec(` ${n} `); if (m) a = m[1].toLowerCase(); }
+  AGES.set(n, a);
+  return a;
+}
 function pinOf(n, mapKey) {
   const place = mapKey.replace(/_(Child|Adult)$/, "");
   const fix = fixOf(n);
@@ -948,12 +963,15 @@ function renderMap() {
     DEV && m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
       onclick: () => { S.pinEdit = !S.pinEdit; pinPlace = null; pinOpen = null; render(); } }, S.pinEdit ? "Done editing" : "Edit pins") : null,
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
+  // on a child or adult map, only the checks that age can get (dungeon maps have no age)
+  const age = /_(Child|Adult)$/.exec(m.key || "");
+  const shown = age ? list.filter((c) => { const a = ageOf(c.n); return !a || a === age[1].toLowerCase(); }) : list;
   let body;
   if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, "Load the game's maps"));
   else if (!m.key) body = h("div", { class: "empty" }, (MAP_ZONES[area] || MAP_DUNGEONS[area]) ? `No map for ${area} was loaded. Load the maps again from the game's Map folder.` : `The game has no map for ${area}.`);
-  else body = mapWithPins(area, m.key, list);
-  const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, list) : null;
+  else body = mapWithPins(area, m.key, shown);
+  const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, shown) : null;
   if (!DEV) S.pinEdit = false;
   const edit = S.pinEdit && m.key && PIN_AREAS.has(area) ? h("div", { class: "banner", style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" },
     h("span", { style: "flex:1;min-width:260px" }, pinPlace ? ["Click on the map where ", h("b", {}, shownName(pinPlace)), " goes."]
