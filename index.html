@@ -2480,7 +2480,8 @@ let mapMsg = "", mapBusy = false;
 // The tracker finds a check's objects through the hashes in its save detection, and keeps the spots in the browser.
 const PIN_KEY = "ootrr-tracker-pins";
 const PIN_AREAS = new Set(["Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field", "Lon Lon Ranch", "Market",
-  "Temple of Time", "Hyrule Castle", "Kakariko Village", "Graveyard"]);  // areas whose pins are shown so far
+  "Temple of Time", "Hyrule Castle", "Kakariko Village", "Graveyard", "Death Mountain Trail", "Goron City", "Death Mountain Crater",
+  "Zora's River", "Zora's Domain", "Zora's Fountain"]);  // areas whose pins are shown so far
 let PINS = null;  // hash → [[map id, u, v, floor label, tray, world x, world z]]
 let CAPS = {};    // map id → [camera x, camera z, height]: the map picture's frame in the world
 try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; } else PINS = j; } catch (e) { PINS = null; }
