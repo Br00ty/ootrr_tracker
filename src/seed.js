@@ -197,7 +197,10 @@ const Seed = (() => {
   const FIXES = [
     "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them on every shelf that keeps its normal item (OOTRR only adds these to shuffled shelves), so Bugs from a Potion Shop need a bottle.",
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
+    "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
   ];
+  // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
+  const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
   // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
   // whether or not shops are shuffled (with shop deals on, most shelves stay vanilla).
@@ -210,6 +213,7 @@ const Seed = (() => {
     if (helpers.has_bombchus) helpers.has_bombchus = `Bomb_Bag and (${helpers.has_bombchus})`;
     const loc_fixes = {};
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
+    for (const [loc, age] of Object.entries(AGE_ONLY)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${age}` : age;
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
     return { ...data, helpers, loc_fixes };
   }
