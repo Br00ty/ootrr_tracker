@@ -152,7 +152,7 @@ const h = (tag, attrs = {}, ...kids) => {
 // ---------- item tracker definition ----------
 // [logic item name, label, max, css class]
 const INV = [
-  ["Slingshot","Sling-shot",1],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
+  ["Slingshot","Sling-shot",3],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
   ["Megaton Hammer","Hammer",1],["Lens of Truth","Lens",1],["Magic Meter","Magic",2],["Dins Fire","Din's Fire",1],["Farores Wind","Farore's Wind",1],["Nayrus Love","Nayru's Love",1],
   ["Bombchus","Bomb-chus",1],["Magic Bean","Magic Beans",10],["Rutos Letter","Ruto's Letter",1],["Bottle","Bottle",4],
 ];
@@ -319,7 +319,7 @@ function bump(name, max, d) {
 // Progressive items show the name of the tier you have instead of a number
 // (the remake's tiers, from items.json: e.g. Item_Hookshot then Item_Longshot).
 const TIERS = {
-  "Slingshot": ["Fairy Slingshot", "Big Bullet Bag", "Biggest Bullet Bag"],
+  "Slingshot": ["Fairy Slingshot", "Fairy Slingshot (Big Bullet Bag)", "Fairy Slingshot (Biggest Bullet Bag)"],
   "Ocarina": ["Fairy Ocarina", "Ocarina of Time"],
   "Bomb Bag": ["Bomb Bag", "Big Bomb Bag", "Biggest Bomb Bag"],
   "Bow": ["Fairy Bow", "Fairy Bow (Big Quiver)", "Fairy Bow (Biggest Quiver)"],
