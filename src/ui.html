@@ -200,6 +200,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
   <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
+  <button class="btn" id="castBtn" title="Open a clean item tracker in its own window, for streaming (for example as an OBS window capture)">Broadcast view</button>
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
   <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
@@ -473,6 +474,7 @@ function render() {
   if (typeof paintSeed === "function") paintSeed();
   renderStats(); renderItems(); renderMode();
   if (S.view === "map") renderMap(); else { renderAreas(); renderChecks(); }
+  renderBroadcast();
   save();
 }
 function tally(list) { const t = { g: 0, y: 0, r: 0, done: 0 }; for (const c of list) t[c.st]++; return t; }
@@ -718,6 +720,88 @@ function openIcons() {
   $("#dlgBody").replaceChildren(...K(...body));
   if (!$("#dlg").open) $("#dlg").showModal();
 }
+// ---------- broadcast view ----------
+// A clean item tracker in a window of its own, for streaming: items, magic arrows, equipment, songs, stones and
+// medallions as picture tiles, the counters and dungeon keys as tiles with numbers. It is drawn by this page
+// (the window shares its storage and code), so it follows every change at once; clicks work as in the tracker.
+let BW = null;
+const CAST_CSS = `
+*{box-sizing:border-box}html,body{margin:0;height:100%}
+body{background:#0c0b08;color:#ece4cf;font:12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:8px;overflow:hidden}
+.panel{display:flex;margin:0 auto;flex-direction:column;gap:6px;background:linear-gradient(#1b2433,#141a24);border:3px solid #d9b45a;border-radius:12px;padding:8px;box-shadow:inset 0 0 0 1px #000}
+.row{display:grid;gap:4px}
+.g4 .t{aspect-ratio:2/1}.g4 .t img{width:auto;height:84%}
+.g6{grid-template-columns:repeat(6,1fr)}.g9{grid-template-columns:repeat(9,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
+.sep{height:1px;background:#d9b45a55;margin:2px 4px}
+.t{position:relative;aspect-ratio:1;border-radius:7px;background:#0f1520;border:1px solid #2c3a52;display:flex;align-items:center;justify-content:center;text-align:center;font-size:9px;color:#5c6b82;cursor:pointer;user-select:none;overflow:hidden}
+.t img{width:84%;height:84%;object-fit:contain;filter:grayscale(1) brightness(.75);opacity:.32;pointer-events:none}
+.t.on{background:#1f2c40;border-color:#4d6890;color:#ece4cf}
+.t.on img{filter:none;opacity:1}
+.t .n{position:absolute;right:3px;bottom:1px;font-size:13px;font-weight:800;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,1px 1px 0 #000}
+.t .n.max{color:#7ee08c}
+.t .lb{position:absolute;left:0;right:0;top:1px;font-size:8.5px;font-weight:700;color:#e9d7a6;text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:.02em}
+.bkb{position:absolute;left:2px;bottom:2px;width:38%;height:38%;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:800;color:#5c6b82;background:#0008;cursor:pointer}
+.bkb img{width:100%;height:100%;opacity:.3;filter:grayscale(1)}
+.bkb.on{color:#f0c43c}.bkb.on img{opacity:1;filter:none}
+`;
+const CAST_SHORT = { "Forest Temple": "Forest", "Fire Temple": "Fire", "Water Temple": "Water", "Shadow Temple": "Shadow", "Spirit Temple": "Spirit",
+  "Bottom of the Well": "Well", "Gerudo Training Ground": "GTG", "Thieves' Hideout": "Hideout", "Ganon's Castle": "Ganon" };
+function openBroadcast() {
+  if (BW && !BW.closed) { BW.focus(); return; }
+  BW = window.open("", "ootrr-broadcast", "popup=yes,width=430,height=760");
+  if (!BW) { $("#dlgBody").replaceChildren(h("h3", {}, "Broadcast view"), h("p", {}, "The browser blocked the new window. Allow pop-ups for this page (the icon at the right end of the address bar), then click Broadcast view again."), h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "OK"))); $("#dlg").showModal(); return; }
+  const d = BW.document;
+  d.title = "OOTRR Tracker · Broadcast";
+  d.head.replaceChildren(Object.assign(d.createElement("style"), { textContent: CAST_CSS }));
+  d.body.replaceChildren();
+  BW.addEventListener("beforeunload", () => { BW = null; });
+  renderBroadcast();
+}
+function castTile(name, label, max, opts = {}) {
+  const v = have(name), pic = opts.pic !== undefined ? opts.pic : picOf(name, Math.max(1, v));
+  const tiers = TIERS[name], on = opts.on !== undefined ? opts.on : v > 0;
+  const text = tiers && v ? tiers[Math.min(v, tiers.length) - 1] : label;
+  const count = opts.count !== undefined ? opts.count : max > 1 && v && (!tiers || (pic && !Array.isArray(ICON[name]))) ? v : null;
+  return h("div", { class: `t ${on ? "on" : ""} ${opts.cls || ""}`, title: `${opts.title || label}${max > 1 ? ` (${v}/${max})` : ""}`,
+    onclick: opts.click || (() => bump(name, max, max === 1 && v ? -1 : 1)),
+    oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); } },
+    pic ? h("img", { src: pic, alt: text }) : text.replace("-", ""),
+    opts.label ? h("span", { class: "lb" }, opts.label) : null, opts.extra || null,
+    count != null && count !== "" ? h("span", { class: `n ${max > 1 && v >= max ? "max" : ""}` }, String(count)) : null);
+}
+function renderBroadcast() {
+  if (!BW) return;
+  if (BW.closed) { BW = null; return; }
+  const d = BW.document, row = (cls, kids) => h("div", { class: `row ${cls}` }, kids), sep = () => h("div", { class: "sep" });
+  const counters = COUNTERS.map(([n, l, m]) => { const max = maxOf(m), v = have(n); return castTile(n, l.replace(" turned in", ""), max, { on: v > 0, count: v, title: l }); });
+  // one tile per dungeon: its small keys as the number, and its boss key as a badge (click the badge to toggle it)
+  const keys = DUNGEONS.map(([dn, sk, m, bk]) => {
+    const v = have(sk), b = bk ? have(bk) : 0;
+    const badge = bk ? h("span", { class: `bkb ${b ? "on" : ""}`, title: `${dn} boss key: click to ${b ? "remove" : "add"}`,
+      onclick: (e) => { e.stopPropagation(); bump(bk, 1, b ? -1 : 1); } }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "boss key" }) : "BK") : null;
+    return castTile(sk, `${CAST_SHORT[dn]} keys`, m, { pic: PICS.Item_Dungeon_SmallKey || null, on: v > 0 || b > 0, count: v, label: CAST_SHORT[dn] || dn, title: `${dn} small keys`, extra: badge });
+  });
+  const panel = h("div", { class: "panel" },
+    row("g6", INV.map(([n, l, m]) => castTile(n, l, m))),
+    row("g6", [...ARROWS, ...REWARDS.filter((r) => r[3] === "stone")].map(([n, l, m]) => castTile(n, l, m))),
+    sep(), row("g6", GEAR.map(([n, l, m]) => castTile(n, l, m))),
+    sep(), row("g6", SONGS.map(([n, l, m]) => castTile(n, l, m))),
+    sep(), row("g6", REWARDS.filter((r) => r[3] === "med").map(([n, l, m]) => castTile(n, l, m))),
+    sep(), row("g4", counters),
+    row("g9", keys));
+  d.body.replaceChildren(d.adoptNode(panel));
+  // fit the window: the tiles follow its width; when that makes the panel taller than the window, shrink it
+  // fit the window: the tiles are square, so a panel taller than the window is made narrower (and centred)
+  const fit = () => {
+    if (!BW || BW.closed) return;
+    const W = BW.innerWidth - 16, H = BW.innerHeight - 16;
+    panel.style.width = `${W}px`;
+    for (let i = 0; i < 3 && panel.offsetHeight > H; i++) panel.style.width = `${Math.floor(panel.offsetWidth * H / panel.offsetHeight)}px`;
+  };
+  fit();
+  BW.onresize = fit;
+}
+
 // ---------- map tracker ----------
 // The game's own pause-menu maps, read from the player's copy of the game (romfs\UI\CustomTex\Map):
 // zstd-packed BNTX textures, decoded in the page (src/texdec.js), shrunk to WebP and kept in the browser's
@@ -1675,6 +1759,7 @@ function openSettings() {
 }
 $("#setBtn").onclick = openSettings;
 $("#dlg").addEventListener("close", () => $("#dlg").classList.remove("wide"));
+$("#castBtn").onclick = openBroadcast;
 $("#iconBtn").onclick = () => { iconMsg = ""; openIcons(); };
 $("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; usePicked(files); };
 // the folder window was closed without picking
