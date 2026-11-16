@@ -778,7 +778,24 @@ const PIN_FIXES = {
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
-const fixOf = (n) => (S.pinFix && n in S.pinFix ? S.pinFix[n] : PIN_FIXES[n]);
+// Edit pins is a tool for the tracker's author, not for visitors: it shows only in dev mode, turned on with
+// ?dev in the address (?dev=0 turns it off) or Ctrl + Alt + D, and remembered in this browser. Pin changes
+// made in dev mode count only in dev mode; everyone else sees the pins built into the tracker.
+const DEV_KEY = "ootrr-tracker-dev";
+let DEV = false;
+try {
+  const m = /[?&#]dev(?:=(\w+))?/.exec(location.href);
+  if (m) localStorage.setItem(DEV_KEY, m[1] === "0" ? "0" : "1");
+  DEV = localStorage.getItem(DEV_KEY) === "1";
+} catch (e) {}
+document.addEventListener("keydown", (e) => {
+  if (e.ctrlKey && e.altKey && e.key.toLowerCase() === "d") {
+    DEV = !DEV; try { localStorage.setItem(DEV_KEY, DEV ? "1" : "0"); } catch (x) {}
+    if (!DEV) S.pinEdit = false;
+    render();
+  }
+});
+const fixOf = (n) => (DEV && S.pinFix && n in S.pinFix ? S.pinFix[n] : PIN_FIXES[n]);
 let pinPlace = null;  // edit mode: the check waiting for a click on the map
 function pinOf(n, mapKey) {
   const place = mapKey.replace(/_(Child|Adult)$/, "");
@@ -916,7 +933,7 @@ function renderMap() {
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
     list.length ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
-    m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
+    DEV && m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
       onclick: () => { S.pinEdit = !S.pinEdit; pinPlace = null; pinOpen = null; render(); } }, S.pinEdit ? "Done editing" : "Edit pins") : null,
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
   let body;
@@ -925,6 +942,7 @@ function renderMap() {
   else if (!m.key) body = h("div", { class: "empty" }, (MAP_ZONES[area] || MAP_DUNGEONS[area]) ? `No map for ${area} was loaded. Load the maps again from the game's Map folder.` : `The game has no map for ${area}.`);
   else body = mapWithPins(area, m.key, list);
   const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, list) : null;
+  if (!DEV) S.pinEdit = false;
   const edit = S.pinEdit && m.key && PIN_AREAS.has(area) ? h("div", { class: "banner", style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" },
     h("span", { style: "flex:1;min-width:260px" }, pinPlace ? ["Click on the map where ", h("b", {}, shownName(pinPlace)), " goes."]
       : "Drag a pin to its right spot. Right-click a pin to take it off the map. To place a check that has no pin, click Place next to it on the right."),
