@@ -223,6 +223,14 @@ if POOLS:
     POOLS['junk_locs'] = sorted(n for n in checks if _van.get(n) in _fits)
     POOLS['unsure_skulls'] = sorted({r['name'] for r in json.load(open(os.path.join(D, 'skull_names.json')))['spots'] if r.get('grade') != 'release'})
     POOLS['junk_slack'] = 2
+    # special deals (shops/layout.rs deal_slots): the shelves in the order deals are handed out, slot k of every
+    # dealing shop before slot k + 1 of any, and how many fit (deal_room.py: the room with "4 special deals",
+    # changed by each setting)
+    _sh = json.load(open(os.path.join(D, 'shops.json')))
+    _at = {(x['shop'], x['slot']): x['name'] for x in _sh['slots']}
+    _order = sorted((k, si, _at[(sh['shop'], sl)]) for si, sh in enumerate(_sh['shops']) if sh.get('deals') for k, sl in enumerate(sh['deal_order']))
+    POOLS['deals'] = {'order': [[k, n] for k, si, n in _order]}
+    if os.path.exists('tools/out/deal_room.json'): POOLS['deals'] |= json.load(open('tools/out/deal_room.json'))
 schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],

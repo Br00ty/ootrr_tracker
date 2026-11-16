@@ -246,11 +246,26 @@ const Seed = (() => {
       if (!enabled(s, v)) continue;
       const d = P.deltas[s.id], x = v[s.id];
       if (!d || x === undefined) continue;
+      if (s.id === "shuffle_shops" && P.deals && P.deals.delta) continue;  // the deal shelves are worked out below
       const ks = Array.isArray(x) ? x.map((i) => JSON.stringify([i])) : JSON.stringify(x) === JSON.stringify(s.default) ? [] : [JSON.stringify(x)];
       for (const k of ks) if (d[k]) { adds.push(...d[k][0]); rems.push(...d[k][1]); }
     }
     for (const n of rems) set.delete(n);
     for (const n of adds) set.add(n);
+    // Special deals: the first shelves in OOTRR's deal order (slot k of every shop, then k + 1), up to the number
+    // per shop the setting asks for, and only as many as fit: OOTRR keeps enough shelf-able items free for other
+    // spots, which other settings change (measured per setting with "4 special deals", tools/deal_room.py)
+    const lv = /^deals_(\d)$/.exec(v.shuffle_shops || "") || (v.shuffle_shops === "random" ? [0, "4"] : null);
+    if (lv && P.deals && P.deals.delta) {
+      let room = P.deals.base;
+      for (const s of data.schema) {
+        const d = P.deals.delta[s.id], x = v[s.id];
+        if (!d || x === undefined || !enabled(s, v)) continue;
+        const ks = Array.isArray(x) ? x.map((i) => JSON.stringify([i])) : JSON.stringify(x) === JSON.stringify(s.default) ? [] : [JSON.stringify(x)];
+        for (const k of ks) room += d[k] || 0;
+      }
+      for (const [k, n] of P.deals.order) if (k < +lv[1] && room > 0) { set.add(n); room--; }
+    }
     // junk_spots.rs: in "matched" skulltula shuffle the unsure skulltulas take only junk, so they join only when
     // enough other shuffled locations hold junk a skulltula can drop (the measured "matched" delta has them out)
     if (P.unsure_skulls && v.shuffle_skulltulas === "matched") {
