@@ -950,25 +950,30 @@ function startWatch(dir) {
   clearInterval(W.timer); W.timer = setInterval(poll, 2000); poll();
 }
 // Chrome won't let a page watch any folder inside AppData ("contains system files"), and Lichii keeps its
-// saves in %APPDATA%\lichii\nand\user\save. A folder link (junction) outside AppData that points to it
-// can be watched instead; Load saves works on the folder itself, but reads it once per click.
+// saves in %APPDATA%\lichii\nand\user\save. A folder link (junction) doesn't help: Chrome follows it back
+// into AppData. What works: Lichii's own NAND folder setting pointed outside AppData, or a live copy of the
+// save folder outside AppData. Load saves works on the folder itself, but reads it once per click.
 const SAVE_DIR = "%APPDATA%\\lichii\\nand\\user\\save";
-const LINK_DIR = "%USERPROFILE%\\Lichii saves";
-const LINK_CMD = `cmd /c mklink /J "${LINK_DIR}" "${SAVE_DIR}"`;
+const COPY_DIR = "%USERPROFILE%\\Lichii save copy";
+const COPY_CMD = String.raw`powershell -NoExit -c "while(1){robocopy \"$env:APPDATA\lichii\nand\user\save\" \"$env:USERPROFILE\Lichii save copy\" /MIR /R:1 /W:1 >$null;sleep 2}"`;
 function openWatchHelp() {
   const copy = (text) => async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; } catch (x) { b.textContent = "Select it and copy"; } };
+  const code = (t) => [h("code", { class: "q", style: "word-break:break-all" }, t), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(t) }, "Copy")];
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Watching your saves"),
-    h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where Lichii keeps its saves, so picking it says the folder contains system files."),
-    h("p", {}, h("b", {}, "Fix it once with a folder link:"), " a folder in your user folder that leads to the save folder. Nothing is moved or copied."),
-    h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
-      h("li", {}, "Press ", h("b", {}, "Windows + R"), "."),
-      h("li", {}, "Paste this and press ", h("b", {}, "Enter"), ":", h("br"),
-        h("code", { class: "q", style: "word-break:break-all" }, LINK_CMD), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(LINK_CMD) }, "Copy")),
-      h("li", {}, "Click ", h("b", {}, "Watch save folder"), ", click the folder window's address bar (", h("b", {}, "Alt + D"), "), paste ",
-        h("code", { class: "q" }, LINK_DIR), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(LINK_DIR) }, "Copy"), " and press Enter, then ", h("b", {}, "Select Folder"), ".")),
-    h("p", { class: "hint", style: "padding:6px 0 0" }, "To remove the link later, delete the Lichii saves folder in your user folder (C:\\Users\\<you>); your real saves stay where they are. If your saves are somewhere else, change the second path in the command."),
-    h("p", {}, h("b", {}, "Or without watching:"), " click ", h("b", {}, "Load saves"), " and pick ", h("code", { class: "q" }, SAVE_DIR), " (paste it into the folder window's address bar). It reads the newest save of all slots; click it again whenever you want to update."),
+    h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where Lichii keeps its saves, so picking them says the folder contains system files. A folder link doesn't help either: the browser follows it back into AppData. Two things work:"),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "1. Move Lichii's data folder out of AppData (once, recommended)")),
+    h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
+      h("li", {}, "Close Lichii."),
+      h("li", {}, "Copy the folder ", h("code", { class: "q" }, "%APPDATA%\\lichii\\nand"), " to a folder outside AppData, for example ", h("code", { class: "q" }, "C:\\Users\\<you>\\Lichii\\nand"), "."),
+      h("li", {}, "Open Lichii, go to ", h("b", {}, "Emulation → Configure"), ", find ", h("b", {}, "Filesystem"), " (its own tab, or under System), and set the ", h("b", {}, "NAND"), " folder to the new one."),
+      h("li", {}, "Check your saves are there in the game, then click ", h("b", {}, "Watch save folder"), " and pick ", h("code", { class: "q" }, "…\\Lichii\\nand\\user\\save"), ".")),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "2. Or keep a live copy of the saves while you play")),
+    h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
+      h("li", {}, "Press ", h("b", {}, "Windows + R"), ", paste this and press ", h("b", {}, "Enter"), ". A window opens that copies the save folder every 2 seconds; leave it open while you play.", h("br"), code(COPY_CMD)),
+      h("li", {}, "Click ", h("b", {}, "Watch save folder"), ", click the address bar (", h("b", {}, "Alt + D"), "), paste ", code(COPY_DIR), " and press Enter, then ", h("b", {}, "Select Folder"), ".")),
+    h("p", { class: "hint", style: "padding:4px 0 0" }, "The copy only ever writes into the Lichii save copy folder. Close its window to stop it."),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "Without watching:"), " click ", h("b", {}, "Load saves"), " and pick ", h("code", { class: "q" }, SAVE_DIR), " (paste it into the folder window's address bar). It reads the newest save of all slots; click it again whenever you want to update."),
     h("div", { style: "display:flex;justify-content:flex-end;margin-top:12px" }, h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")),
   ));
   if (!$("#dlg").open) $("#dlg").showModal();
