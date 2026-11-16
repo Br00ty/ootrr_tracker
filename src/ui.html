@@ -866,8 +866,32 @@ function paintSeed() {
 
 // tracker/seed.rs: with a seed, a gift is found by the get event of the item actually placed there,
 // and a shuffled cow by its own one-time event.
+// Checks the game marks with a flag of its own, set whatever item is handed over. OOTRR detects these
+// gifts by the "got this item" event of the placed item, which never fires when that item was had before.
+// OWN_FLAGS replaces OOTRR's rule (confirmed in a real save: MiniGame_Fishing_GetHeartPiece went 0 → 1 at
+// the child fishing prize while the get event didn't). EXTRA_FLAGS are added next to OOTRR's rule: their
+// names say what they are and they are stored in the save, but they haven't been seen changing yet.
+const OWN_FLAGS = {
+  "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
+  "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
+};
+const EXTRA_FLAGS = {
+  "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
+  "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
+  "Market Lost Dog": ["SubEvent_FindRichard_GetHeartPiece"],
+  "Market Shooting Gallery Reward": ["MiniGame_HitTarget_HrlCity_Get_BulletBag"],
+  "Kak Shooting Gallery Reward": ["MiniGame_HitTarget_Kakariko_Get_Quiver"],
+  "GF HBA 1500 Points": ["MiniGame_HorseBackArchery_Get_Quiver"],
+  "LH Lab Dive": ["MiniGame_Diving_Cleared"],
+};
 function detectMap() {
-  if (!S.seed) return DATA.detect;
+  const out = detectMapBase();
+  for (const [n, f] of Object.entries(OWN_FLAGS)) if (out[n]) out[n] = [{ f }];
+  for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
+  return out;
+}
+function detectMapBase() {
+  if (!S.seed) return { ...DATA.detect };
   const placed = S.seed.placements, copies = {};
   for (const v of Object.values(placed)) copies[v] = (copies[v] || 0) + 1;
   const out = {};
