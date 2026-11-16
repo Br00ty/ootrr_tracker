@@ -1,6 +1,6 @@
 """Builds data/data.json from an OOTRR checkout and the two exports in tools/out (see README).
 Usage: python tools/build_data.py <ootrr checkout>/data"""
-import json, sys, collections, os
+import json, os, sys, collections
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 D = sys.argv[1]
 L = json.load(open('tools/out/logic.json'))
@@ -207,10 +207,16 @@ for t in T:
     if t.get('map') and o in checks: mapc[t['map']][checks[o][0]] += 1
 maps = {m: c.most_common(1)[0][0] for m, c in mapc.items()}
 
-schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'disabled', 'label') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
+# which locations each setting adds to or takes from the shuffle, measured with OOTRR's own generator
+# (tools/pool_matrix.py); the tracker builds the manual settings' location list from it
+POOLS = json.load(open('tools/out/pools.json')) if os.path.exists('tools/out/pools.json') else None
+schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],
        'settings': L['settings'], 'items': items, 'vanilla': L['vanilla'], 'checks': checks, 'classic': classic, 'detect': det, 'maps': maps,
-       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'skull_notes': skull_notes, 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']}}
+       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'skull_notes': skull_notes, 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']},
+       # OOTRR's settings page: its groups (tabs), presets and the help text of each setting and choice
+       'tips': {s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']},
+       'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)

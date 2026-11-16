@@ -236,6 +236,23 @@ const Seed = (() => {
     return { ...sd, switches: logicSwitches(sd.vals), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
-  return { refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
+  // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what
+  // each setting adds or takes away (measured with OOTRR's generator, tools/pool_matrix.py).
+  function poolOf(v, data) {
+    const P = data.pools;
+    if (!P) return null;
+    const set = new Set(P.base), adds = [], rems = [];
+    for (const s of data.schema) {
+      if (!enabled(s, v)) continue;
+      const d = P.deltas[s.id], x = v[s.id];
+      if (!d || x === undefined) continue;
+      const ks = Array.isArray(x) ? x.map((i) => JSON.stringify([i])) : JSON.stringify(x) === JSON.stringify(s.default) ? [] : [JSON.stringify(x)];
+      for (const k of ks) if (d[k]) { adds.push(...d[k][0]); rems.push(...d[k][1]); }
+    }
+    for (const n of rems) set.delete(n);
+    for (const n of adds) set.add(n);
+    return set;
+  }
+  return { enabled, poolOf, kakarikoSkip, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

@@ -5,6 +5,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 **▶ Open the tracker: [br00ty.github.io/ootrr_tracker](https://br00ty.github.io/ootrr_tracker/)**
 
 - **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.6.0's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
+- **Or set the settings by hand.** Without a seed file, Settings works like OOTRR's own settings page: the same groups, presets, labels and help text, settings that only count when another one is on, and a box for an OOTRR settings string. The tracker then lists exactly the locations OOTRR would shuffle with those settings.
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Dungeon entrance shuffle.** With Entrances set to Dungeons, the logic follows which dungeon is behind each door, exactly like OOTRR's. Each dungeon in the list shows **door: ?** until you click it (or until your save has Link inside it), so the layout isn't spoiled.
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is.
@@ -71,6 +72,7 @@ The page shows a banner when a loaded seed uses entrance or shop shuffle.
 | `src/autotrack.js` | `progress.sav` reading and save-based detection |
 | `src/texdec.js` | Game texture reading for the map tracker: zstd, BNTX, block-linear swizzle and ASTC (ported from ootrr-core's `tex` module) |
 | `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.6.0 |
+| `tools/pool_matrix.py` | Runs OOTRR's generator once per setting value and records which locations each one adds or removes (`tools/out/pools.json`), for the manual settings |
 | `tools/` | Scripts that rebuild `data/data.json` for a new OOTRR version, and the cross-check |
 
 After editing anything in `src/`, run `python tools/assemble.py`.
@@ -81,7 +83,7 @@ After editing anything in `src/`, run `python tools/assemble.py`.
 2. Copy the three `.rs` programs in `tools/ootrr-export/` (not `zs_stub.rs`) into its `crates/core/examples/`. If crates.io isn't reachable, replace `crates/core/src/zs.rs` with `tools/ootrr-export/zs_stub.rs` and remove `ruzstd` from `crates/core/Cargo.toml` (the export never unpacks game files).
 3. `cargo run -p ootrr-core --example tracker_export > <this repo>/tools/out/logic.json`
 4. `cargo run -p ootrr-core --example settings_schema > <this repo>/tools/out/schema.json`
-5. `python tools/build_data.py <ootrr>/data` then `python tools/assemble.py`.
+5. `python tools/pool_matrix.py <path to the ootrr CLI>` (a few minutes), then `python tools/build_data.py <ootrr>/data` and `python tools/assemble.py`.
    If OOTRR renames or moves a check listed under [Renamed checks](#renamed-checks), update its key in `RENAMES`.
 6. Generate a few seeds with the `ootrr` CLI (`ootrr generate <preset or settings.json> <seed> out.ootrr`; `tools/seeds/wild.json` turns on many shuffles), build `tracker_check`, and run `node tools/crosscheck.js tools/seeds <path to tracker_check>` (it expects `default`, `keysanity`, `wild`, `dungeons` and `dungeons_plain` seeds; `tools/seeds/dungeons.json` is wild with dungeon entrances shuffled). It should print `all match`: the tracker's in-logic locations equal ootrr's own search for every seed and inventory.
 
