@@ -82,6 +82,8 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck.open{background:var(--panel2)}
 .desc{padding:4px 16px 9px 36px;font-size:12px;line-height:1.45;color:var(--dim);background:var(--panel2);border-bottom:1px solid #221f18}
 .desc b{color:var(--ink);font-weight:600}
+.desc .way{margin-top:6px}
+.desc .from{color:var(--dim)}
 .desc .q{display:block;margin-top:3px;color:#cdbf98;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
 /* settings */
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:0;width:min(560px,92vw)}
@@ -397,11 +399,22 @@ function toggleDone(n) {
   if (isDone(n)) { delete S.done[n]; if (S.auto.done[n]) S.ignore[n] = 1; } else { S.done[n] = 1; delete S.ignore[n]; }
   render();
 }
+// entrances into each logic region: target → [[from region, rule], …]
+const ENTRANCES = new Map();
+for (const r of DATA.regions) for (const [to, q] of Object.entries(r.x || {})) {
+  if (!ENTRANCES.has(to)) ENTRANCES.set(to, []);
+  ENTRANCES.get(to).push([r.n, q.replace(/\s+/g, " ").trim()]);
+}
 function describe(n) {
   const [, , region, rule] = DATA.checks[n];
+  const ways = ENTRANCES.get(region) || [];
+  const shown = ways.slice(0, 6);
   return h("div", { class: "desc" },
     h("div", {}, "Region: ", h("b", {}, region)),
-    h("code", { class: "q" }, rule || "True"));
+    h("code", { class: "q" }, rule || "True"),
+    ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
+    shown.map(([from, q]) => h("code", { class: "q" }, h("span", { class: "from" }, `${from} → `), q)),
+    ways.length > shown.length ? h("div", { class: "way" }, `+ ${ways.length - shown.length} more`) : null);
 }
 
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
