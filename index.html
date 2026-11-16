@@ -1015,7 +1015,7 @@ const Seed = (() => {
     if (["any_dungeon", "keysanity", "overworld", "regional"].includes(v.shuffle_smallkeys))
       for (const k of ["fire_key_layout", "water_key_layout", "spirit_key_layout"]) out.push([k, "shuffled"]);
     if (v.bombchus_in_logic === true) out.push(["free_bombchu_drops", "true"]);
-    if (v.open_kakariko === "open") { out.push(["open_kakariko", "open"]); out.push(["skip_child_zelda", "true"]); }
+    if (kakarikoSkip(v)) { out.push(["open_kakariko", "open"]); out.push(["skip_child_zelda", "true"]); }
     if (v.anju_one_cucco === true) out.push(["chicken_count", "1"]);
     if (v.big_poe_one === true) out.push(["big_poe_count", "1"]);
     if (v.zora_fountain === "open") out.push(["zora_fountain", "open"]);
@@ -1044,11 +1044,23 @@ const Seed = (() => {
   const patchesOf = (sw) => sw.map(([k, v]) => `${k}=${v}`).filter((x) => PATCHED.includes(x));
 
   // start_items/give.rs: each chosen item or song, as the logic counts it
+  // slice/support.rs plan(): an open Kakariko gate skips child Zelda's story (unless the forest is closed),
+  // and start_state.rs KAKARIKO_LOCATIONS' items are handed out at new game instead of in the world.
+  const KAKARIKO_LOCATIONS = ["HC Zeldas Letter", "Song from Impa"];
+  function kakarikoSkip(v) { return v.open_kakariko === "open" && v.open_forest !== "closed"; }
   function startItems(v, table) {
     const out = {};
     for (const id of v.starting_items || []) for (const [n, c] of table[`starting_items:${id}`] || []) out[n] = Math.max(out[n] || 0, c);
     for (const id of v.starting_songs || []) for (const [n, c] of table[`starting_songs:${id}`] || []) out[n] = (out[n] || 0) + c;
     if (typeof v.starting_hearts === "number" && v.starting_hearts > 3) out["Piece of Heart"] = (v.starting_hearts - 3) * 4;
+    return out;
+  }
+
+  // the items of the skipped story's checks count as starting items
+  function withSkipped(start, vals, placements) {
+    if (!kakarikoSkip(vals)) return start;
+    const out = { ...start };
+    for (const l of KAKARIKO_LOCATIONS) { const it = placements[l]; if (it) out[it] = (out[it] || 0) + 1; }
     return out;
   }
 
@@ -1064,7 +1076,7 @@ const Seed = (() => {
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
-      vals, warn, switches: sw, start: startItems(vals, data.start_items),
+      vals, warn, switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
     };
   }
 
@@ -1125,7 +1137,13 @@ const Seed = (() => {
     return { ...data, helpers, loc_fixes };
   }
 
-  return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
+  // a seed stored by an older tracker: recompute what newer versions derive from it
+  function refresh(sd, data) {
+    if (!sd || !sd.vals || !sd.placements) return sd;
+    return { ...sd, switches: logicSwitches(sd.vals), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+  }
+
+  return { refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;
 </script>
@@ -1206,6 +1224,7 @@ const DEFAULT = {
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
+if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
 function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -1275,13 +1294,15 @@ function doorOf(dungeon) {
 const entrancesShuffled = () => Object.entries(LAYOUT).some(([a, b]) => a !== b);
 // With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
 function trackedNames() {
-  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n]);
+  // checks the seed hands out at new game (skipped child Zelda story) aren't in the world
+  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !(S.seed.skipped || []).includes(n));
   return DATA.classic.filter((n) => S.cats[catOf(DATA.checks[n][1])]);
 }
 function compute() {
   ensureWorlds();
   const names = trackedNames();
-  const tracked = new Set(names);
+  // skipped checks hold nothing in the world: their items are starting items
+  const tracked = new Set([...names, ...((S.seed && S.seed.skipped) || [])]);
   const res = worlds.map((w) => {
     // Locations the seed does not shuffle keep their vanilla item, which the logic collects once reachable.
     const place = new Array(w.locs.length).fill(null);

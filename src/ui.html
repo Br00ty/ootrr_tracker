@@ -244,6 +244,7 @@ const DEFAULT = {
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
+if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
 function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -313,13 +314,15 @@ function doorOf(dungeon) {
 const entrancesShuffled = () => Object.entries(LAYOUT).some(([a, b]) => a !== b);
 // With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
 function trackedNames() {
-  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n]);
+  // checks the seed hands out at new game (skipped child Zelda story) aren't in the world
+  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !(S.seed.skipped || []).includes(n));
   return DATA.classic.filter((n) => S.cats[catOf(DATA.checks[n][1])]);
 }
 function compute() {
   ensureWorlds();
   const names = trackedNames();
-  const tracked = new Set(names);
+  // skipped checks hold nothing in the world: their items are starting items
+  const tracked = new Set([...names, ...((S.seed && S.seed.skipped) || [])]);
   const res = worlds.map((w) => {
     // Locations the seed does not shuffle keep their vanilla item, which the logic collects once reachable.
     const place = new Array(w.locs.length).fill(null);
