@@ -1,0 +1,18 @@
+OOTRR Tracker is free software under the GNU General Public License, version 3 or (at your option) any
+later version. The full text is in LICENSE.
+
+It is built on OOTRR, the Ocarina of Time remake randomizer by REALAZK and contributors
+(https://github.com/realazk/ootrr), licensed GPL-3.0-or-later:
+- src/engine.js ports OOTRR's logic engine (crates/core/src: rule_ast.rs, rules.rs, world.rs, search.rs).
+- src/seed.js ports its settings string and seed file reading (settings/codec.rs, settings/string.rs,
+  settings/seed.rs) and the settings-to-logic mapping (slice/support.rs, start_items/give.rs).
+- src/autotrack.js ports its save reading and tracker rules (tracker/peek.rs, tracker/rules.rs,
+  tracker/grid.rs, tracker/seed.rs, murmur.rs).
+- data/data.json is generated from OOTRR 0.6.0's data files and an export of ootrr-core
+  (tools/ootrr-export), so it carries OOTRR's logic, settings schema, locations and tracker targets.
+
+OOTRR's logic engine follows the design of the OoT Randomizer (https://github.com/OoTRandomizer/OoT-Randomizer,
+MIT License, Copyright (c) 2025 OoTRandomizer), and its logic files come from the OoT Randomizer.
+Credit to AmazingAmpharos, Testrunner, Zannick, Junglechief87 and the other OoT Randomizer contributors.
+
+No game files or game assets are included. Item tiles are text.

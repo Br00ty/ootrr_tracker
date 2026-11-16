@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<!--
+  OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/realazk/ootrr),
+  and its data files are embedded (0.6.0). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OOTRR Tracker</title>
+<style>
+:root{
+  --bg:#14130f; --panel:#1d1b16; --panel2:#262319; --line:#3a3528; --ink:#ece4cf; --dim:#9a917b; --faint:#6b6452;
+  --gold:#d9b45a; --green:#3fb56b; --yellow:#f0c43c; --red:#e0533f; --grey:#6f6a5e; --blue:#6d8fd1;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--ink);font:13px/1.35 system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column}
+button,select,input{font:inherit;color:inherit}
+header{display:flex;align-items:center;gap:14px;flex-wrap:wrap;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+header h1{font-size:15px;margin:0;letter-spacing:.06em;color:var(--gold);font-weight:700;white-space:nowrap}
+@media (max-width:1500px){header h1 small{display:none}}
+header h1 small{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6px}
+.stats{display:flex;gap:14px;flex-wrap:nowrap;white-space:nowrap}
+.stat{display:flex;align-items:center;gap:6px;color:var(--dim)}
+.stat b{color:var(--ink);font-variant-numeric:tabular-nums}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.g{background:var(--green)}.y{background:var(--yellow)}.r{background:var(--red)}.d{background:var(--grey)}
+.spacer{flex:1}
+.btn{white-space:nowrap;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+.btn:hover{border-color:var(--gold)}
+main{flex:1;display:grid;grid-template-columns:minmax(330px,390px) 250px 1fr;min-height:0}
+section{border-right:1px solid var(--line);overflow:auto;min-height:0}
+section:last-child{border-right:0}
+h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:14px 14px 6px;font-weight:600}
+/* items */
+.grid{display:grid;grid-template-columns:repeat(6,1fr);gap:4px;padding:0 12px}
+.it{position:relative;aspect-ratio:1;border:1px solid var(--line);border-radius:6px;background:var(--panel);display:flex;align-items:center;justify-content:center;text-align:center;font-size:10px;line-height:1.1;padding:2px;cursor:pointer;user-select:none;color:var(--faint);transition:background .1s}
+.it:hover{border-color:var(--gold)}
+.it.on{background:#33301f;color:var(--ink);border-color:#6a5c32}
+.it .n{position:absolute;right:3px;bottom:2px;font-size:10px;font-weight:700;color:var(--gold)}
+.it.arrow.on{background:#33261c;border-color:#7a5a32}
+.it.song.on{background:#2a2633;border-color:#5b4f7a}
+.it.stone.on{background:#1f3029;border-color:#3c6e58}
+.it.med.on{background:#2f2428;border-color:#7a4f5f}
+.dtab{width:calc(100% - 24px);margin:0 12px;border-collapse:collapse;font-size:12px}
+.dtab td{padding:3px 4px;border-bottom:1px solid var(--line)}
+.dtab td:first-child{color:var(--dim)}
+.cnt{display:inline-flex;align-items:center;gap:4px}
+.cnt button{width:20px;height:20px;border-radius:4px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;padding:0;line-height:1}
+.cnt span{min-width:30px;text-align:center;font-variant-numeric:tabular-nums}
+.bk{border:1px solid var(--line);border-radius:4px;padding:1px 7px;cursor:pointer;background:var(--panel);color:var(--faint)}
+.bk.on{background:#33301f;color:var(--gold);border-color:#6a5c32}
+.hint{color:var(--faint);font-size:11px;padding:6px 14px 14px}
+/* areas */
+.area{display:flex;align-items:center;gap:8px;padding:6px 14px;cursor:pointer;border-left:3px solid transparent}
+.area:hover{background:var(--panel)}
+.area.sel{background:var(--panel2);border-left-color:var(--gold)}
+.area .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.area.done .nm{color:var(--faint)}
+.pills{display:flex;gap:3px}
+.pill{min-width:20px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:700;text-align:center;color:#111}
+.pill.g{background:var(--green)}.pill.y{background:var(--yellow)}.pill.r{background:var(--red);color:#fff}
+/* checks */
+.ckhead{display:flex;align-items:center;gap:10px;padding:12px 16px 4px}
+.ckhead h3{margin:0;font-size:16px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;padding:6px 16px 8px}
+.chip{border:1px solid var(--line);border-radius:12px;padding:2px 9px;cursor:pointer;background:var(--panel);font-size:12px;color:var(--dim)}
+.chip.on{border-color:var(--gold);color:var(--ink)}
+.ck{display:flex;align-items:center;gap:10px;padding:5px 16px;cursor:pointer;border-bottom:1px solid #221f18}
+.ck:hover{background:var(--panel)}
+.ck .nm{flex:1}
+.ck.st-done .nm{color:var(--faint);text-decoration:line-through}
+.ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
+.age{font-size:10px;font-weight:700;border-radius:3px;padding:0 4px;border:1px solid var(--line);color:var(--faint)}
+.age.ok{color:#111;background:var(--green);border-color:var(--green)}
+.age.ol{color:#111;background:var(--yellow);border-color:var(--yellow)}
+.st-g .dot{background:var(--green)}.st-y .dot{background:var(--yellow)}.st-r .dot{background:var(--red)}.st-done .dot{background:var(--grey)}
+.empty{color:var(--faint);padding:20px 16px}
+/* settings */
+dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:0;width:min(560px,92vw)}
+dialog::backdrop{background:#0009}
+.dlg{padding:16px 20px}
+.dlg h3{margin:0 0 10px;color:var(--gold)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--line)}
+.row label{color:var(--dim)}
+.row select,.row input[type=number]{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:3px 6px}
+.cats{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 10px}
+.foot{display:flex;justify-content:space-between;gap:8px;padding-top:14px}
+.legend{display:flex;gap:12px;color:var(--dim);font-size:11px;padding:6px 16px 0;flex-wrap:wrap}
+.legend span{display:flex;align-items:center;gap:4px}
+.err{color:var(--red);padding:20px}
+.seedbox{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)}
+.seedbox .seed{border:1px solid #6a5c32;background:#2a2516;color:var(--gold);border-radius:6px;padding:4px 8px;white-space:nowrap;cursor:pointer}
+.banner{background:#2b2214;border-bottom:1px solid #5a4a26;color:#e9d7a6;font-size:12px;padding:6px 16px}
+.banner b{color:var(--gold)}
+.sv-list{max-height:320px;overflow:auto;border:1px solid var(--line);border-radius:6px;margin:8px 0;padding:4px 10px;font-size:12px}
+.sv-list div{display:flex;justify-content:space-between;gap:10px;padding:2px 0;border-bottom:1px solid #2a271e}
+.sv-list span:last-child{color:var(--ink);text-align:right}
+.auto{display:flex;align-items:center;gap:8px;color:var(--dim);font-size:12px}
+.auto .live{width:8px;height:8px;border-radius:50%;background:var(--faint)}
+.auto .live.on{background:var(--green);box-shadow:0 0 6px var(--green)}
+.auto .live.err{background:var(--red)}
+.auto label{white-space:nowrap}
+.auto b{color:var(--ink);font-weight:600}
+.it.auto{box-shadow:inset 0 -2px 0 var(--green)}
+.ck .sv{font-size:10px;color:var(--green);border:1px solid #2e5a3e;border-radius:3px;padding:0 4px}
+body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
+</style>
+</head>
+<body>
+<header>
+  <h1>OOTRR TRACKER<small>OoT Remake randomizer</small></h1>
+  <div class="stats" id="stats"></div>
+  <div class="spacer"></div>
+  <div class="auto" id="autoBox"></div>
+  <input type="file" id="saveFile" accept=".sav" multiple hidden>
+  <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
+  <div class="seedbox" id="seedBox"></div>
+  <button class="btn" id="setBtn">Settings</button>
+  <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
+</header>
+<div class="banner" id="banner" hidden></div>
+<main>
+  <section id="items"></section>
+  <section id="areas"></section>
+  <section id="checks"></section>
+</main>
+<dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
+
+<script>/*ENGINE*/</script>
+<script>/*AUTO*/</script>
+<script>/*SEED*/</script>
+<script>const DATA = /*DATA*/;</script>
+<script>
+"use strict";
+const KEY = "ootrr-tracker-v1";
+const $ = (s, r = document) => r.querySelector(s);
+const K = (...a) => a.flat(3).filter((x) => x != null && x !== false);
+const h = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else if (k === "class") e.className = v;
+    else if (v !== false && v != null) e.setAttribute(k, v === true ? "" : v);
+  }
+  for (const c of kids.flat()) if (c != null && c !== false) e.append(c.nodeType ? c : String(c));
+  return e;
+};
+
+// ---------- item tracker definition ----------
+// [logic item name, label, max, css class]
+const INV = [
+  ["Slingshot","Sling-shot",1],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
+  ["Megaton Hammer","Hammer",1],["Lens of Truth","Lens",1],["Magic Meter","Magic",2],["Dins Fire","Din's Fire",1],["Farores Wind","Farore's Wind",1],["Nayrus Love","Nayru's Love",1],
+  ["Bombchus","Bomb-chus",1],["Magic Bean","Magic Beans",10],["Bottle","Bottle",4],
+];
+const ARROWS = [["Fire Arrows","Fire Arrows",1,"arrow"],["Ice Arrows","Ice Arrows",1,"arrow"],["Light Arrows","Light Arrows",1,"arrow"]];
+const GEAR = [
+  ["Kokiri Sword","Kokiri Sword",1],["Biggoron Sword","Biggoron Sword",1],["Mirror Shield","Mirror Shield",1],["Goron Tunic","Goron Tunic",1],["Zora Tunic","Zora Tunic",1],["Iron Boots","Iron Boots",1],
+  ["Hover Boots","Hover Boots",1],["Progressive Strength Upgrade","Strength",3],["Progressive Scale","Scale",2],["Progressive Wallet","Wallet",3],["Stone of Agony","Agony",1],["Gerudo Membership Card","Gerudo Card",1],
+];
+const TRADE = [
+  ["Weird Egg","Weird Egg",1],["Zeldas Letter","Zelda's Letter",1],["Rutos Letter","Ruto's Letter",1],["Keaton Mask","Keaton",1],["Skull Mask","Skull Mask",1],["Spooky Mask","Spooky",1],
+  ["Bunny Hood","Bunny Hood",1],["Mask of Truth","Mask of Truth",1],["Pocket Egg","Pocket Egg",1],["Cojiro","Cojiro",1],["Odd Mushroom","Odd Mush-room",1],["Odd Potion","Odd Potion",1],
+  ["Poachers Saw","Poacher's Saw",1],["Broken Sword","Broken Sword",1],["Prescription","Prescrip-tion",1],["Eyeball Frog","Eyeball Frog",1],["Eyedrops","Eyedrops",1],["Claim Check","Claim Check",1],
+];
+const SONGS = [
+  ["Zeldas Lullaby","Zelda's Lullaby",1,"song"],["Eponas Song","Epona's Song",1,"song"],["Sarias Song","Saria's Song",1,"song"],["Suns Song","Sun's Song",1,"song"],["Song of Time","Song of Time",1,"song"],["Song of Storms","Song of Storms",1,"song"],
+  ["Minuet of Forest","Minuet",1,"song"],["Bolero of Fire","Bolero",1,"song"],["Serenade of Water","Serenade",1,"song"],["Requiem of Spirit","Requiem",1,"song"],["Nocturne of Shadow","Nocturne",1,"song"],["Prelude of Light","Prelude",1,"song"],
+];
+const REWARDS = [
+  ["Kokiri Emerald","Kokiri Emerald",1,"stone"],["Goron Ruby","Goron Ruby",1,"stone"],["Zora Sapphire","Zora Sapphire",1,"stone"],
+  ["Forest Medallion","Forest",1,"med"],["Fire Medallion","Fire",1,"med"],["Water Medallion","Water",1,"med"],["Shadow Medallion","Shadow",1,"med"],["Spirit Medallion","Spirit",1,"med"],["Light Medallion","Light",1,"med"],
+];
+const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Heart","Pieces of Heart",36],["Heart Container","Heart Containers",9]];
+// dungeon, small key item, max keys, boss key item
+const DUNGEONS = [
+  ["Forest Temple","Small Key (Forest Temple)",5,"Boss Key (Forest Temple)"],
+  ["Fire Temple","Small Key (Fire Temple)",8,"Boss Key (Fire Temple)"],
+  ["Water Temple","Small Key (Water Temple)",6,"Boss Key (Water Temple)"],
+  ["Shadow Temple","Small Key (Shadow Temple)",5,"Boss Key (Shadow Temple)"],
+  ["Spirit Temple","Small Key (Spirit Temple)",5,"Boss Key (Spirit Temple)"],
+  ["Bottom of the Well","Small Key (Bottom of the Well)",3,null],
+  ["Gerudo Training Ground","Small Key (Gerudo Training Ground)",9,null],
+  ["Thieves' Hideout","Small Key (Thieves Hideout)",4,null],
+  ["Ganon's Castle","Small Key (Ganons Castle)",2,"Boss Key (Ganons Castle)"],
+];
+
+// ---------- settings ----------
+// Settings the tracker offers when no seed is loaded: ootrr's own setting ids and choices (settings/list.rs),
+// turned into logic the same way a seed's settings are (Seed.logicSwitches).
+const MANUAL = ["open_forest", "open_kakariko", "open_door_of_time", "zora_fountain", "jabu_open", "plant_beans", "gerudo_bridge_open",
+  "skip_mask_quest", "time_always_passes", "shuffle_smallkeys", "bombchus_in_logic", "anju_one_cucco", "big_poe_one"];
+const SCHEMA = new Map(DATA.schema.map((s) => [s.id, s]));
+const label = (id, v) => (DATA.labels[id] || {})[v] || String(v);
+const CATS = [["chest","Chests"],["npc","NPCs & cutscenes"],["song","Songs"],["boss","Bosses (stones & medallions)"],["gs","Gold Skulltulas"],["other","Hearts, keys, cows, scrubs, pots"]];
+const catOf = (kind) => ({ chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "gs" })[kind] || "other";
+const DEFAULT = {
+  items: {}, done: {}, auto: { items: {}, done: {} }, ignore: {}, follow: true, area: "Kokiri Forest", show: { g: true, y: true, r: true, done: false },
+  settings: Object.fromEntries(MANUAL.map((id) => [id, SCHEMA.get(id).default])),
+  seed: null,
+  cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
+};
+let S = load();
+function load() {
+  try {
+    const v = JSON.parse(localStorage.getItem(KEY) || "null");
+    if (v && v.settings) {  // settings saved before 0.6.0 used logic names
+      const o = v.settings;
+      if (typeof o.open_door_of_time === "string") o.open_door_of_time = o.open_door_of_time === "open";
+      if ("complete_mask_quest" in o) { o.skip_mask_quest = !!o.complete_mask_quest; delete o.complete_mask_quest; }
+      if (o.zora_fountain === "adult") o.zora_fountain = "closed";
+      for (const k of Object.keys(o)) if (!SCHEMA.has(k)) delete o[k];
+    }
+    if (v) return { ...structuredClone(DEFAULT), ...v, auto: { items: {}, done: {}, ...(v.auto || {}) }, settings: { ...DEFAULT.settings, ...v.settings }, cats: { ...DEFAULT.cats, ...v.cats }, show: { ...DEFAULT.show, ...v.show } };
+  } catch (e) {}
+  return structuredClone(DEFAULT);
+}
+const startOf = (n) => (S.seed && S.seed.start[n]) || 0;
+const have = (n) => Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n));
+const isDone = (n) => !!S.done[n] || (!!S.auto.done[n] && !S.ignore[n]);
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+// ---------- logic ----------
+const OVERWORLD = ["Kokiri Forest","Lost Woods","Sacred Forest Meadow","Hyrule Field","Lon Lon Ranch","Market","Temple of Time","Hyrule Castle","Kakariko Village","Graveyard","Death Mountain Trail","Goron City","Death Mountain Crater","Zora's River","Zora's Domain","Zora's Fountain","Lake Hylia","Gerudo Valley","Gerudo's Fortress","Thieves' Hideout","Haunted Wasteland","Desert Colossus","Outside Ganon's Castle"];
+const DUNGEON_AREAS = ["Deku Tree","Dodongo's Cavern","Jabu Jabu's Belly","Forest Temple","Fire Temple","Water Temple","Shadow Temple","Spirit Temple","Bottom of the Well","Ice Cavern","Gerudo Training Ground","Ganon's Castle"];
+
+// The logic switches in force: the seed's, or the manual settings run through the same mapping.
+function switches() {
+  if (S.seed) return S.seed.switches;
+  const vals = Object.fromEntries(DATA.schema.map((s) => [s.id, s.default]));
+  Object.assign(vals, S.settings);
+  return Seed.logicSwitches(vals);
+}
+function settingsFor(tricks) {
+  const s = Seed.applySwitches(DATA.settings, switches());
+  if (tricks) for (const k of Object.keys(s)) if (k.startsWith("logic_") && typeof s[k] === "boolean") s[k] = true;
+  return s;
+}
+let worlds = null, worldKey = "";
+function ensureWorlds() {
+  const sw = switches();
+  const k = JSON.stringify(sw);
+  if (worlds && k === worldKey) return;
+  const p = Seed.patchesOf(sw);
+  worlds = [Engine.buildWorld(DATA, settingsFor(false), p), Engine.buildWorld(DATA, settingsFor(true), p)];
+  worldKey = k;
+}
+// With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
+function trackedNames() {
+  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n]);
+  return DATA.classic.filter((n) => S.cats[catOf(DATA.checks[n][1])]);
+}
+function compute() {
+  ensureWorlds();
+  const names = trackedNames();
+  const tracked = new Set(names);
+  const res = worlds.map((w) => {
+    // Locations the seed does not shuffle keep their vanilla item, which the logic collects once reachable.
+    const place = new Array(w.locs.length).fill(null);
+    w.locs.forEach((l, k) => {
+      if (l.event !== null || tracked.has(l.name)) return;
+      const v = DATA.vanilla[l.name];
+      if (v !== undefined) { const i = w.items.find(v); if (i !== undefined) place[k] = i; }
+    });
+    const counts = [];
+    // The remake has no separate ocarina notes, so every note button counts as owned.
+    for (const b of ["A", "C up", "C down", "C left", "C right"]) { const i = w.items.find(`Ocarina ${b} Button`); if (i !== undefined) counts.push([i, 1]); }
+    // Treasure Chest Game keys stay in their vanilla rooms.
+    { const i = w.items.find("Small Key (Treasure Chest Game)"); if (i !== undefined) counts.push([i, 6]); }
+    const names = new Set([...Object.keys(S.items), ...Object.keys(S.auto.items), ...Object.keys((S.seed && S.seed.start) || {})]);
+    for (const n of names) { const i = w.items.find(n), c = have(n); if (i !== undefined && c > 0) counts.push([i, c]); }
+    return { w, s: new Engine.Search(w, counts).run(place) };
+  });
+  const out = new Map();
+  for (const n of names) {
+    const [a, k] = DATA.checks[n];
+    const c = { n, a, k };
+    const [L, T] = res.map(({ w, s }) => { const l = w.lix.get(n); return l === undefined ? null : [s.locAccess(l, 1), s.locAccess(l, 0)]; });
+    let st = "r";
+    if (isDone(n)) st = "done";
+    else if (L && (L[0] || L[1])) st = "g";
+    else if (T && (T[0] || T[1])) st = "y";
+    out.set(n, { ...c, st, fromSave: !!S.auto.done[n] && !S.ignore[n] && !S.done[n], child: L && L[0] ? "ok" : T && T[0] ? "ol" : "", adult: L && L[1] ? "ok" : T && T[1] ? "ol" : "" });
+  }
+  return out;
+}
+
+// ---------- render ----------
+let R = new Map();
+function render() {
+  R = compute();
+  if (typeof paintAuto === "function") paintAuto();
+  if (typeof paintSeed === "function") paintSeed();
+  renderStats(); renderItems(); renderAreas(); renderChecks();
+  save();
+}
+function tally(list) { const t = { g: 0, y: 0, r: 0, done: 0 }; for (const c of list) t[c.st]++; return t; }
+function renderStats() {
+  const t = tally(R.values()); const all = R.size;
+  $("#stats").replaceChildren(...K(
+    h("div", { class: "stat" }, h("span", { class: "dot d" }), "Done ", h("b", {}, `${t.done}/${all}`)),
+    h("div", { class: "stat" }, h("span", { class: "dot g" }), "In logic ", h("b", {}, t.g)),
+    h("div", { class: "stat" }, h("span", { class: "dot y" }), "Out of logic ", h("b", {}, t.y)),
+    h("div", { class: "stat" }, h("span", { class: "dot r" }), "Inaccessible ", h("b", {}, t.r)),
+  ));
+}
+function bump(name, max, d) {
+  const v = Math.max(0, Math.min(max, have(name) + d));
+  if (v) S.items[name] = v; else delete S.items[name];
+  render();
+}
+function tile([name, label, max, cls]) {
+  const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
+  return h("div", {
+    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""}`, title: `${name}${max > 1 ? ` (${v}/${max})` : ""}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
+    onclick: () => bump(name, max, max === 1 && v ? -1 : 1),
+    oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); },
+  }, label.replace("-", "­"), max > 1 && v ? h("span", { class: "n" }, v) : null);
+}
+function counter(name, max, step = 1) {
+  const v = have(name);
+  return h("span", { class: "cnt" },
+    h("button", { onclick: () => bump(name, max, -step), "aria-label": "less" }, "−"),
+    h("span", {}, `${v}/${max}`),
+    h("button", { onclick: () => bump(name, max, step), "aria-label": "more" }, "+"));
+}
+function renderItems() {
+  const el = $("#items"); const top = el.scrollTop;
+  el.replaceChildren(...K(
+    h("h2", {}, "Items"), h("div", { class: "grid" }, INV.map(tile)),
+    h("h2", {}, "Magic arrows"), h("div", { class: "grid" }, ARROWS.map(tile)),
+    h("h2", {}, "Equipment"), h("div", { class: "grid" }, GEAR.map(tile)),
+    h("h2", {}, "Songs"), h("div", { class: "grid" }, SONGS.map(tile)),
+    h("h2", {}, "Stones & medallions"), h("div", { class: "grid" }, REWARDS.map(tile)),
+    h("h2", {}, "Trade & masks"), h("div", { class: "grid" }, TRADE.map(tile)),
+    h("h2", {}, "Counters"),
+    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, l), h("td", { style: "text-align:right" }, counter(n, m))))),
+    h("h2", {}, "Dungeon keys"),
+    h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
+      h("td", {}, d), h("td", {}, counter(sk, m)),
+      h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""}`, onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, "Boss key") : "")))),
+    h("p", { class: "hint" }, "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too."),
+  ));
+  el.scrollTop = top;
+}
+function areaRow(name) {
+  const list = [...R.values()].filter((c) => c.a === name);
+  if (!list.length) return null;
+  const t = tally(list);
+  return h("div", { class: `area ${S.area === name ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
+    h("span", { class: "nm" }, name),
+    h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
+}
+function renderAreas() {
+  const el = $("#areas"); const top = el.scrollTop;
+  const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
+  el.replaceChildren(...K(h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)));
+  el.scrollTop = top;
+}
+const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
+function renderChecks() {
+  const el = $("#checks"); const top = el.scrollTop;
+  const list = [...R.values()].filter((c) => c.a === S.area);
+  const t = tally(list);
+  const vis = list.filter((c) => S.show[c.st]);
+  const order = { g: 0, y: 1, r: 2, done: 3 };
+  vis.sort((a, b) => order[a.st] - order[b.st]);
+  const chip = (k, label) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label);
+  el.replaceChildren(...K(
+    h("div", { class: "ckhead" }, h("h3", {}, S.area), h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`),
+      h("span", { class: "spacer" }), list.some((c) => c.st === "g") ? h("button", { class: "btn", onclick: () => { list.filter((c) => c.st === "g").forEach((c) => (S.done[c.n] = 1)); render(); } }, "Mark all in-logic done") : null),
+    h("div", { class: "chips" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
+    vis.length ? vis.map((c) => h("div", {
+      class: `ck st-${c.st}`,
+      onclick: () => { if (isDone(c.n)) { delete S.done[c.n]; if (S.auto.done[c.n]) S.ignore[c.n] = 1; } else { S.done[c.n] = 1; delete S.ignore[c.n]; } render(); },
+    }, h("span", { class: "dot" }), h("span", { class: "nm" }, c.n),
+      h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
+      c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
+      h("span", { class: "kind" }, KIND[c.k]))) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
+    h("div", { class: "legend" },
+      h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
+      h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),
+      h("span", {}, "C / A: which age can get it")),
+  ));
+  el.scrollTop = top;
+}
+
+// ---------- settings dialog ----------
+function settingRow(id) {
+  const s = SCHEMA.get(id), v = S.settings[id];
+  let input;
+  if (s.kind === "toggle") {
+    input = h("select", { onchange: (e) => { S.settings[id] = e.target.value === "1"; render(); } },
+      [h("option", { value: "0" }, "Off"), h("option", { value: "1" }, "On")]);
+    input.value = v ? "1" : "0";
+  } else {
+    const opts = s.id === "zora_fountain" ? ["closed", "open"] : s.id === "open_kakariko" ? ["zelda", "open"] : s.id === "shuffle_smallkeys" ? ["vanilla", "dungeon", "any_dungeon", "keysanity"] : s.choices;
+    input = h("select", { onchange: (e) => { S.settings[id] = e.target.value; render(); } }, opts.map((c) => h("option", { value: c }, label(id, c))));
+    input.value = v;
+  }
+  return h("div", { class: "row" }, h("label", {}, label(id, "_")), input);
+}
+function seedSummary() {
+  // every setting the seed changes from ootrr's defaults, in ootrr's own words
+  const rows = [];
+  for (const s of DATA.schema) {
+    const v = S.seed.vals[s.id];
+    if (JSON.stringify(v) === JSON.stringify(s.default)) continue;
+    const shown = Array.isArray(v) ? (v.length ? v.map((x) => label(s.id, x)).join(", ") : "none") : typeof v === "boolean" ? (v ? "On" : "Off") : label(s.id, v);
+    rows.push(h("div", {}, h("span", {}, label(s.id, "_")), h("span", {}, shown)));
+  }
+  return rows.length ? rows : [h("div", {}, h("span", {}, "Every setting is at ootrr's default"))];
+}
+function openSettings() {
+  const body = $("#dlgBody");
+  const close = h("div", { class: "foot" }, h("span", { style: "color:var(--faint);font-size:11px;align-self:center" }, "Saved in this browser."), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Done"));
+  if (S.seed) {
+    const sd = S.seed;
+    body.replaceChildren(...K(
+      h("h3", {}, "Settings from your seed"),
+      h("div", { style: "color:var(--dim);font-size:12px" }, `Seed ${sd.seed} · ${sd.generator} · ${Object.keys(sd.placements).length} shuffled locations`),
+      h("div", { style: "font-family:ui-monospace,monospace;font-size:11px;color:var(--faint);word-break:break-all;margin-top:4px" }, sd.settingsString),
+      h("div", { class: "sv-list" }, seedSummary()),
+      h("div", { class: "foot" },
+        h("button", { class: "btn", onclick: () => { S.seed = null; render(); openSettings(); } }, "Unload seed"),
+        h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Done")),
+    ));
+  } else {
+    body.replaceChildren(...K(
+      h("h3", {}, "Seed settings"),
+      h("div", { style: "color:var(--dim);font-size:12px;margin-bottom:6px" }, "Or load your .ootrr seed file and every setting is taken from it."),
+      MANUAL.map(settingRow),
+      h("h3", { style: "margin-top:16px" }, "Shuffled locations"),
+      h("div", { style: "color:var(--dim);font-size:12px" }, "Checked kinds are listed for you to track. Unchecked kinds keep their vanilla item, and the logic gives you that item once it is reachable."),
+      h("div", { class: "cats" }, CATS.map(([k, l]) => h("span", { class: `chip ${S.cats[k] ? "on" : ""}`, onclick: () => { S.cats[k] = !S.cats[k]; render(); openSettings(); } }, l))),
+      close,
+    ));
+  }
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
+$("#setBtn").onclick = openSettings;
+let armed = 0;
+$("#resetBtn").onclick = (e) => {
+  const b = e.currentTarget;
+  if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
+  clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; render();
+};
+
+
+// ---------- seed file ----------
+function seedId(sd) { return `${sd.seed}|${sd.settingsString}|${sd.game}`; }
+async function loadSeedFile(f) {
+  if (!f) return;
+  let sd;
+  try { sd = Seed.parseFile(await f.text(), DATA); }
+  catch (e) { W.err = `Couldn't read ${f.name}: ${e.message}`; paintAuto(); return; }
+  const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
+  S.seed = sd;
+  if (fresh) {  // a different seed is a new run
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = "";
+  }
+  W.err = "";
+  render();
+}
+$("#seedFile").onchange = (e) => { loadSeedFile(e.target.files[0]); e.target.value = ""; };
+
+function paintSeed() {
+  const box = $("#seedBox");
+  if (S.seed) {
+    box.replaceChildren(h("span", { class: "seed", title: `${S.seed.settingsString}\nClick to see the seed's settings`, onclick: openSettings }, `Seed ${S.seed.seed}`),
+      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file" }, "Load seed"));
+  } else {
+    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file ootrr generated: the tracker takes its settings and shuffled locations" }, "Load seed"));
+  }
+  // what a seed asks for that the tracker cannot model yet
+  const notes = [];
+  if (S.seed) {
+    const v = S.seed.vals;
+    if (v.shuffle_entrances && v.shuffle_entrances !== "off") notes.push("Entrances are shuffled in this seed. The tracker's logic still assumes vanilla entrances.");
+    if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
+    if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
+  }
+  const b = $("#banner");
+  b.hidden = !notes.length;
+  b.replaceChildren(...notes.map((n) => h("div", {}, n)));
+}
+
+// tracker/seed.rs: with a seed, a gift is found by the get event of the item actually placed there,
+// and a shuffled cow by its own one-time event.
+function detectMap() {
+  if (!S.seed) return DATA.detect;
+  const placed = S.seed.placements, copies = {};
+  for (const v of Object.values(placed)) copies[v] = (copies[v] || 0) + 1;
+  const out = {};
+  for (const [n, rules] of Object.entries(DATA.detect)) {
+    out[n] = rules.map((r) => {
+      const item = placed[n];
+      if (!item || !(r.g || r.c)) return r;
+      // a shuffled cow: its own one-time event, unless it still gives Milk (tracker/seed.rs cow_rule)
+      if (DATA.cow_flags[n]) return item === "Milk" ? r : { f: [DATA.cow_flags[n]] };
+      if (!r.g) return r;
+      // a gift: the get event of the placed item. ootrr calls the match weak when that item is not a
+      // plain actor or is placed more than once (its event fires for any copy), so those stay manual.
+      const ia = DATA.item_actors[item];
+      if (!ia || !ia.actor || copies[item] > 1) return {};
+      return { f: ia.a.map((a) => "HavePlayedGetEvent." + a) };
+    });
+  }
+  return out;
+}
+
+// ---------- auto-tracking ----------
+// Watches the game's save folder: Longshot's ...\Games\Longshot\user\save, or Lichii's
+// %APPDATA%\lichii\nand\user\save\...\0400486024DEC000. The newest slot's progress.sav wins.
+const W = { dir: null, timer: 0, read: null, err: "", where: "", child: false, name: "", mode: "", saved: null, blocked: false };
+let lastSig = "", lastMap = "";
+const canWatch = typeof window.showDirectoryPicker === "function";
+
+const MAX = {};
+for (const L of [INV, ARROWS, GEAR, TRADE, SONGS, REWARDS]) for (const [n, , m] of L) MAX[n] = m;
+for (const [n, , m] of COUNTERS) MAX[n] = m;
+for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
+
+function applyPeek(p, label) {
+  // Items and found checks stay once seen: keys are spent and trade items are swapped,
+  // so a later save can show less than you collected.
+  for (let [n, v] of Object.entries(Auto.items(p))) {
+    if (MAX[n] != null) v = Math.min(v, MAX[n]);
+    S.auto.items[n] = Math.max(S.auto.items[n] || 0, v);
+  }
+  for (const n of Auto.checks(p, detectMap())) S.auto.done[n] = 1;
+  const area = Auto.areaOf(p.map, DATA.maps);
+  W.where = area || ""; W.child = p.child; W.read = new Date(); W.err = ""; W.name = label;
+  if (S.follow && area && p.map !== lastMap) S.area = area;
+  lastMap = p.map || "";
+  render();
+}
+
+async function newestSave(dir) {
+  // Finds progress.sav in this folder or any folder below it (slot_00, slot_01 …, up to 4 levels),
+  // and returns the one written last.
+  let best = null;
+  const visit = async (d, label, depth) => {
+    for await (const [name, h] of d.entries()) {
+      if (h.kind === "file" && name === "progress.sav") {
+        try { const f = await h.getFile(); if (!best || f.lastModified > best.f.lastModified) best = { f, label }; } catch (e) {}
+      } else if (h.kind === "directory" && depth < 4) {
+        await visit(h, name, depth + 1);
+      }
+    }
+  };
+  await visit(dir, dir.name, 0);
+  return best;
+}
+
+async function poll() {
+  if (!W.dir) return;
+  try {
+    const b = await newestSave(W.dir);
+    if (!b) { W.err = "No progress.sav in that folder. Pick the save folder that holds slot_00, slot_01 …"; paintAuto(); return; }
+    const sig = `${b.label}:${b.f.lastModified}:${b.f.size}`;
+    if (sig !== lastSig) { lastSig = sig; applyPeek(Auto.peek(await b.f.arrayBuffer()), b.label); }
+    else paintAuto();
+  } catch (e) { W.err = e.message || String(e); paintAuto(); }
+}
+
+function startWatch(dir) {
+  W.dir = dir; W.mode = "watch"; lastSig = "";
+  clearInterval(W.timer); W.timer = setInterval(poll, 2000); poll();
+}
+async function watchFolder() {
+  try {
+    const dir = await window.showDirectoryPicker({ id: "ootrr-saves", mode: "read" });
+    try { const db = await idb(); db.transaction("h", "readwrite").objectStore("h").put(dir, "dir"); } catch (e) {}
+    startWatch(dir);
+  } catch (e) {
+    if (e && e.name === "AbortError") return;
+    W.err = "Folder watching isn't allowed here. Load the save file instead, or open the tracker as its own file in Chrome or Edge.";
+    W.blocked = true; paintAuto();
+  }
+}
+function idb() {
+  return new Promise((ok, bad) => { const r = indexedDB.open("ootrr-tracker", 1); r.onupgradeneeded = () => r.result.createObjectStore("h"); r.onsuccess = () => ok(r.result); r.onerror = () => bad(r.error); });
+}
+async function restoreFolder() {
+  if (!canWatch) return;
+  try {
+    const db = await idb();
+    const h = await new Promise((ok) => { const q = db.transaction("h").objectStore("h").get("dir"); q.onsuccess = () => ok(q.result); q.onerror = () => ok(null); });
+    if (!h) return;
+    W.saved = h;
+    if ((await h.queryPermission({ mode: "read" })) === "granted") startWatch(h);
+    else paintAuto();
+  } catch (e) {}
+}
+async function reconnect() {
+  try { if ((await W.saved.requestPermission({ mode: "read" })) === "granted") startWatch(W.saved); } catch (e) { W.err = e.message; paintAuto(); }
+}
+
+async function loadFile(f) {
+  if (!f) return;
+  try { applyPeek(Auto.peek(await f.arrayBuffer()), f.name); }
+  catch (e) { W.err = `Couldn't read ${f.name}: ${e.message}`; paintAuto(); }
+}
+// With several saves picked or dropped (one per slot), the newest one is read.
+const newestOf = (files) => [...files].filter((f) => /\.sav$/i.test(f.name)).sort((a, b) => b.lastModified - a.lastModified)[0];
+$("#saveFile").onchange = (e) => { loadFile(newestOf(e.target.files)); e.target.value = ""; };
+document.addEventListener("dragover", (e) => { e.preventDefault(); document.body.classList.add("drag"); });
+document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.body.classList.remove("drag"); });
+document.addEventListener("drop", (e) => {
+  e.preventDefault(); document.body.classList.remove("drag");
+  const files = [...e.dataTransfer.files];
+  const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
+  if (seed) loadSeedFile(seed); else loadFile(newestOf(files));
+});
+
+function paintAuto() {
+  const t = W.read ? W.read.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+  const watching = W.mode === "watch" && W.dir;
+  const kids = [h("span", { class: `live ${W.err ? "err" : watching ? "on" : ""}` })];
+  if (W.err) kids.push(h("span", { style: "color:var(--red);max-width:340px" }, W.err));
+  else if (W.read) kids.push(h("span", {}, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
+  else kids.push(h("span", {}, "Auto-tracking off"));
+  if (W.saved && !W.dir) kids.push(h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
+  else if (canWatch && !W.blocked && !watching) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
+  kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick or drop progress.sav (pick several and the newest is read)" }, watching ? "Load file" : "Load save"));
+  kids.push(h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
+    (() => { const c = h("input", { type: "checkbox" }); c.checked = S.follow; c.onchange = () => { S.follow = c.checked; save(); }; return c; })(), "Follow Link"));
+  $("#autoBox").replaceChildren(...kids);
+}
+
+try { render(); restoreFolder(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
+</script>
+</body>
+</html>
