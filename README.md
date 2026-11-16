@@ -2,6 +2,8 @@
 
 A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomizer](https://github.com/realazk/ootrr) by REALAZK. It is one HTML file that runs in your browser, offline, with nothing to install.
 
+**▶ Open the tracker: [br00ty.github.io/ootrr_tracker](https://br00ty.github.io/ootrr_tracker/)**
+
 - **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.6.0's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is.
@@ -10,7 +12,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 ## Use it
 
-Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link if it's turned on for this repo).
+Open the tracker in Chrome or Edge: use **[the online version](https://br00ty.github.io/ootrr_tracker/)**, or download `index.html` from this repo and open it. Both work the same, and your progress is saved in whichever one you use (the two don't share it).
 
 1. **Load seed** → pick your `.ootrr` file.
 2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
