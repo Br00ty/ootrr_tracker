@@ -806,7 +806,13 @@ let pinPlace = null;  // edit mode: the check waiting for a click on the map
 // only the child or only the adult version of a map), else its rule (a rule that needs one age), else its
 // name (OOTRR names one-age objects "Child …" / "Adult …").
 const AGES = new Map();
+// ages set by hand: "child", "adult", or null for both (OOTRR's data is unclear for these)
+const AGE_FIXES = {
+  // the two Know-it-All Brothers' house pots share an object in OOTRR's data; both ages until checked in game
+  "KF Know it All House Pot 1": null, "KF Know it All House Pot 2": null,
+};
 function ageOf(n) {
+  if (n in AGE_FIXES) return AGE_FIXES[n];
   if (AGES.has(n)) return AGES.get(n);
   let a = null;
   const ages = new Set();
