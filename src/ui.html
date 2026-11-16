@@ -405,9 +405,18 @@ for (const r of DATA.regions) for (const [to, q] of Object.entries(r.x || {})) {
   if (!ENTRANCES.has(to)) ENTRANCES.set(to, []);
   ENTRANCES.get(to).push([r.n, q.replace(/\s+/g, " ").trim()]);
 }
+// The way in is shown only when it is worth knowing: every entrance into the region needs something
+// (Song of Storms for a grotto, explosives for a fountain, keys for a dungeon room). Regions you can
+// walk into, or that only need an age or time of day (already shown by the C/A badges), stay quiet.
+// Warps (Farore's Wind, blue warps, warp songs) don't count as entrances here.
+const isFree = (q) => !q.replace(/\b(True|is_child|is_adult|at_day|at_night|at_dampe_time|and|or)\b|[()]/g, " ").trim();
+function waysIn(region) {
+  const ways = (ENTRANCES.get(region) || []).filter(([from]) => !/Warp/.test(from));
+  return ways.length && !ways.some(([, q]) => isFree(q)) ? ways : [];
+}
 function describe(n) {
   const [, , region, rule] = DATA.checks[n];
-  const ways = ENTRANCES.get(region) || [];
+  const ways = waysIn(region);
   const shown = ways.slice(0, 6);
   return h("div", { class: "desc" },
     h("div", {}, "Region: ", h("b", {}, region)),
