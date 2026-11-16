@@ -50,6 +50,7 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | LH Open Grotto Chest (Lake Hylia) | HF Open Grotto Chest | The chest is in a hidden hole in Lake Hylia |
 | LH Poe Chest (Lake Hylia) | HF Lake Poe Chest | A remake-only chest on the Lake Hylia shore |
 | HF GS Grotto Near Lake Entrance (Hyrule Field) | HF GS Cow Grotto | A Gold Skulltula in the grotto near the Lake Hylia entrance; OOTRR uses this name only as a placeholder for it |
+| HF GS Tree By KF (Hyrule Field) | LLR GS Rain Shed | A Gold Skulltula in a Hyrule Field tree near Kokiri Forest; OOTRR's data names it as Lon Lon Ranch's |
 | GV GS Behind Tent | GV GS Pillar | OOTRR's catalog has these two the wrong way round; the labels swap so each shows the item that drops there |
 | GV GS Pillar | GV GS Behind Tent | (the other half of the swap) |
 
