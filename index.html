@@ -31,6 +31,14 @@ header h1 small{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6p
 .btn{white-space:nowrap;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
 .btn:hover{border-color:var(--gold)}
 main{flex:1;display:grid;grid-template-columns:minmax(330px,390px) 250px 1fr;min-height:0}
+/* wide screens (1920x1080 and up): counters, keys and trade items get their own column, and the dungeons sit
+   beside the overworld, so nothing needs scrolling; narrower screens keep three columns */
+main section.wide{display:none}
+@media (min-width:1500px){
+  main{grid-template-columns:minmax(330px,390px) minmax(290px,330px) 250px 250px 1fr}
+  main section.wide{display:block}
+}
+.grid.g5{grid-template-columns:repeat(5,1fr)}
 section{border-right:1px solid var(--line);overflow:auto;min-height:0}
 section:last-child{border-right:0}
 h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);margin:14px 14px 6px;font-weight:600}
@@ -57,7 +65,7 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .cnt{display:inline-flex;align-items:center;gap:4px}
 .cnt button{width:20px;height:20px;border-radius:4px;border:1px solid var(--line);background:var(--panel2);cursor:pointer;padding:0;line-height:1}
 .cnt span{min-width:30px;text-align:center;font-variant-numeric:tabular-nums}
-.bk{border:1px solid var(--line);border-radius:4px;padding:1px 7px;cursor:pointer;background:var(--panel);color:var(--faint)}
+.bk{white-space:nowrap;border:1px solid var(--line);border-radius:4px;padding:1px 7px;cursor:pointer;background:var(--panel);color:var(--faint)}
 .bk.on{background:#33301f;color:var(--gold);border-color:#6a5c32}
 .hint{color:var(--faint);font-size:11px;padding:6px 14px 14px}
 /* areas */
@@ -145,7 +153,9 @@ body.drag::after{content:"Drop a .ootrr seed or progress.sav";position:fixed;ins
 <div class="banner" id="banner" hidden></div>
 <main>
   <section id="items"></section>
+  <section id="items2" class="wide"></section>
   <section id="areas"></section>
+  <section id="dungeons" class="wide"></section>
   <section id="checks"></section>
 </main>
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
@@ -1464,9 +1474,12 @@ function counter(name, max, step = 1) {
     h("span", {}, `${v}/${max}`),
     h("button", { onclick: () => bump(name, max, step), "aria-label": "more" }, "+"));
 }
+const WIDE = window.matchMedia("(min-width:1500px)");
+WIDE.addEventListener("change", () => render());
 function renderItems() {
-  const el = $("#items"); const top = el.scrollTop;
-  el.replaceChildren(...K(
+  const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
+  const wide = WIDE.matches;
+  const main = [
     h("h2", {}, "Items"), h("div", { class: "grid" }, INV.map(tile)),
     h("h2", {}, "Magic arrows"), h("div", { class: "grid" }, ARROWS.map(tile)),
     h("h2", {}, "Equipment"), h("div", { class: "grid" }, GEAR.map(tile)),
@@ -1475,17 +1488,23 @@ function renderItems() {
     // the three Spiritual Stones on their own row, the six Medallions in a row below them
     h("div", { class: "grid" }, REWARDS.filter((r) => r[3] === "stone").map(tile)),
     h("div", { class: "grid", style: "margin-top:4px" }, REWARDS.filter((r) => r[3] === "med").map(tile)),
-    h("h2", {}, "Child trade"), h("div", { class: "grid" }, CHILD_TRADE.map(tile)),
-    h("h2", {}, "Adult trade"), h("div", { class: "grid" }, ADULT_TRADE.map(tile)),
+  ];
+  // the second column on wide screens: counters, dungeon keys, child trade, adult trade
+  const g = wide ? "grid g5" : "grid";
+  const more = [
     h("h2", {}, "Counters"),
     h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, m))))),
     h("h2", {}, "Dungeon keys"),
     h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
       h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""} ${PICS.Item_Dungeon_BossKey ? "pic" : ""}`, title: "Boss key", onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "Boss key" }) : "Boss key") : "")))),
-    h("p", { class: "hint" }, "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too."),
-  ));
-  el.scrollTop = top;
+    h("h2", {}, "Child trade"), h("div", { class: g }, CHILD_TRADE.map(tile)),
+    h("h2", {}, "Adult trade"), h("div", { class: g }, ADULT_TRADE.map(tile)),
+  ];
+  const hint = h("p", { class: "hint" }, "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.");
+  if (wide) { el.replaceChildren(...K(main, hint)); el2.replaceChildren(...K(more)); }
+  else { el.replaceChildren(...K(main, more, hint)); el2.replaceChildren(); }
+  el.scrollTop = top; el2.scrollTop = top2;
 }
 function areaRow(name) {
   const list = [...R.values()].filter((c) => c.a === name);
@@ -1507,10 +1526,13 @@ function areaRow(name) {
     h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
 }
 function renderAreas() {
-  const el = $("#areas"); const top = el.scrollTop;
+  const el = $("#areas"), el2 = $("#dungeons"); const top = el.scrollTop, top2 = el2.scrollTop;
   const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
-  el.replaceChildren(...K(h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)));
-  el.scrollTop = top;
+  const over = [h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow)], dun = [h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)];
+  // wide screens: the dungeons get their own column to the right of the overworld
+  if (WIDE.matches) { el.replaceChildren(...K(over)); el2.replaceChildren(...K(dun)); }
+  else { el.replaceChildren(...K(over, dun)); el2.replaceChildren(); }
+  el.scrollTop = top; el2.scrollTop = top2;
 }
 // ---------- check logic ----------
 // Clicking a check shows its rule exactly as OOTRR's logic writes it, with the logic region the rule
