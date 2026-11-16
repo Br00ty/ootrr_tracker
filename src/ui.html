@@ -136,6 +136,24 @@ dialog::backdrop{background:#0009}
 .auto b{color:var(--ink);font-weight:600}
 .it.auto{box-shadow:inset 0 -2px 0 var(--green)}
 .ck .sv{font-size:10px;color:var(--green);border:1px solid #2e5a3e;border-radius:3px;padding:0 4px}
+/* map tracker: the map takes the place of the overworld, dungeon and location columns */
+.mode{display:inline-flex;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.mode button{background:var(--panel2);border:0;padding:5px 10px;cursor:pointer;color:var(--dim);white-space:nowrap}
+.mode button+button{border-left:1px solid var(--line)}
+.mode button.on{background:#33301f;color:var(--gold)}
+#mapview{display:none;grid-column:2/-1;overflow:hidden;flex-direction:column}
+@media (min-width:1500px){#mapview{grid-column:3/-1}}
+main.mapmode #areas,main.mapmode #dungeons,main.mapmode #checks{display:none}
+main.mapmode #mapview{display:flex}
+.mapbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
+.mapbar select{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 6px}
+.mapbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.mapbar .seg button{background:var(--panel2);border:0;padding:3px 9px;cursor:pointer;color:var(--dim)}
+.mapbar .seg button+button{border-left:1px solid var(--line)}
+.mapbar .seg button.on{background:#33301f;color:var(--gold)}
+.mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b}
+.mapbox img{max-width:100%;max-height:100%;aspect-ratio:3/2;object-fit:fill;width:auto;height:auto;display:block}
+.mapbox .empty{max-width:520px;text-align:center;line-height:1.6}
 body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
 </style>
 </head>
@@ -143,12 +161,13 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 <header>
   <h1>OOTRR TRACKER<small>OoT Remake randomizer</small></h1>
   <div class="stats" id="stats"></div>
+  <div class="mode" id="modeBox" title="Switch between the list of locations and the game's maps"></div>
   <div class="spacer"></div>
   <div class="auto" id="autoBox"></div>
   <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
   <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
-  <button class="btn" id="iconBtn" title="Show item pictures from OOTRR's icon cache">Icons</button>
+  <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
   <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
@@ -161,12 +180,14 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <section id="areas"></section>
   <section id="dungeons" class="wide"></section>
   <section id="checks"></section>
+  <section id="mapview"></section>
 </main>
 <dialog id="dlg"><div class="dlg" id="dlgBody"></div></dialog>
 
 <script>/*ENGINE*/</script>
 <script>/*AUTO*/</script>
 <script>/*SEED*/</script>
+<script>/*TEX*/</script>
 <script>const DATA = /*DATA*/;</script>
 <script>
 "use strict";
@@ -266,7 +287,8 @@ const label = (id, v) => (DATA.labels[id] || {})[v] || String(v);
 const CATS = [["chest","Chests"],["npc","NPCs & cutscenes"],["song","Songs"],["boss","Bosses (stones & medallions)"],["gs","Gold Skulltulas"],["other","Hearts, keys, cows, scrubs, pots"]];
 const catOf = (kind) => ({ chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "gs" })[kind] || "other";
 const DEFAULT = {
-  items: {}, done: {}, auto: { items: {}, done: {} }, ignore: {}, follow: true, area: "Kokiri Forest", show: { g: true, y: true, r: true, done: false },
+  items: {}, done: {}, auto: { items: {}, done: {} }, ignore: {}, follow: true, area: "Kokiri Forest",
+  view: "list", mapAge: "child", floor: {}, show: { g: true, y: true, r: true, done: false },
   settings: Object.fromEntries(MANUAL.map((id) => [id, SCHEMA.get(id).default])),
   seed: null,
   reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
@@ -389,7 +411,8 @@ function render() {
   R = compute();
   if (typeof paintAuto === "function") paintAuto();
   if (typeof paintSeed === "function") paintSeed();
-  renderStats(); renderItems(); renderAreas(); renderChecks();
+  renderStats(); renderItems(); renderMode();
+  if (S.view === "map") renderMap(); else { renderAreas(); renderChecks(); }
   save();
 }
 function tally(list) { const t = { g: 0, y: 0, r: 0, done: 0 }; for (const c of list) t[c.st]++; return t; }
@@ -493,11 +516,29 @@ const ASK_KEY = "ootrr-tracker-icons-ask";
 let iconMsg = "", iconView = "main", copied = false;
 const nPics = () => Object.keys(PICS).filter((k) => ICON_IDS.has(k)).length;
 const NONE_FOUND = `No OOTRR pictures were found in that folder. Pick the ootrr folder in AppData\\Local (${ICON_PATH}). If OOTRR has never shown its tracker with your game folder set, open it once so it saves the pictures.`;
+// a picked or dropped folder: the game's map textures, or OOTRR's pictures (whose folder also holds
+// OOTRR's settings, with the game folder the maps are read from)
+function usePicked(files) {
+  if (files.some((f) => /\.bntx\.zs$/i.test(f.name))) return useMapFiles(files);
+  return useIconFiles(files);
+}
 async function useIconFiles(files) {
+  const set = files.find((f) => f.name === "settings.json");
+  if (set) try { const d = JSON.parse(await set.text()); if (d && d.game_dir) localStorage.setItem(MAP_PATH_KEY, d.game_dir); } catch (e) {}
   iconView = "main"; iconMsg = "Reading pictures…"; openIcons();
   const n = await takeIcons(files.filter((f) => /\.png$/i.test(f.name)));
   iconMsg = n ? `Loaded ${n} pictures.` : NONE_FOUND;
   openIcons();
+}
+// the maps' folder: from OOTRR's settings when known, otherwise the part inside the game folder
+const mapPath = () => { let d = null; try { d = localStorage.getItem(MAP_PATH_KEY); } catch (e) {} return d ? `${d.replace(/[\\/]+$/, "")}\\UI\\CustomTex\\Map` : null; };
+const MAP_NONE = "No map files were found in that folder. Pick the Map folder inside your game files: romfs → UI → CustomTex → Map.";
+async function pickMaps(auto) {
+  copied = false;
+  const p = mapPath();
+  if (auto && p) { try { await navigator.clipboard.writeText(p); copied = true; } catch (e) {} }
+  iconMsg = ""; mapMsg = ""; iconView = "mapfind"; openIcons();
+  $("#iconFile").click();
 }
 // auto: copy the folder's address first, so the folder window only needs paste + Enter
 async function pickIcons(auto) {
@@ -510,7 +551,7 @@ async function droppedFolderFiles(entries) {
   const out = [];
   const walk = (entry, depth) => new Promise((done) => {
     if (entry.isFile) {
-      if (/\.(png|sav)$/i.test(entry.name)) entry.file((f) => { f.slot = (entry.fullPath || "").split("/").slice(-2, -1)[0]; out.push(f); done(); }, () => done());
+      if (/\.(png|sav|zs|json)$/i.test(entry.name)) entry.file((f) => { f.slot = (entry.fullPath || "").split("/").slice(-2, -1)[0]; out.push(f); done(); }, () => done());
       else done();
       return;
     }
@@ -532,7 +573,19 @@ function openIcons() {
   const row = (...b) => h("div", { style: "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px" }, ...b);
   const path = h("p", {}, h("code", { class: "q" }, ICON_PATH), " ", h("button", { class: "btn", style: "padding:2px 8px", onclick: async (e) => { try { await navigator.clipboard.writeText(ICON_PATH); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = "Select it and copy"; } } }, "Copy"));
   let body;
-  if (iconView === "finding") {
+  if (iconView === "mapfind") {
+    const p = mapPath();
+    body = [h("h3", {}, "Finding the game's maps"),
+      h("p", {}, p ? (copied ? "The Map folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:")
+        : "In the folder window that just opened, go to your game files (the extracted romfs folder), then into UI → CustomTex → Map."),
+      p && !copied ? h("p", {}, h("code", { class: "q" }, p)) : null,
+      p ? h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
+        h("li", {}, "Click the address bar at the top (or press ", h("b", {}, "Alt + D"), ")."),
+        h("li", {}, copied ? h("span", {}, "Press ", h("b", {}, "Ctrl + V"), " to paste, then ", h("b", {}, "Enter"), ".") : "Type the address above, then press Enter."),
+        h("li", {}, "Click ", h("b", {}, "Upload"), ", then ", h("b", {}, "Upload"), " again when the browser asks to confirm.")) : h("p", {}, "Then click ", h("b", {}, "Upload"), ", and ", h("b", {}, "Upload"), " again when the browser asks to confirm."),
+      h("p", { class: "hint", style: "padding:6px 0 0" }, "About 70 maps are read and shrunk; it takes a little while. They're kept in your browser; nothing is sent anywhere."),
+      row(h("button", { class: "btn", onclick: () => pickMaps(false) }, "Open the folder window again"), h("button", { class: "btn", onclick: () => { iconView = "main"; openIcons(); } }, "Back"))];
+  } else if (iconView === "finding") {
     body = [h("h3", {}, "Finding the pictures"),
       h("p", {}, copied ? "The folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:"),
       copied ? null : path,
@@ -551,7 +604,7 @@ function openIcons() {
         h("button", { class: "btn", onclick: () => pickIcons(false) }, "Pick folder"))];
   } else {
     const first = !n;
-    body = [h("h3", {}, first ? "Show item pictures?" : "Item pictures"),
+    body = [h("h3", {}, first ? "Show item pictures?" : "Item pictures and maps"),
       h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys. They come from your copy of the game, so they aren't included with the tracker: OOTRR saves them on your PC the first time its tracker runs with your game folder set."),
       msg,
       h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser.` : "No pictures stored yet."),
@@ -562,12 +615,177 @@ function openIcons() {
         h("button", { class: "btn", style: "text-align:left;padding:8px 12px", onclick: () => { iconView = "manual"; iconMsg = ""; openIcons(); } },
           h("b", {}, "I'll do it myself"), h("br"),
           h("span", { style: "color:var(--dim);font-size:12px" }, "Pick the folder with the pictures, or drag it onto the tracker."))),
+      h("h3", { style: "margin-top:18px" }, "Game maps"),
+      h("p", {}, "The Map Tracker shows the game's own maps. They're read from your game files (romfs → UI → CustomTex → Map)."),
+      mapMsg ? h("p", { style: "color:var(--gold)" }, mapMsg) : null,
+      mapBusy ? null : h("p", { style: "color:var(--dim)" }, nMaps() ? `${nMaps()} maps stored in this browser.` : "No maps stored yet."),
+      mapBusy ? null : h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
+        h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => pickMaps(true) }, nMaps() ? "Load the maps again" : "Load the game's maps"),
+        nMaps() ? h("button", { class: "btn", onclick: async () => { await mapsClear(); mapMsg = "Maps removed."; render(); openIcons(); } }, "Remove maps") : null),
+      mapPath() || mapBusy ? null : h("p", { class: "hint", style: "padding:6px 0 0" }, "Tip: load the item pictures first. Their folder tells the tracker where your game files are, so it can copy the Map folder's address for you."),
       row(n ? h("button", { class: "btn", onclick: () => { PICS = {}; try { localStorage.removeItem(ICON_KEY); } catch (e) {} iconMsg = "Pictures removed."; render(); openIcons(); } }, "Remove pictures") : null,
         first ? h("button", { class: "btn", title: "You can still add them from the Icons button", onclick: () => { try { localStorage.setItem(ASK_KEY, "no"); } catch (e) {} close(); } }, "Don't ask again") : null,
         h("button", { class: "btn", onclick: close }, first ? "Not now" : "Close"))];
   }
   $("#dlgBody").replaceChildren(...K(...body));
   if (!$("#dlg").open) $("#dlg").showModal();
+}
+// ---------- map tracker ----------
+// The game's own pause-menu maps, read from the player's copy of the game (romfs\UI\CustomTex\Map):
+// zstd-packed BNTX textures, decoded in the page (src/texdec.js), shrunk to WebP and kept in the browser's
+// IndexedDB. Field maps: <Zone>_<Child|Adult>_00. Dungeon floors: <Dungeon>_<Floor>[_Lv<n>][_State<nn>]_Main,
+// the first level/state of each floor. All textures are 2000x1440 and the game shows them 3:2.
+const MAP_ZONES = {
+  "Kokiri Forest": "KokiriForest", "Lost Woods": "LostWood", "Sacred Forest Meadow": "SacredForestMeadow",
+  "Hyrule Field": "HyruleField", "Lon Lon Ranch": "LonLonRanch", "Market": "Market", "Hyrule Castle": ["HyruleCastle", "GanonCastle"],
+  "Kakariko Village": "KakarikoVillage", "Graveyard": "Graveyard", "Death Mountain Trail": "DeathMountainTrail",
+  "Goron City": "GoronCity", "Death Mountain Crater": "DeathMountainCrater", "Zora's River": "ZoraRiver",
+  "Zora's Domain": "ZoraDomain", "Zora's Fountain": "ZoraFountain", "Lake Hylia": "LakeHylia", "Gerudo Valley": "GerudoValley",
+  "Gerudo's Fortress": "GerudoFortress", "Haunted Wasteland": "HountedWasteland", "Desert Colossus": "DesertColossus",
+  "Outside Ganon's Castle": "GanonCastle",
+};
+const MAP_DUNGEONS = {
+  "Deku Tree": "InsideTheDekuTree", "Dodongo's Cavern": "DodongoCavern", "Jabu Jabu's Belly": "InsideJabuJabuBelly",
+  "Forest Temple": "ForestTemple", "Fire Temple": "FireTemple", "Water Temple": "WaterTemple", "Shadow Temple": "ShadowTemple",
+  "Spirit Temple": "SpiritTemple", "Bottom of the Well": "BottomOfTheWell", "Ice Cavern": "IceCavern",
+};
+const MAP_DB = "ootrr-tracker-maps", MAP_PATH_KEY = "ootrr-tracker-gamedir";
+const FIELD_RE = /^(?!Mini_)([A-Za-z]+)_(Child|Adult)_00$/;
+const FLOOR_RE = /^([A-Za-z]+)_(B\d|\dF)(?:_Lv(\d))?(?:_State(\d\d))?_Main$/;
+const floorRank = (f) => (f[0] === "B" ? -+f[1] : +f[0]);  // 5F … 1F, B1 … B4
+let MAPS = new Map();      // texture key → Blob
+const MAP_URL = new Map(); // texture key → object URL
+let mapMsg = "", mapBusy = false;
+function mapDb() {
+  return new Promise((ok, no) => {
+    try {
+      const r = indexedDB.open(MAP_DB, 1);
+      r.onupgradeneeded = () => r.result.createObjectStore("maps");
+      r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error);
+    } catch (e) { no(e); }
+  });
+}
+async function mapsLoad() {
+  try {
+    const db = await mapDb();
+    const all = await new Promise((ok, no) => {
+      const out = new Map(), tx = db.transaction("maps"), st = tx.objectStore("maps"), c = st.openCursor();
+      c.onsuccess = () => { const k = c.result; if (k) { out.set(k.key, k.value); k.continue(); } else ok(out); };
+      c.onerror = () => no(c.error);
+    });
+    MAPS = all;
+  } catch (e) { /* no IndexedDB here: maps last until the page closes */ }
+  if (S.view === "map") render();
+}
+async function mapsStore(entries) {
+  try {
+    const db = await mapDb();
+    await new Promise((ok, no) => {
+      const tx = db.transaction("maps", "readwrite"), st = tx.objectStore("maps");
+      for (const [k, v] of entries) st.put(v, k);
+      tx.oncomplete = ok; tx.onerror = () => no(tx.error);
+    });
+  } catch (e) {}
+}
+async function mapsClear() {
+  MAPS = new Map(); for (const u of MAP_URL.values()) URL.revokeObjectURL(u); MAP_URL.clear();
+  try { const db = await mapDb(); db.transaction("maps", "readwrite").objectStore("maps").clear(); } catch (e) {}
+}
+const nMaps = () => MAPS.size;
+// The texture files worth keeping: one field map per zone and age, and the first state of each dungeon floor.
+function mapPicks(files) {
+  const best = new Map();
+  for (const f of files) {
+    const n = f.name.replace(/\.bntx\.zs$/i, "");
+    if (n === f.name) continue;
+    let key = null, rank = 0;
+    const fm = FIELD_RE.exec(n);
+    if (fm) key = `${fm[1]}_${fm[2]}`;
+    const dm = !fm && FLOOR_RE.exec(n);
+    if (dm) { key = `${dm[1]}_${dm[2]}`; rank = (+dm[3] || 0) * 100 + (+dm[4] || 0); }
+    if (!key) continue;
+    if (!best.has(key) || rank < best.get(key).rank) best.set(key, { f, rank });
+  }
+  return best;
+}
+async function toWebp(img) {
+  const c = document.createElement("canvas");
+  c.width = img.w; c.height = img.h;
+  c.getContext("2d").putImageData(new ImageData(img.rgba, img.w, img.h), 0, 0);
+  // stored at 1500x1080 (3/4 size): sharp enough for the panel, about a quarter of the space
+  const o = document.createElement("canvas");
+  o.width = Math.round(img.w * 0.75); o.height = Math.round(img.h * 0.75);
+  const g = o.getContext("2d"); g.imageSmoothingQuality = "high"; g.drawImage(c, 0, 0, o.width, o.height);
+  return await new Promise((ok) => o.toBlob((b) => ok(b), "image/webp", 0.86)) || await new Promise((ok) => o.toBlob(ok, "image/png"));
+}
+async function useMapFiles(files) {
+  const picks = mapPicks(files);
+  if (!picks.size) { mapMsg = MAP_NONE; iconView = "main"; openIcons(); return; }
+  mapBusy = true;
+  let done = 0, bad = 0;
+  const got = [];
+  for (const [key, { f }] of picks) {
+    mapMsg = `Reading maps… ${done} of ${picks.size}`; iconView = "main"; openIcons();
+    await new Promise((r) => setTimeout(r, 0));
+    try {
+      const tex = TexDec.readTextures(new Uint8Array(await f.arrayBuffer()))[0];
+      const blob = await toWebp(tex);
+      MAPS.set(key, blob);
+      if (MAP_URL.has(key)) { URL.revokeObjectURL(MAP_URL.get(key)); MAP_URL.delete(key); }
+      got.push([key, blob]);
+    } catch (e) { bad++; console.warn("map", key, e); }
+    done++;
+  }
+  await mapsStore(got);
+  mapBusy = false;
+  mapMsg = `Loaded ${got.length} maps.` + (bad ? ` ${bad} could not be read.` : "");
+  openIcons(); render();
+}
+// the stored map for an area: [texture key, note] (the other age's map when this age has none)
+function mapFor(area) {
+  if (MAP_DUNGEONS[area]) {
+    const d = MAP_DUNGEONS[area];
+    const floors = [...MAPS.keys()].filter((k) => k.startsWith(d + "_")).map((k) => k.slice(d.length + 1)).sort((a, b) => floorRank(b) - floorRank(a));
+    const fl = floors.includes(S.floor[area]) ? S.floor[area] : floors.find((f) => f === "1F") || floors[0];
+    return { floors, floor: fl, key: fl ? `${d}_${fl}` : null };
+  }
+  const zs = [].concat(MAP_ZONES[area] || []);
+  const age = S.mapAge === "adult" ? "Adult" : "Child", other = age === "Adult" ? "Child" : "Adult";
+  for (const z of zs) if (MAPS.has(`${z}_${age}`)) return { key: `${z}_${age}` };
+  for (const z of zs) if (MAPS.has(`${z}_${other}`)) return { key: `${z}_${other}`, note: `The game has no ${age.toLowerCase()} map here; this is the ${other.toLowerCase()} one.` };
+  return { key: null };
+}
+function mapUrl(key) {
+  if (!MAP_URL.has(key)) MAP_URL.set(key, URL.createObjectURL(MAPS.get(key)));
+  return MAP_URL.get(key);
+}
+function renderMode() {
+  const b = (v, label) => h("button", { class: S.view === v ? "on" : "", onclick: () => { S.view = v; render(); } }, label);
+  $("#modeBox").replaceChildren(b("list", "Location Tracker"), b("map", "Map Tracker"));
+  $("main").classList.toggle("mapmode", S.view === "map");
+}
+function renderMap() {
+  const el = $("#mapview");
+  const areas = [...OVERWORLD, ...DUNGEON_AREAS];
+  const sel = h("select", { onchange: (e) => { S.area = e.target.value; render(); } },
+    h("optgroup", { label: "Overworld" }, OVERWORLD.map((a) => h("option", { value: a }, a))),
+    h("optgroup", { label: "Dungeons" }, DUNGEON_AREAS.map((a) => h("option", { value: a }, a))));
+  sel.value = areas.includes(S.area) ? S.area : "Kokiri Forest";
+  const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
+  const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
+  const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
+  const bar = h("div", { class: "mapbar" }, sel,
+    dungeon ? (m.floors.length ? seg(m.floors.map((f) => [f, f]), m.floor, (v) => { S.floor[area] = v; }) : null)
+      : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
+    h("span", { class: "spacer" }),
+    list.length ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
+    h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
+  let body;
+  if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
+    h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, "Load the game's maps"));
+  else if (!m.key) body = h("div", { class: "empty" }, (MAP_ZONES[area] || MAP_DUNGEONS[area]) ? `No map for ${area} was loaded. Load the maps again from the game's Map folder.` : `The game has no map for ${area}.`);
+  else body = h("img", { src: mapUrl(m.key), alt: `Map of ${area}`, draggable: "false" });
+  el.replaceChildren(...K(bar, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null, h("div", { class: "mapbox" }, body)));
 }
 function tile([name, label, max, cls]) {
   const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
@@ -857,7 +1075,7 @@ function openSettings() {
 }
 $("#setBtn").onclick = openSettings;
 $("#iconBtn").onclick = () => { iconMsg = ""; openIcons(); };
-$("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; useIconFiles(files); };
+$("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; usePicked(files); };
 // the folder window was closed without picking
 $("#iconFile").addEventListener("cancel", () => { if (iconView === "finding") { iconView = "main"; openIcons(); } });
 let armed = 0;
@@ -1046,6 +1264,7 @@ function applyPeek(p, label) {
   W.where = area || ""; W.child = p.child; W.read = new Date(); W.err = ""; W.name = label;
   // follow the area, not the map: Lake Hylia and Lon Lon Ranch share the Hyrule Field map
   if (S.follow && area && area !== lastMap) S.area = area;
+  if (S.follow && area) S.mapAge = p.child ? "child" : "adult";
   // Link inside a dungeon has walked through its door, so that door is no secret any more
   if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
   lastMap = area || "";
@@ -1200,7 +1419,7 @@ document.addEventListener("drop", (e) => {
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);
   if (folder) {  // a dropped folder: saves if it holds any, otherwise item pictures
-    droppedFolderFiles(entries).then((got) => { const f = newestOf(got); if (f) loadFile(f, f.slot || f.name); else useIconFiles(got); });
+    droppedFolderFiles(entries).then((got) => { const f = newestOf(got); if (f) loadFile(f, f.slot || f.name); else usePicked(got); });
     return;
   }
   if (files.some((f) => /\.png$/i.test(f.name))) { useIconFiles(files); return; }
@@ -1229,7 +1448,7 @@ function paintAuto() {
   $("#autoBox").replaceChildren(...kids);
 }
 
-try { render(); restoreFolder(); restoreIcons(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
+try { render(); restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
 </script>
 </body>
 </html>
