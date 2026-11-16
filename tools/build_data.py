@@ -126,7 +126,9 @@ print('classic', len(classic), 'not in logic', len(missing), missing[:10], file=
 # save detection (tracker/rules.rs), gifts and cows marked for seed-aware rewiring (tracker/seed.rs)
 det = {}
 for t in T:
-    o = t.get('ootr')
+    # most targets name their OoTR location in "ootr"; some (29 chests, the grass and rocks) are named
+    # after it directly and have no "ootr" field
+    o = t.get('ootr') or (t.get('name') if t.get('name') in checks else None)
     if not o or o not in checks: continue
     r = {}
     if t['how'] == 'flag': r['f'] = t.get('flags') or []
