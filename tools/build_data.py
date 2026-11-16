@@ -94,10 +94,14 @@ def all_locs(regs):
         for n in (r.get('l') or {}):
             yield n, r['n']
 seen = {}
-for n, rn in all_locs(base): seen.setdefault(n, rn)
+rules = {}
+for r in base:
+    for n, q in (r.get('l') or {}).items():
+        seen.setdefault(n, r['n']); rules.setdefault(n, q)
 for ch in patches.values():
     for rn, d in ch.items():
-        for n in ((d.get('new') or {}).get('l') or d.get('l') or {}): seen.setdefault(n, rn)
+        for n, q in ((d.get('new') or {}).get('l') or d.get('l') or {}).items():
+            seen.setdefault(n, rn); rules.setdefault(n, q)
 checks = {}
 noarea = []
 for n, rn in seen.items():
@@ -105,9 +109,10 @@ for n, rn in seen.items():
     a = area_hint.get(base_n) or area_of(base_n) or area_of(rn)
     if not a:
         noarea.append(n); a = 'Other'
-    checks[n] = [a, kind_of.get(base_n) or guess_kind(base_n)]
+    # area, kind, logic region, and the location's own logic rule (for the check's description)
+    checks[n] = [a, kind_of.get(base_n) or guess_kind(base_n), rn, ' '.join(rules[n].split())]
 print('catalog', len(checks), 'no area', len(noarea), noarea[:20], file=sys.stderr)
-print(collections.Counter(k for _, k in checks.values()), file=sys.stderr)
+print(collections.Counter(k for _, k, *_ in checks.values()), file=sys.stderr)
 
 # the classic (no seed) check list: the 0.6.0 versions of locations.json and flow_locations.json
 classic = []

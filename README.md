@@ -13,7 +13,7 @@ Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link i
 
 1. **Load seed** → pick your `.ootrr` file.
 2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
-3. Play. Click an area to see its checks; click a check to tick or untick it.
+3. Play. Click an area to see its checks. Click a check to see where it is and what it needs once you're there (from OOTRR's logic); double-click it to mark it done, or double-click again to undo.
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 

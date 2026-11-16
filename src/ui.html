@@ -78,6 +78,11 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .age.ol{color:#111;background:var(--yellow);border-color:var(--yellow)}
 .st-g .dot{background:var(--green)}.st-y .dot{background:var(--yellow)}.st-r .dot{background:var(--red)}.st-done .dot{background:var(--grey)}
 .empty{color:var(--faint);padding:20px 16px}
+.ck{user-select:none}
+.ck.open{background:var(--panel2)}
+.desc{padding:4px 16px 9px 36px;font-size:12px;line-height:1.45;color:var(--dim);background:var(--panel2);border-bottom:1px solid #221f18}
+.desc b{color:var(--ink);font-weight:600}
+.desc .q{color:#cdbf98}
 /* settings */
 dialog{background:var(--panel);color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:0;width:min(560px,92vw)}
 dialog::backdrop{background:#0009}
@@ -384,6 +389,89 @@ function renderAreas() {
   el.replaceChildren(...K(h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)));
   el.scrollTop = top;
 }
+// ---------- check descriptions ----------
+// Built from OOTRR's logic: the location's logic region (where it is inside the area) and the
+// location's own rule (what it needs once you are in that region). Region access is not repeated.
+let openCheck = null, clickTimer = 0;
+function toggleDone(n) {
+  if (isDone(n)) { delete S.done[n]; if (S.auto.done[n]) S.ignore[n] = 1; } else { S.done[n] = 1; delete S.ignore[n]; }
+  render();
+}
+const ABBR = { KF: "Kokiri Forest", LW: "Lost Woods", SFM: "Sacred Forest Meadow", HF: "Hyrule Field", LLR: "Lon Lon Ranch", ToT: "Temple of Time",
+  HC: "Hyrule Castle", OGC: "Outside Ganon's Castle", Kak: "Kakariko Village", DMT: "Death Mountain Trail", GC: "Goron City", DMC: "Death Mountain Crater",
+  ZR: "Zora's River", ZD: "Zora's Domain", ZF: "Zora's Fountain", LH: "Lake Hylia", GV: "Gerudo Valley", GF: "Gerudo's Fortress", GS: "Gold Skulltula", PoH: "Piece of Heart" };
+const OWN = { Midos: "Mido's", Sarias: "Saria's", Darunias: "Darunia's", Impas: "Impa's", Links: "Link's", Ganons: "Ganon's", Dampes: "Dampé's", Dodongos: "Dodongo's",
+  Zoras: "Zora's", Rutos: "Ruto's", Zeldas: "Zelda's", Eponas: "Epona's", Suns: "Sun's", Dins: "Din's", Farores: "Farore's", Nayrus: "Nayru's", Jabus: "Jabu's",
+  Poachers: "Poacher's", Giants: "Giant's", Biggorons: "Biggoron's", Kings: "King's", Twinrovas: "Twinrova's", Gorons: "Goron's", Talons: "Talon's", Malons: "Malon's" };
+const words = (t) => t.split(" ").map((w) => ABBR[w] || OWN[w] || w).join(" ");
+const bare = (t) => t.replace(/'/g, "").toLowerCase();
+function placeOf(region, area) {
+  let r = words(region);
+  // drop the area from the front of the region name ("Gerudo Fortress" is "Gerudo's Fortress")
+  for (const a of [area, area.replace(/'s\b/g, ""), area.replace(/'/g, "")]) if (bare(r).startsWith(bare(a) + " ")) { r = r.slice(a.length + 1); break; }
+  return !r || bare(r) === bare(area) || bare(r) === bare(area.replace(/'s\b/g, "")) ? area : `${r}, ${area}`;
+}
+const regionWords = (t) => words(t).replace(/ (Skippable )?Locations$/, "");
+const NAMES = { is_child: "child", is_adult: "adult", at_night: "at night", at_day: "by day", at_dampe_time: "at Dampé's hours", Time_Travel: "the Master Sword (time travel)",
+  can_blast_or_smash: "explosives or the Hammer", has_explosives: "explosives", can_child_attack: "a child weapon", can_cut_shrubs: "something to cut shrubs",
+  can_stun_deku: "something to stun Deku Scrubs", can_open_bomb_grotto: "a way to open a bombable grotto", can_open_storm_grotto: "Song of Storms",
+  can_plant_bean: "a planted bean", can_plant_bugs: "bugs to release", can_break_crate: "a way to break crates", can_summon_gossip_fairy: "a song for the Gossip Stone",
+  can_summon_gossip_fairy_without_suns: "a song for the Gossip Stone", has_bottle: "a bottle", can_ride_epona: "Epona", can_leave_forest: "leaving the forest",
+  can_jumpslash: "a sword or sticks", can_dive: "a scale", Sticks: "Deku Sticks", Nuts: "Deku Nuts", Bombs: "bombs", Scarecrow: "Hookshot and Scarecrow's Song",
+  Distant_Scarecrow: "Longshot and Scarecrow's Song", True: "nothing more", False: "not possible" };
+const human = (n) => NAMES[n] || words(n.replace(/^can_use_?/, "").replace(/^logic_(.*)$/, "trick: $1").replace(/_/g, " "));
+function speak(a, top) {
+  switch (a.t) {
+    case "bool": return a.v ? "nothing more" : "not possible";
+    case "int": case "float": return String(a.v);
+    case "str": return a.v;
+    case "name": return human(a.v);
+    case "not": return "not " + speak(a.x);
+    case "and": {
+      // the remake gives every Ocarina note, so the note buttons are left out
+      const parts = a.v.filter((x) => !(x.t === "name" && /^Ocarina_.*_Button$/.test(x.v)) && !(x.t === "call" && x.n === "has_all_notes_for_song")).map((x) => speak(x)).filter(Boolean);
+      return parts.length ? parts.join(" and ") : "nothing more";
+    }
+    case "or": { const s = a.v.map((x) => (x.t === "and" ? `(${speak(x)})` : speak(x))).join(" or "); return top ? s : `(${s})`; }
+    case "tuple": {
+      const [it, k] = a.v; const n = it.v ? it.v.replace(/_/g, " ") : "";
+      const tiers = TIERS[n]; const cnt = k.t === "int" ? k.v : null;
+      if (tiers && cnt) return tiers[Math.min(cnt, tiers.length) - 1];
+      if (/^Small Key /.test(n)) return `${cnt ?? "some"} ${words(n.replace(/^Small Key /, ""))} small key${cnt === 1 ? "" : "s"}`;
+      return `${cnt ?? ""} ${human(it.v || "")}`.trim();
+    }
+    case "call": {
+      const args = a.v;
+      if (a.n === "can_use" || a.n === "here" || a.n === "has") return speak(args[0], top);
+      if (a.n === "can_play") return "play " + speak(args[0]);
+      if (a.n === "at") return `${speak(args[1])} (and reaching ${regionWords(args[0].v || "")})`;
+      const keys = /^(fire|water|spirit)_keys$/.exec(a.n);
+      if (keys && args[0] && args[0].t === "int") return `${args[0].v} ${keys[1][0].toUpperCase() + keys[1].slice(1)} Temple small keys`;
+      if (a.n === "has_all_notes_for_song") return "";
+      return human(a.n) + (args.length ? ` (${args.map((x) => speak(x)).join(", ")})` : "");
+    }
+    case "cmp": return a.r.reduce((s, [op, x]) => `${s} ${op} ${speak(x)}`, speak(a.l)).replace(/ == /g, " is ").replace(/ != /g, " is not ");
+    case "if": return `${speak(a.a)} if ${speak(a.c)} else ${speak(a.b)}`;
+    case "bin": return `${speak(a.a)} ${a.op} ${speak(a.b)}`;
+    case "neg": return "-" + speak(a.x);
+    case "index": return `${a.n}[${speak(a.x)}]`;
+    case "list": return a.v.map((x) => speak(x)).join(", ");
+  }
+  return "";
+}
+const KIND_LONG = { chest: "chest", npc: "reward from a character or event", song: "song", boss: "boss reward", gs: "Gold Skulltula", pot: "pot", crate: "crate",
+  rock: "rock", grass: "grass", hive: "beehive", cow: "cow", shop: "shop item", silver: "silver rupee", scrub: "Deku Scrub", free: "item on the ground" };
+function describe(n) {
+  const [area, kind, region, rule] = DATA.checks[n];
+  let needs;
+  try { needs = speak(Engine.parse(rule || "True"), true); } catch (e) { needs = rule; }
+  needs = needs.replace(/\s+/g, " ").trim();
+  const short = needs.length > 220 ? needs.slice(0, 217) + "…" : needs;
+  return h("div", { class: "desc" },
+    h("div", {}, h("b", {}, placeOf(region, area)), ` · ${KIND_LONG[kind] || kind}`),
+    h("div", { title: rule }, "Once you're there it needs: ", h("span", { class: "q" }, short)));
+}
+
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
 function renderChecks() {
   const el = $("#checks"); const top = el.scrollTop;
@@ -397,17 +485,20 @@ function renderChecks() {
     h("div", { class: "ckhead" }, h("h3", {}, S.area), h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`),
       h("span", { class: "spacer" }), list.some((c) => c.st === "g") ? h("button", { class: "btn", onclick: () => { list.filter((c) => c.st === "g").forEach((c) => (S.done[c.n] = 1)); render(); } }, "Mark all in-logic done") : null),
     h("div", { class: "chips" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    vis.length ? vis.map((c) => h("div", {
-      class: `ck st-${c.st}`,
-      onclick: () => { if (isDone(c.n)) { delete S.done[c.n]; if (S.auto.done[c.n]) S.ignore[c.n] = 1; } else { S.done[c.n] = 1; delete S.ignore[c.n]; } render(); },
+    vis.length ? vis.map((c) => [h("div", {
+      class: `ck st-${c.st} ${openCheck === c.n ? "open" : ""}`, title: "Click for where it is · double-click to mark it done",
+      // one click opens the description; a double click marks the check done and cancels the pending click
+      onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; renderChecks(); }, 230); },
+      ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
     }, h("span", { class: "dot" }), h("span", { class: "nm" }, c.n),
       h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
       c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
-      h("span", { class: "kind" }, KIND[c.k]))) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
+      h("span", { class: "kind" }, KIND[c.k])),
+      openCheck === c.n ? describe(c.n) : null]) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
     h("div", { class: "legend" },
       h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
       h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),
-      h("span", {}, "C / A: which age can get it")),
+      h("span", {}, "C / A: which age can get it"), h("span", {}, "click: where it is · double-click: done")),
   ));
   el.scrollTop = top;
 }
