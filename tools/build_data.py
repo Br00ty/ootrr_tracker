@@ -155,6 +155,13 @@ for sp in SN['spots']:
         det[n] = [{'k': [h]}]
         skull_notes[n] = [sp['grade'], sp['why']]
 print('skull names', len(SN['spots']), 'notes', len(skull_notes), file=sys.stderr)
+# shop shelves: bought once its sold counter (Shop_SoldNum.<keeper>.<slot>, from OOTRR's shops.json) is
+# above 0. Seen in a real save: Kak Bazaar Items 1 and 4 went 0 -> 1 when bought.
+SH = json.load(open(os.path.join(D, 'shops.json')))
+for sl in SH['slots']:
+    if sl['name'] in checks and sl.get('counters'):
+        det[sl['name']] = [{'f': sl['counters']}]
+print('shop shelves', sum(1 for sl in SH['slots'] if sl['name'] in checks), file=sys.stderr)
 mapc = collections.defaultdict(collections.Counter)
 for t in T:
     o = t.get('ootr')
