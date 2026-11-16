@@ -1056,17 +1056,20 @@ const h = (tag, attrs = {}, ...kids) => {
 const INV = [
   ["Slingshot","Sling-shot",1],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
   ["Megaton Hammer","Hammer",1],["Lens of Truth","Lens",1],["Magic Meter","Magic",2],["Dins Fire","Din's Fire",1],["Farores Wind","Farore's Wind",1],["Nayrus Love","Nayru's Love",1],
-  ["Bombchus","Bomb-chus",1],["Magic Bean","Magic Beans",10],["Bottle","Bottle",4],
+  ["Bombchus","Bomb-chus",1],["Magic Bean","Magic Beans",10],["Rutos Letter","Ruto's Letter",1],["Bottle","Bottle",4],
 ];
 const ARROWS = [["Fire Arrows","Fire Arrows",1,"arrow"],["Ice Arrows","Ice Arrows",1,"arrow"],["Light Arrows","Light Arrows",1,"arrow"]];
 const GEAR = [
   ["Kokiri Sword","Kokiri Sword",1],["Biggoron Sword","Biggoron Sword",1],["Mirror Shield","Mirror Shield",1],["Goron Tunic","Goron Tunic",1],["Zora Tunic","Zora Tunic",1],["Iron Boots","Iron Boots",1],
   ["Hover Boots","Hover Boots",1],["Progressive Strength Upgrade","Strength",3],["Progressive Scale","Scale",2],["Progressive Wallet","Wallet",3],["Stone of Agony","Agony",1],["Gerudo Membership Card","Gerudo Card",1],
 ];
-const TRADE = [
-  ["Weird Egg","Weird Egg",1],["Zeldas Letter","Zelda's Letter",1],["Rutos Letter","Ruto's Letter",1],["Keaton Mask","Keaton",1],["Skull Mask","Skull Mask",1],["Spooky Mask","Spooky",1],
-  ["Bunny Hood","Bunny Hood",1],["Mask of Truth","Mask of Truth",1],["Pocket Egg","Pocket Egg",1],["Cojiro","Cojiro",1],["Odd Mushroom","Odd Mush-room",1],["Odd Potion","Odd Potion",1],
-  ["Poachers Saw","Poacher's Saw",1],["Broken Sword","Broken Sword",1],["Prescription","Prescrip-tion",1],["Eyeball Frog","Eyeball Frog",1],["Eyedrops","Eyedrops",1],["Claim Check","Claim Check",1],
+const CHILD_TRADE = [
+  ["Weird Egg","Weird Egg",1],["Zeldas Letter","Zelda's Letter",1],["Keaton Mask","Keaton",1],["Skull Mask","Skull Mask",1],["Spooky Mask","Spooky Mask",1],["Bunny Hood","Bunny Hood",1],
+  ["Mask of Truth","Mask of Truth",1],
+];
+const ADULT_TRADE = [
+  ["Pocket Egg","Pocket Egg",1],["Cojiro","Cojiro",1],["Odd Mushroom","Odd Mush-room",1],["Odd Potion","Odd Potion",1],["Poachers Saw","Poacher's Saw",1],["Broken Sword","Broken Sword",1],
+  ["Prescription","Prescrip-tion",1],["Eyeball Frog","Eyeball Frog",1],["Eyedrops","Eyedrops",1],["Claim Check","Claim Check",1],
 ];
 const SONGS = [
   ["Zeldas Lullaby","Zelda's Lullaby",1,"song"],["Eponas Song","Epona's Song",1,"song"],["Sarias Song","Saria's Song",1,"song"],["Suns Song","Sun's Song",1,"song"],["Song of Time","Song of Time",1,"song"],["Song of Storms","Song of Storms",1,"song"],
@@ -1241,7 +1244,8 @@ function renderItems() {
     // the three Spiritual Stones on their own row, the six Medallions in a row below them
     h("div", { class: "grid" }, REWARDS.filter((r) => r[3] === "stone").map(tile)),
     h("div", { class: "grid", style: "margin-top:4px" }, REWARDS.filter((r) => r[3] === "med").map(tile)),
-    h("h2", {}, "Trade & masks"), h("div", { class: "grid" }, TRADE.map(tile)),
+    h("h2", {}, "Child trade"), h("div", { class: "grid" }, CHILD_TRADE.map(tile)),
+    h("h2", {}, "Adult trade"), h("div", { class: "grid" }, ADULT_TRADE.map(tile)),
     h("h2", {}, "Counters"),
     h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, l), h("td", { style: "text-align:right" }, counter(n, m))))),
     h("h2", {}, "Dungeon keys"),
@@ -1427,7 +1431,7 @@ let lastSig = "", lastMap = "";
 const canWatch = typeof window.showDirectoryPicker === "function";
 
 const MAX = {};
-for (const L of [INV, ARROWS, GEAR, TRADE, SONGS, REWARDS]) for (const [n, , m] of L) MAX[n] = m;
+for (const L of [INV, ARROWS, GEAR, CHILD_TRADE, ADULT_TRADE, SONGS, REWARDS]) for (const [n, , m] of L) MAX[n] = m;
 for (const [n, , m] of COUNTERS) MAX[n] = m;
 for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
 
