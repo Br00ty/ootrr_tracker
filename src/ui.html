@@ -938,6 +938,11 @@ const OWN_FLAGS = {
   "Kak 10 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward10"], "Kak 20 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward20"],
   "Kak 30 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward30"], "Kak 40 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward40"],
   "Kak 50 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward50"], "Kak 100 Gold Skulltula Reward": ["GatheringTokenGold_Father_BacktoHuman"],
+  // bosses: the game counts each boss beaten; OOTRR's rule (getting the vanilla Stone or Medallion) misses when rewards move
+  "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"], "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
+  "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"], "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
+  "Volvagia": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia"], "Morpha": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
+  "Bongo Bongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"], "Twinrova": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
   "ZR Frogs Zeldas Lullaby": ["MiniGame_FrogTenors_ZeldaLullaby"], "ZR Frogs Eponas Song": ["MiniGame_FrogTenors_EponaSong"],
   "ZR Frogs Sarias Song": ["MiniGame_FrogTenors_SariaSong"], "ZR Frogs Suns Song": ["MiniGame_FrogTenors_SunSong"],
   "ZR Frogs Song of Time": ["MiniGame_FrogTenors_TimeSong"], "ZR Frogs in the Rain": ["MiniGame_FrogTenors_StormSong"],
@@ -950,6 +955,16 @@ const OWN_FLAGS = {
   "Market Bombchu Bowling Second Prize": ["MiniGame_BombchuBowling_ClearThirdTime"],
 };
 const EXTRA_FLAGS = {
+  // boss Heart Containers: the save keeps no mark of the pickup itself (its key isn't stored), so the
+  // boss being beaten stands in for it; the heart appears when the boss falls
+  "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss", "InsideTheDekuTree_Heart_Container_Obtained"],
+  "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
+  "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
+  "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
+  "Fire Temple Volvagia Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia"],
+  "Water Temple Morpha Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
+  "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
+  "Spirit Temple Twinrova Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
   "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
   "Market Lost Dog": ["SubEvent_FindRichard_GetHeartPiece"],
