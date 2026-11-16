@@ -83,6 +83,8 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .desc{padding:4px 16px 9px 36px;font-size:12px;line-height:1.45;color:var(--dim);background:var(--panel2);border-bottom:1px solid #221f18}
 .desc b{color:var(--ink);font-weight:600}
 .desc .way{margin-top:6px}
+.xa{font-size:10px;font-weight:700;color:#e9c46a;border:1px solid #7a6a3a;border-radius:3px;padding:0 4px;white-space:nowrap}
+.desc .cross{color:#e9d7a6;margin-bottom:5px;display:flex;gap:6px;align-items:baseline}
 .desc .from{color:var(--dim)}
 .desc .q{display:block;margin-top:3px;color:#cdbf98;font:12px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;white-space:pre-wrap;word-break:break-word}
 /* settings */
@@ -1316,11 +1318,75 @@ function waysIn(region) {
   const ways = (ENTRANCES.get(region) || []).filter(([from]) => !/Warp/.test(from));
   return ways.length && !ways.some(([, q]) => isFree(q)) ? ways : [];
 }
+// ---------- one age first, then the other ----------
+// From the logic: inside a part of a rule that pins one age, a here()/at() sub-rule or an event that only
+// the other age can do. In 0.6.0 that is the magic bean spots (a child plants the bean, an adult uses it)
+// and HF Deku Scrub Grotto (an adult visit first, then the child).
+const HELP = new Map(Object.entries(DATA.helpers).map(([k, v]) => [k.split("(")[0].trim(), { params: /\(/.test(k), body: Engine.parse(v) }]));
+const EVENTS = new Map();
+for (const r of DATA.regions) for (const [e, q] of Object.entries(r.e || {})) { if (!EVENTS.has(e)) EVENTS.set(e, []); EVENTS.get(e).push(Engine.parse(q)); }
+function pinnedAge(a, depth = 0) {
+  if (!a || depth > 6) return null;
+  if (a.t === "name") {
+    if (a.v === "is_child") return "child";
+    if (a.v === "is_adult") return "adult";
+    const hp = HELP.get(a.v);
+    if (!hp || hp.params) return null;
+    // a helper like can_plant_bean ("plant_beans or (is_child and …)"): the age of its age-bound branch
+    if (hp.body.t === "or") { const g = hp.body.v.map((x) => pinnedAge(x, depth + 1)).filter(Boolean); return g.length && g.every((x) => x === g[0]) ? g[0] : null; }
+    return pinnedAge(hp.body, depth + 1);
+  }
+  if (a.t === "and") { for (const x of a.v) { const g = pinnedAge(x, depth + 1); if (g) return g; } return null; }
+  if (a.t === "or") { const g = a.v.map((x) => pinnedAge(x, depth + 1)); return g.every((x) => x && x === g[0]) ? g[0] : null; }
+  return null;
+}
+const OTHER = { child: "adult", adult: "child" };
+const crossCache = new Map();
+function crossAge(n) {
+  if (crossCache.has(n)) return crossCache.get(n);
+  const notes = [];
+  const walk = (a, age) => {
+    if (!a || typeof a !== "object") return;
+    if (Array.isArray(a)) { a.forEach((x) => walk(x, age)); return; }
+    if (a.t === "and") { const g = pinnedAge(a) || age; a.v.forEach((x) => walk(x, g)); return; }
+    if (a.t === "call" && (a.n === "here" || a.n === "at") && age) {
+      const body = a.n === "here" ? a.v[0] : a.v[1];
+      const g = pinnedAge(body);
+      if (g && g === OTHER[age]) {
+        const bean = /\bcan_plant_bean\b/.test(ruleText(body));
+        notes.push(bean ? { first: "child", then: "adult", bean: true, text: "Plant a magic bean here as a child first, then come back as an adult." }
+          : { first: g, then: age, text: `Do this as ${g === "child" ? "a child" : "an adult"} first: ${a.n === "at" ? `at ${a.v[0].v}, ` : ""}${JSON.stringify(body) && ruleText(body)}` });
+      }
+    }
+    if (a.t === "str" && age && EVENTS.has(a.v)) {
+      const gs = EVENTS.get(a.v).map((q) => pinnedAge(q));
+      if (gs.every((g) => g === OTHER[age])) notes.push({ first: OTHER[age], then: age, text: `Needs '${a.v}', which only ${OTHER[age] === "adult" ? "an adult" : "a child"} can do, so come here as ${OTHER[age] === "adult" ? "an adult" : "a child"} first.` });
+    }
+    for (const k of ["v", "x", "a", "b", "c", "l"]) if (a[k] && typeof a[k] === "object") walk(a[k], age);
+  };
+  try { walk(Engine.parse(DATA.checks[n][3] || "True"), null); } catch (e) {}
+  const out = notes.filter((x, i) => notes.findIndex((y) => y.text === x.text) === i);
+  crossCache.set(n, out);
+  return out;
+}
+// planted beans make the bean notes moot
+const beansPlanted = () => switches().some(([k]) => k === "plant_beans");
+function crossNotes(n) { return crossAge(n).filter((x) => !(x.bean && beansPlanted())); }
+const ruleText = (a) => {
+  switch (a.t) { case "name": return a.v; case "str": return `'${a.v}'`; case "bool": return a.v ? "True" : "False"; case "int": return String(a.v);
+    case "and": return a.v.map(ruleText).join(" and "); case "or": return "(" + a.v.map(ruleText).join(" or ") + ")";
+    case "call": return `${a.n}(${a.v.map(ruleText).join(", ")})`; case "tuple": return `(${a.v.map(ruleText).join(", ")})`; case "not": return "not " + ruleText(a.x); }
+  return "…";
+};
+
 function describe(n) {
-  const [, , region, rule] = DATA.checks[n];
-  const ways = waysIn(region);
+  const [area, , region, rule] = DATA.checks[n];
+  // dungeon checks never show the way in: the dungeon's own rooms and keys are the route
+  const ways = DUNGEON_AREAS.includes(area) ? [] : waysIn(region);
+  const cross = crossNotes(n);
   const shown = ways.slice(0, 6);
   return h("div", { class: "desc" },
+    cross.map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
     h("div", {}, "Region: ", h("b", {}, region)),
     h("code", { class: "q" }, rule || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
@@ -1349,12 +1415,13 @@ function renderChecks() {
     }, h("span", { class: "dot" }), h("span", { class: "nm" }, c.n),
       h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
       c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
+      crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
       h("span", { class: "kind" }, KIND[c.k])),
       openCheck === c.n ? describe(c.n) : null]) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
     h("div", { class: "legend" },
       h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
       h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),
-      h("span", {}, "C / A: which age can get it"), h("span", {}, "click: logic · double-click: done")),
+      h("span", {}, "C / A: which age can get it"), h("span", {}, h("span", { class: "xa" }, "C→A"), "do something as one age first"), h("span", {}, "click: logic · double-click: done")),
   ));
   el.scrollTop = top;
 }

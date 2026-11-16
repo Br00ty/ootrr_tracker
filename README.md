@@ -13,7 +13,7 @@ Open `index.html` in Chrome or Edge (download it, or use the GitHub Pages link i
 
 1. **Load seed** → pick your `.ootrr` file.
 2. **Watch save folder** → pick your emulator's save folder. For Lichii that's `%APPDATA%\lichii\nand\user\save` (any folder above the `slot_00`, `slot_01` … folders works). Or **Load save** to read a `progress.sav` once.
-3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo.
+3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo. A **C→A** or **A→C** badge marks a check that needs something done as the other age first (a magic bean planted as a child, the adult visit before the HF Deku Scrub Grotto).
 
 Everything is saved in your browser. **Reset progress** clears items and ticked checks for a new run; loading a different seed does that too.
 
