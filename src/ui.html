@@ -764,6 +764,15 @@ const PIN_FIXES = {
   "KF Top of Sarias Recovery Heart 2": { place: "KokiriForest", u: 0.4902, v: 0.6439 },
   "KF Top of Sarias Recovery Heart 3": { place: "KokiriForest", u: 0.4842, v: 0.6507 },
   "KF West Ledge Chest": { place: "KokiriForest", u: 0.5867, v: 0.4832 },
+  // the Kokiri Shop: items 1 and 8 placed by the player, the other shelves share the spot
+  "KF Shop Item 1": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 2": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 3": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 4": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 5": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 6": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 7": { place: "KokiriForest", u: 0.5083, v: 0.4538 },
+  "KF Shop Item 8": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
