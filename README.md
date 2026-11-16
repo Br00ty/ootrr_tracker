@@ -32,7 +32,7 @@ Folder watching needs Chrome or Edge (the File System Access API). In other brow
 
 The tracker follows OOTRR's own logic, except in two places where that logic lets you do something the game doesn't. Both are listed in the tracker's Settings window, under **Logic corrections**.
 
-- **Shop items with shops not shuffled.** OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs, Poes, fairies and Blue Fire; a wallet for the price; its rule for Bombchus) only when shops are shuffled. Without them its logic buys Bugs with no bottle, and so puts the bean patch Gold Skulltulas in logic without one. The tracker applies the same requirements, taken from OOTRR's own shop table, to the normal shelves.
+- **Shop items on shelves that keep their normal item.** OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs, Poes, fairies and Blue Fire; a wallet for the price; its rule for Bombchus) only when shops are shuffled. Without them its logic buys Bugs with no bottle, and so puts the bean patch Gold Skulltulas in logic without one. The tracker applies the same requirements, taken from OOTRR's own shop table, to every shelf that keeps its normal item, also when shop deals are on.
 - **Bombchus need a Bomb Bag.** With *Bombchus in logic (experimental)* on, OOTRR counts Bombchus without a Bomb Bag; its own note says they didn't work without one in its test. The tracker asks for the Bomb Bag.
 
 `node tools/crosscheck.js` compares the tracker's logic *without* these corrections against OOTRR, so it still checks the port itself.

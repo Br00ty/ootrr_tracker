@@ -285,11 +285,11 @@ let LAYOUT = {}, ENTR_ERR = "";
 function ensureWorlds() {
   const sw = switches();
   const ent = (S.seed && S.seed.entrances) || {};
-  const k = JSON.stringify([sw, ent, S.seed ? S.seed.vals.shuffle_shops : S.settings.shuffle_shops]);
+  const k = JSON.stringify([sw, ent, S.seed ? seedId(S.seed) : ""]);
   if (worlds && k === worldKey) return;
   const p = Seed.patchesOf(sw);
   // the tracker's corrections to OOTRR's logic (Seed.withFixes): bottles for shop goods, a Bomb Bag for Bombchus
-  const D = Seed.withFixes(DATA, S.seed ? S.seed.vals : S.settings);
+  const D = Seed.withFixes(DATA, S.seed ? S.seed.vals : S.settings, S.seed ? S.seed.placements : null);
   worlds = [Engine.buildWorld(D, settingsFor(false), p), Engine.buildWorld(D, settingsFor(true), p)];
   LAYOUT = {}; ENTR_ERR = "";
   try { for (const w of worlds) LAYOUT = Seed.applyEntrances(w, DATA.entrances, ent); }

@@ -195,15 +195,19 @@ const Seed = (() => {
   //  2. "Bombchus in logic (experimental)": Bombchus count without a Bomb Bag, which OOTRR's own note says
   //     didn't work in its test; the game needs a Bomb Bag. found_bombchus asks for one.
   const FIXES = [
-    "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them even when shops aren't shuffled (OOTRR only adds these when shops are shuffled), so Bugs from a Potion Shop need a bottle.",
+    "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them on every shelf that keeps its normal item (OOTRR only adds these to shuffled shelves), so Bugs from a Potion Shop need a bottle.",
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
   ];
-  function withFixes(data, vals) {
-    const shopsMoved = vals && vals.shuffle_shops && vals.shuffle_shops !== "off";
+  // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
+  // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
+  // whether or not shops are shuffled (with shop deals on, most shelves stay vanilla).
+  function withFixes(data, vals, placed) {
     const helpers = { ...data.helpers };
     if (helpers.found_bombchus) helpers.found_bombchus = `Bomb_Bag and (${helpers.found_bombchus})`;
     if (helpers.has_bombchus) helpers.has_bombchus = `Bomb_Bag and (${helpers.has_bombchus})`;
-    return { ...data, helpers, loc_fixes: shopsMoved ? {} : (data.shop_rules || {}) };
+    const loc_fixes = {};
+    for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
+    return { ...data, helpers, loc_fixes };
   }
 
   return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
