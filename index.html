@@ -1184,9 +1184,10 @@ const RENAMES = {
   "HF Open Grotto Chest": { name: "LH Open Grotto Chest", area: "Lake Hylia" },
   // A remake-only chest that a Poe guards on the Lake Hylia shore (IsTreasureBoxOpen.17023457248274633121).
   "HF Lake Poe Chest": { name: "LH Poe Chest", area: "Lake Hylia" },
-  // A Gold Skulltula near the Lake Hylia entrance (key 12007978132755687032). OOTRR's skull_names gives
-  // it this name only as a "tour" placeholder; its catalog had pooled it with LH GS Small Island.
-  "HF GS Cow Grotto": { name: "LH GS Near Lake Entrance", area: "Lake Hylia" },
+  // A Gold Skulltula in the Hyrule Field grotto near the Lake Hylia entrance (key 12007978132755687032).
+  // OOTRR's skull_names gives it this name only as a "tour" placeholder; its catalog had pooled it with
+  // LH GS Small Island. It stays in Hyrule Field; only the name changes.
+  "HF GS Cow Grotto": { name: "HF GS Grotto Near Lake Entrance" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 const shownName = (n) => (RENAMES[n] ? RENAMES[n].name : n);
@@ -1745,7 +1746,7 @@ function describe(n) {
     cross.map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
     // Skulltulas whose OoTR name is OOTRR's guess or placeholder for a remake spot: OOTRR's own note on where it is
     skullNote(n),
-    RENAMES[n] ? h("div", { class: "cross" }, `OOTRR name: ${n} (in its ${region} region; the tracker lists it here)`) : null,
+    RENAMES[n] ? h("div", { class: "cross" }, `OOTRR name: ${n}`) : null,
     h("div", {}, "Region: ", h("b", {}, region)),
     h("code", { class: "q" }, rule || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,

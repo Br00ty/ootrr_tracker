@@ -39,13 +39,13 @@ The tracker follows OOTRR's own logic, except in two places where that logic let
 
 ## Renamed checks
 
-A few checks are listed under a different name and area than OOTRR gives them, because in the remake they sit somewhere else. Only the label and the area list change; the logic, the seed's placements and save detection all keep OOTRR's name. They're in `RENAMES` near the top of the script in `src/ui.html`, and each one's details panel shows its OOTRR name.
+A few checks are listed under a different name (and sometimes area) than OOTRR gives them, because in the remake they sit somewhere else. Only the label and the area list change; the logic, the seed's placements and save detection all keep OOTRR's name. They're in `RENAMES` near the top of the script in `src/ui.html`, and each one's details panel shows its OOTRR name.
 
 | Shown as | OOTRR name | Why |
 |---|---|---|
 | LH Open Grotto Chest (Lake Hylia) | HF Open Grotto Chest | The chest is in a hidden hole in Lake Hylia |
 | LH Poe Chest (Lake Hylia) | HF Lake Poe Chest | A remake-only chest on the Lake Hylia shore |
-| LH GS Near Lake Entrance (Lake Hylia) | HF GS Cow Grotto | A Gold Skulltula near where Hyrule Field meets the lake; OOTRR uses this name only as a placeholder for it |
+| HF GS Grotto Near Lake Entrance (Hyrule Field) | HF GS Cow Grotto | A Gold Skulltula in the grotto near the Lake Hylia entrance; OOTRR uses this name only as a placeholder for it |
 
 ## Not handled yet
 
