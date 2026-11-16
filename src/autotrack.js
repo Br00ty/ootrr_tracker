@@ -95,6 +95,8 @@ const Auto = (() => {
       "Fire Arrows": ["Item_Arrow_Fire"], "Ice Arrows": ["Item_Arrow_Ice"], "Light Arrows": ["Item_Arrow_Light"], Bombchus: ["Item_Bombchu"],
       "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"], "Mirror Shield": ["Weapon_Shield_Mirror"],
       "Goron Tunic": ["Armor_Adult_Goron"], "Zora Tunic": ["Armor_Adult_Zora"], "Iron Boots": ["Armor_Adult_HeavyBoot"], "Hover Boots": ["Armor_Adult_HoverBoot"],
+      // having sticks or nuts satisfies OOTRR's Sticks / Nuts helpers (which accept a drop of them)
+      "Deku Stick Drop": ["Item_DekuStick"], "Deku Nut Drop": ["Item_DekuNut"],
       "Stone of Agony": ["Item_AgonyStone"], "Gerudo Membership Card": ["Item_Token_Gerudo"],
       "Weird Egg": ["Item_WeirdEgg"], "Zeldas Letter": ["Item_ZeldaLetter"], "Rutos Letter": ["Item_Bottle_Letter"],
       "Keaton Mask": ["Armor_Child_Mask_Keaton"], "Skull Mask": ["Armor_Child_Mask_Skull"], "Spooky Mask": ["Armor_Child_Mask_Spooky"],

@@ -31,7 +31,7 @@ header h1 small{color:var(--dim);font-weight:400;letter-spacing:0;margin-left:6p
 .btn{white-space:nowrap;background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
 .btn:hover{border-color:var(--gold)}
 a.btn{color:inherit;text-decoration:none;display:inline-block}
-@media (max-width:1800px){h1 small{display:none}}
+@media (max-width:2000px){h1 small{display:none}}
 main{flex:1;display:grid;grid-template-columns:minmax(330px,390px) 250px 1fr;min-height:0}
 /* wide screens (1920x1080 and up): counters, keys and trade items get their own column, and the dungeons sit
    beside the overworld, so nothing needs scrolling; narrower screens keep three columns */
@@ -856,6 +856,8 @@ const Auto = (() => {
       "Fire Arrows": ["Item_Arrow_Fire"], "Ice Arrows": ["Item_Arrow_Ice"], "Light Arrows": ["Item_Arrow_Light"], Bombchus: ["Item_Bombchu"],
       "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"], "Mirror Shield": ["Weapon_Shield_Mirror"],
       "Goron Tunic": ["Armor_Adult_Goron"], "Zora Tunic": ["Armor_Adult_Zora"], "Iron Boots": ["Armor_Adult_HeavyBoot"], "Hover Boots": ["Armor_Adult_HoverBoot"],
+      // having sticks or nuts satisfies OOTRR's Sticks / Nuts helpers (which accept a drop of them)
+      "Deku Stick Drop": ["Item_DekuStick"], "Deku Nut Drop": ["Item_DekuNut"],
       "Stone of Agony": ["Item_AgonyStone"], "Gerudo Membership Card": ["Item_Token_Gerudo"],
       "Weird Egg": ["Item_WeirdEgg"], "Zeldas Letter": ["Item_ZeldaLetter"], "Rutos Letter": ["Item_Bottle_Letter"],
       "Keaton Mask": ["Armor_Child_Mask_Keaton"], "Skull Mask": ["Armor_Child_Mask_Skull"], "Spooky Mask": ["Armor_Child_Mask_Spooky"],
@@ -1166,8 +1168,10 @@ const h = (tag, attrs = {}, ...kids) => {
 
 // ---------- item tracker definition ----------
 // [logic item name, label, max, css class]
+// Deku Sticks / Deku Nuts: OOTRR's Sticks and Nuts helpers accept a stick or nut drop, so owning them
+// is tracked as that drop
 const INV = [
-  ["Slingshot","Sling-shot",3],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
+  ["Deku Stick Drop","Deku Sticks",1],["Deku Nut Drop","Deku Nuts",1],["Slingshot","Sling-shot",3],["Ocarina","Ocarina",2],["Bomb Bag","Bomb Bag",3],["Boomerang","Boom-erang",1],["Bow","Bow",3],["Progressive Hookshot","Hook-shot",2],
   ["Megaton Hammer","Hammer",1],["Lens of Truth","Lens",1],["Magic Meter","Magic",2],["Dins Fire","Din's Fire",1],["Farores Wind","Farore's Wind",1],["Nayrus Love","Nayru's Love",1],
   ["Bombchus","Bomb-chus",1],["Magic Bean","Magic Beans",10],["Rutos Letter","Ruto's Letter",1],["Bottle","Bottle",4],
 ];
@@ -1377,6 +1381,7 @@ const TIERS = {
 // picking that folder (or any folder above it) copies small versions into this browser.
 // item name -> OOTRR icon id, or one id per tier for items whose picture changes as they upgrade
 const ICON = {
+  "Deku Stick Drop": "Item_DekuStick", "Deku Nut Drop": "Item_DekuNut",
   "Slingshot": "Weapon_Range_SlingShot", "Ocarina": ["Item_Ocarina_Fairy", "Item_Ocarina_Time"], "Bomb Bag": "Item_Bomb",
   "Boomerang": "Item_Boomerang", "Bow": "Weapon_Range_Bow", "Progressive Hookshot": ["Item_Hookshot", "Item_Longshot"],
   "Megaton Hammer": "Item_Hammer_PouchIcon", "Lens of Truth": "Armor_GlassTruth", "Magic Meter": "Item_Bottle_GreenPotion",
@@ -2115,7 +2120,11 @@ function paintAuto() {
   const watching = W.mode === "watch" && W.dir;
   const kids = [h("span", { class: `live ${W.err ? "err" : watching ? "on" : ""}` })];
   if (W.err) kids.push(h("span", { style: "color:var(--red);max-width:340px" }, W.err));
-  else if (W.read) kids.push(h("span", {}, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
+  else if (W.read) {
+    // one line that shortens itself, so the header doesn't wrap; the full text is in the tooltip
+    const full = `${watching ? "Watching" : "Read"} ${W.name} at ${t}${W.where ? ` · Link in ${W.where} (${W.child ? "child" : "adult"})` : ""}`;
+    kids.push(h("span", { title: full, style: "max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
+  }
   else kids.push(h("span", {}, "Auto-tracking off"));
   if (W.saved && !W.dir) kids.push(
     h("button", { class: "btn", title: "Copies the command that starts copying your saves (press Windows + R, Ctrl + V, Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "See ? for the command"; } }, "Copy start command"),
