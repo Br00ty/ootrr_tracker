@@ -1882,12 +1882,16 @@ const OWN_FLAGS = {
   "GC Rolling Goron as Adult": ["SageOfFire_Step02_DoorOpen"],
   // confirmed in a real save: set when the Zora diving game is won (it is not the lab dive)
   "ZD Diving Minigame": ["MiniGame_Diving_Cleared"],
+  // confirmed in a real save: the potion shop keeper's free bottle, then the escaped-bug lesson
+  "Market Potion Shop Free Bottle": ["Npc_Hylia_020_Shop_Item_Bottle_Present"],
+  "Market Potion Shop Red Potion": ["Market_Item_Bottle_TutorialEvent_Cleared"],
+  // confirmed in a real save: set when the Market shooting gallery is won
+  "Market Shooting Gallery Reward": ["MiniGame_HitTarget_HrlCity_Get_BulletBag"],
 };
 const EXTRA_FLAGS = {
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
   "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
   "Market Lost Dog": ["SubEvent_FindRichard_GetHeartPiece"],
-  "Market Shooting Gallery Reward": ["MiniGame_HitTarget_HrlCity_Get_BulletBag"],
   "Kak Shooting Gallery Reward": ["MiniGame_HitTarget_Kakariko_Get_Quiver"],
   "GF HBA 1500 Points": ["MiniGame_HorseBackArchery_Get_Quiver"],
   // each song spot's "learn the song" scene, like the windmill's (Dm_MelodyGet_Zelda was also set in the
@@ -1906,7 +1910,7 @@ const EXTRA_FLAGS = {
 };
 function detectMap() {
   const out = detectMapBase();
-  for (const [n, f] of Object.entries(OWN_FLAGS)) if (out[n]) out[n] = [{ f }];
+  for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   return out;
 }
