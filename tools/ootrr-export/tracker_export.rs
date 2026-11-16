@@ -105,6 +105,20 @@ fn main() {
         }
     }
     out.push('}');
+    // shop requirements OOTRR adds only when shops are shuffled (shops/logic.rs extra(): wallet for the price,
+    // a bottle for bottled goods, its bomb rule for Bombchus), here for the vanilla shelves (shops/layout.rs home())
+    out.push_str(",\"shop_rules\":{");
+    {
+        let t = ootrr_core::shops::data::table().unwrap();
+        let mut first = true;
+        for p in &ootrr_core::shops::layout::home().unwrap().places {
+            let more = ootrr_core::shops::logic::extra(t, p);
+            if more.is_empty() { continue; }
+            if !first { out.push(','); } first = false;
+            esc(&p.loc, &mut out); out.push(':'); esc(&more.join(" and "), &mut out);
+        }
+    }
+    out.push('}');
     // dungeon entrance pool: [door name, area, entry exit from, entry exit to, exit from, exit to]
     out.push_str(",\"entrances\":[");
     for (i, c) in ootrr_core::entr::pools::DUNGEONS.iter().enumerate() {

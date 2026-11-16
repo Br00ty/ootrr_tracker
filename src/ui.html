@@ -285,15 +285,17 @@ let LAYOUT = {}, ENTR_ERR = "";
 function ensureWorlds() {
   const sw = switches();
   const ent = (S.seed && S.seed.entrances) || {};
-  const k = JSON.stringify([sw, ent]);
+  const k = JSON.stringify([sw, ent, S.seed ? S.seed.vals.shuffle_shops : S.settings.shuffle_shops]);
   if (worlds && k === worldKey) return;
   const p = Seed.patchesOf(sw);
-  worlds = [Engine.buildWorld(DATA, settingsFor(false), p), Engine.buildWorld(DATA, settingsFor(true), p)];
+  // the tracker's corrections to OOTRR's logic (Seed.withFixes): bottles for shop goods, a Bomb Bag for Bombchus
+  const D = Seed.withFixes(DATA, S.seed ? S.seed.vals : S.settings);
+  worlds = [Engine.buildWorld(D, settingsFor(false), p), Engine.buildWorld(D, settingsFor(true), p)];
   LAYOUT = {}; ENTR_ERR = "";
   try { for (const w of worlds) LAYOUT = Seed.applyEntrances(w, DATA.entrances, ent); }
   catch (e) {
     ENTR_ERR = e.message; LAYOUT = {};
-    worlds = [Engine.buildWorld(DATA, settingsFor(false), p), Engine.buildWorld(DATA, settingsFor(true), p)];
+    worlds = [Engine.buildWorld(D, settingsFor(false), p), Engine.buildWorld(D, settingsFor(true), p)];
   }
   worldKey = k;
 }
@@ -769,6 +771,11 @@ function seedSummary() {
 }
 function openSettings() {
   const body = $("#dlgBody");
+  // where the tracker's logic knowingly differs from OOTRR 0.6.0's (Seed.withFixes)
+  const fixes = h("details", { style: "margin-top:12px;color:var(--dim);font-size:12px" },
+    h("summary", { style: "cursor:pointer" }, "Logic corrections"),
+    h("p", { style: "margin:6px 0 4px" }, "The tracker follows OOTRR's logic, except where that logic lets you do something the game doesn't:"),
+    h("ul", { style: "margin:0 0 0 18px" }, Seed.FIXES.map((f) => h("li", {}, f))));
   const close = h("div", { class: "foot" }, h("span", { style: "color:var(--faint);font-size:11px;align-self:center" }, "Saved in this browser."), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Done"));
   if (S.seed) {
     const sd = S.seed;
@@ -779,6 +786,7 @@ function openSettings() {
         h("button", { class: "btn", style: "padding:1px 8px;font-family:inherit;font-size:11px", title: "Copy the settings string, for example for a bug report",
           onclick: async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText(`Seed: ${sd.seed}\nSettings: ${sd.settingsString}`); b.textContent = "Copied"; } catch (x) { b.textContent = "Select the text to copy it"; } } }, "Copy")),
       h("div", { class: "sv-list" }, seedSummary()),
+      fixes,
       h("div", { class: "foot" },
         h("button", { class: "btn", onclick: () => { S.seed = null; render(); openSettings(); } }, "Unload seed"),
         h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Done")),
@@ -791,6 +799,7 @@ function openSettings() {
       h("h3", { style: "margin-top:16px" }, "Shuffled locations"),
       h("div", { style: "color:var(--dim);font-size:12px" }, "Checked kinds are listed for you to track. Unchecked kinds keep their vanilla item, and the logic gives you that item once it is reachable."),
       h("div", { class: "cats" }, CATS.map(([k, l]) => h("span", { class: `chip ${S.cats[k] ? "on" : ""}`, onclick: () => { S.cats[k] = !S.cats[k]; render(); openSettings(); } }, l))),
+      fixes,
       close,
     ));
   }

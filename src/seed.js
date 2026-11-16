@@ -186,6 +186,26 @@ const Seed = (() => {
     return lay;
   }
 
-  return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances };
+  // Corrections the tracker makes to OOTRR 0.6.0's logic, where it lets you do something the game doesn't.
+  // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
+  //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
+  //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
+  //     shuffled (shops/logic.rs extra()). Without them the logic buys Bugs with no bottle and plants them
+  //     at the bean patch Gold Skulltulas. The same rules, from OOTRR's own table, apply to the vanilla shelves.
+  //  2. "Bombchus in logic (experimental)": Bombchus count without a Bomb Bag, which OOTRR's own note says
+  //     didn't work in its test; the game needs a Bomb Bag. found_bombchus asks for one.
+  const FIXES = [
+    "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them even when shops aren't shuffled (OOTRR only adds these when shops are shuffled), so Bugs from a Potion Shop need a bottle.",
+    "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
+  ];
+  function withFixes(data, vals) {
+    const shopsMoved = vals && vals.shuffle_shops && vals.shuffle_shops !== "off";
+    const helpers = { ...data.helpers };
+    if (helpers.found_bombchus) helpers.found_bombchus = `Bomb_Bag and (${helpers.found_bombchus})`;
+    if (helpers.has_bombchus) helpers.has_bombchus = `Bomb_Bag and (${helpers.has_bombchus})`;
+    return { ...data, helpers, loc_fixes: shopsMoved ? {} : (data.shop_rules || {}) };
+  }
+
+  return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

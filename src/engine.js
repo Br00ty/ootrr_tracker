@@ -451,7 +451,10 @@ const Engine = (() => {
     regionList.forEach((r) => { rix.set(r.n, regions.length); regions.push({ name: r.n, dungeon: r.d || null, provides: r.t || 0, locations: [], exits: [] }); });
     const locs = [], lix = new Map(), exits = [];
     regionList.forEach((r, rid) => {
-      for (const [n, text] of Object.entries(r.l || {})) {
+      for (const [n, base] of Object.entries(r.l || {})) {
+        // data.loc_fixes: extra requirements the tracker adds to single locations (see Seed.withFixes)
+        const more = data.loc_fixes && data.loc_fixes[n];
+        const text = more ? `(${base}) and ${more}` : base;
         const rule = cmp.rule(text, { region: r.n, name: n });
         lix.set(n, locs.length); regions[rid].locations.push(locs.length);
         locs.push({ name: n, region: rid, rule, event: null });
