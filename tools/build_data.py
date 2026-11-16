@@ -138,6 +138,45 @@ for t in T:
     if t['kind'] == 'gift': r['g'] = 1
     if t['kind'] == 'cow': r['c'] = 1
     if r: det.setdefault(o, []).append(r)
+# The generator writes each location's item into the game objects its catalog (locations.json "refs")
+# names, so that catalog decides which object belongs to which check. tracker_targets only guesses some
+# (57 differ, e.g. Mido's chests, DMT Chest vs DMT Storms Grotto Chest: in a real save the chest on
+# the trail set IsTreasureBoxOpen.9809508929088891725, which the catalog verifies as DMT Chest).
+# Each catalog object keeps the save rule tracker_targets has for it, under the catalog's name.
+def objs(r):
+    return [f.split('.', 1)[1] for f in (r.get('f') or []) if f.startswith('IsTreasureBoxOpen.')] + list(r.get('k') or [])
+by_obj = {}
+for o, rules in det.items():
+    for r in rules:
+        for h in objs(r): by_obj.setdefault(h, r)
+CAT = json.load(open(os.path.join(D, 'locations.json')))
+CAT = CAT if isinstance(CAT, list) else next(v for v in CAT.values() if isinstance(v, list))
+moved = 0
+for loc in CAT:
+    n, hs = loc['name'], [str(x['hash']) for x in loc.get('refs') or []]
+    if n not in checks or not hs: continue
+    new = []
+    for h in hs:
+        r = by_obj.get(h) or ({'f': ['IsTreasureBoxOpen.' + h]} if loc.get('kind') == 'chest' else None)
+        if r and r not in new: new.append(dict(r))
+    if not new: continue
+    # these objects belong to n now: take them out of every other check's rules
+    for o in list(det):
+        if o == n: continue
+        keep = []
+        for r in det[o]:
+            if set(objs(r)) & set(hs):
+                r = dict(r)
+                if 'f' in r: r['f'] = [f for f in r['f'] if not (f.startswith('IsTreasureBoxOpen.') and f.split('.', 1)[1] in hs)]
+                if 'k' in r: r['k'] = [k for k in r['k'] if k not in hs]
+                if not (r.get('f') or r.get('k')): continue
+            keep.append(r)
+        if keep: det[o] = keep
+        else: del det[o]
+    if det.get(n) != new: moved += 1
+    det[n] = new
+print('catalog objects reassigned for', moved, 'checks', file=sys.stderr)
+
 # Gold Skulltulas: OOTRR's shuffle drops a check's item at the skulltula skull_names.json names for it
 # (slice/skull_names.rs hashes()), which overrides the older tracker_targets pairing for 48 skulltulas.
 # Seen in a real save: the lone Hyrule Field tree skulltula (2177746409373494991) dropped the item of
