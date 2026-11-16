@@ -4,6 +4,8 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 **▶ Open the tracker: [br00ty.github.io/ootrr_tracker](https://br00ty.github.io/ootrr_tracker/)**
 
+> **Disclaimer:** this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use **Report a bug** on the tracker or [open an issue](https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml).
+
 - **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.6.0's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
 - **Or set the settings by hand.** Without a seed file, Settings works like OOTRR's own settings page: the same groups, presets, labels and help text, settings that only count when another one is on, and a box for an OOTRR settings string. The tracker then lists exactly the locations OOTRR would shuffle with those settings.
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
