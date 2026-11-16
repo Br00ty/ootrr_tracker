@@ -714,20 +714,25 @@ let mapMsg = "", mapBusy = false;
 // gives each location object its spot on the game's maps as fractions of the map picture (u across, v down).
 // The tracker finds a check's objects through the hashes in its save detection, and keeps the spots in the browser.
 const PIN_KEY = "ootrr-tracker-pins";
-const PIN_AREAS = new Set(["Kokiri Forest"]);  // areas whose pins are shown so far
-let PINS = null;  // hash → [[map id, u, v, floor label, tray]]
-try { PINS = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); } catch (e) { PINS = null; }
+const PIN_AREAS = new Set(["Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field"]);  // areas whose pins are shown so far
+let PINS = null;  // hash → [[map id, u, v, floor label, tray, world x, world z]]
+let CAPS = {};    // map id → [camera x, camera z, height]: the map picture's frame in the world
+try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; } else PINS = j; } catch (e) { PINS = null; }
 let pinOpen = null;  // the open pin's key
 function takePins(idx) {
   if (!idx || !Array.isArray(idx.locations)) return 0;
-  const out = {};
+  const out = {}, caps = {};
+  for (const m of idx.maps || []) if (m && m.id && Array.isArray(m.cap)) caps[m.id] = m.cap;
   for (const l of idx.locations) {
     const hsh = String(l.id || "").split(":").pop();
     if (!hsh || !Array.isArray(l.pins)) continue;
-    for (const p of l.pins) if (p && p.map) (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray]);
+    for (const p of l.pins) if (p && p.map) {
+      const pos = Array.isArray(p.pos) ? [+p.pos[0].toFixed(2), +p.pos[2].toFixed(2)] : [null, null];
+      (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray, ...pos]);
+    }
   }
-  PINS = out;
-  try { localStorage.setItem(PIN_KEY, JSON.stringify(out)); } catch (e) {}
+  PINS = out; CAPS = caps;
+  try { localStorage.setItem(PIN_KEY, JSON.stringify({ pins: out, caps })); } catch (e) {}
   return Object.keys(out).length;
 }
 // the object hashes behind a check: its save keys and the hashes at the end of its flags
@@ -802,13 +807,20 @@ function pinOf(n, mapKey) {
   const fix = fixOf(n);
   if (fix !== undefined) return fix && !fix.hide && fix.place === place ? [mapKey, fix.u, fix.v, null, false] : null;
   if (!PINS) return null;
-  let other = null;
+  // OOTRR pins each object on one map; Lake Hylia and Lon Lon Ranch lie inside Hyrule Field's picture too,
+  // so an object is also placed on any other map whose frame holds its spot (OOTRR's projection.rs)
+  const cap = CAPS[mapKey];
+  let other = null, seen = null;
   for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) {
     if (p[4] || p[1] == null || p[2] == null) continue;
     if (p[0] === mapKey) return p;
     if (!other && p[0].replace(/_(Child|Adult)$/, "") === place) other = p;
+    if (!seen && cap && p[5] != null) {
+      const u = 0.5 + (p[5] - cap[0]) / cap[2], v = 0.5 + ((p[6] - cap[1]) / cap[2]) * (2000 / 1440);
+      if (u >= 0 && u <= 1 && v >= 0 && v <= 1) seen = [mapKey, u, v, null, false];
+    }
   }
-  return other;
+  return other || seen;
 }
 function mapDb() {
   return new Promise((ok, no) => {
@@ -1025,7 +1037,7 @@ function mapSide(area, key, list) {
     h("div", { class: "hint" }, "Moved or placed pins are kept in this browser. Copy my pin changes and send them to the tracker's author to make them part of the tracker for everyone."));
   return h("div", { class: "mapside" },
     h("div", { class: "chips", style: "padding:10px 12px 4px" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    PINS ? null : h("p", { class: "hint" }, "Pins need OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps) and it's read along with them."),
+    PINS && Object.keys(CAPS).length ? null : h("p", { class: "hint" }, PINS ? "Some pins need the newer copy of OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps)." : "Pins need OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps) and it's read along with them."),
     h("h2", {}, `Not on the map (${off.length})`),
     off.length ? off.map((c) => ckRow(c, renderMap)) : h("div", { class: "hint" }, "Every check shown here has a pin."),
     h("div", { class: "hint" }, "Click a pin to list its checks; double-click a single pin, or a check in a list, to mark it done."));
