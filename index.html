@@ -1993,7 +1993,7 @@ const CATS = [["chest","Chests"],["npc","NPCs & cutscenes"],["song","Songs"],["b
 const catOf = (kind) => ({ chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "gs" })[kind] || "other";
 const DEFAULT = {
   items: {}, done: {}, auto: { items: {}, done: {} }, ignore: {}, follow: true, area: "Kokiri Forest",
-  view: "list", mapAge: "child", floor: {}, show: { g: true, y: true, r: true, done: false },
+  view: "list", mapAge: "child", floor: {}, pinFix: {}, pinEdit: false, show: { g: true, y: true, r: true, done: false },
   settings: Object.fromEntries(MANUAL.map((id) => [id, SCHEMA.get(id).default])),
   seed: null,
   reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
@@ -2397,9 +2397,20 @@ function hashesOf(n) {
   return HASHES.get(n);
 }
 // a check's spot on a map: its pin on that map, or on the same place's other-age map (same picture frame)
+// Pins corrected by hand (in Map Tracker's Edit pins mode, then copied here): check name → { place, u, v },
+// or null for a pin OOTRR puts in the wrong spot and nobody has placed yet (the check is listed beside the map).
+// place is the map's zone (the map name without _Child/_Adult); u, v are fractions of the map picture.
+const PIN_FIXES = {
+  // OOTRR's spots for these were wrong in game (checked 2026-11-16)
+  "KF West Ledge Chest": null, "KF Storms Grotto Chest": null, "KF Know it All House Pot 2": null, "KF House of Twins Pot 1": null,
+};
+const fixOf = (n) => (S.pinFix && n in S.pinFix ? S.pinFix[n] : PIN_FIXES[n]);
+let pinPlace = null;  // edit mode: the check waiting for a click on the map
 function pinOf(n, mapKey) {
-  if (!PINS) return null;
   const place = mapKey.replace(/_(Child|Adult)$/, "");
+  const fix = fixOf(n);
+  if (fix !== undefined) return fix && !fix.hide && fix.place === place ? [mapKey, fix.u, fix.v, null, false] : null;
+  if (!PINS) return null;
   let other = null;
   for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) {
     if (p[4] || p[1] == null || p[2] == null) continue;
@@ -2531,6 +2542,8 @@ function renderMap() {
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
     list.length ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
+    m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
+      onclick: () => { S.pinEdit = !S.pinEdit; pinPlace = null; pinOpen = null; render(); } }, S.pinEdit ? "Done editing" : "Edit pins") : null,
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
   let body;
   if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
@@ -2538,7 +2551,14 @@ function renderMap() {
   else if (!m.key) body = h("div", { class: "empty" }, (MAP_ZONES[area] || MAP_DUNGEONS[area]) ? `No map for ${area} was loaded. Load the maps again from the game's Map folder.` : `The game has no map for ${area}.`);
   else body = mapWithPins(area, m.key, list);
   const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, list) : null;
-  el.replaceChildren(...K(bar, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
+  const edit = S.pinEdit && m.key && PIN_AREAS.has(area) ? h("div", { class: "banner", style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" },
+    h("span", { style: "flex:1;min-width:260px" }, pinPlace ? ["Click on the map where ", h("b", {}, shownName(pinPlace)), " goes."]
+      : "Drag a pin to its right spot. Right-click a pin to take it off the map. To place a check that has no pin, click Place next to it on the right."),
+    pinPlace ? h("button", { class: "btn", onclick: () => { pinPlace = null; renderMap(); } }, "Cancel") : null,
+    h("button", { class: "btn", title: "Copies your pin changes as text: paste them to the tracker's author so they become part of the tracker",
+      onclick: async (e) => { const txt = JSON.stringify(S.pinFix || {}, null, 1); try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copied"; } catch (x) { prompt("Copy this:", txt); } } }, `Copy my pin changes (${Object.keys(S.pinFix || {}).length})`),
+    Object.keys(S.pinFix || {}).length ? h("button", { class: "btn", onclick: (e) => { if (e.target.dataset.sure) { S.pinFix = {}; render(); } else { e.target.dataset.sure = 1; e.target.textContent = "Click again to undo all"; } } }, "Undo all") : null) : null;
+  el.replaceChildren(...K(bar, edit, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
     h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side)));
 }
 const ORDER = { g: 0, y: 1, r: 2, done: 3 };
@@ -2548,7 +2568,7 @@ function pinGroups(key, list) {
   for (const c of list) {
     const p = pinOf(c.n, key);
     if (!p) continue;
-    let g = groups.find((x) => Math.hypot(x.u - p[1], (x.v - p[2]) / 1.5) < 0.02);
+    let g = S.pinEdit ? null : groups.find((x) => Math.hypot(x.u - p[1], (x.v - p[2]) / 1.5) < 0.02);
     if (!g) { g = { u: p[1], v: p[2], cs: [] }; groups.push(g); }
     g.cs.push(c);
   }
@@ -2561,7 +2581,28 @@ function pinGroups(key, list) {
 }
 function mapWithPins(area, key, list) {
   const fit = h("div", { class: "mapfit" }, h("img", { src: mapUrl(key), alt: `Map of ${area}`, draggable: "false" }));
-  if (!PIN_AREAS.has(area) || !PINS) return fit;
+  if (!PIN_AREAS.has(area)) return fit;
+  const place = key.replace(/_(Child|Adult)$/, "");
+  const at = (e) => { const r = fit.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
+  if (S.pinEdit) {
+    fit.style.cursor = pinPlace ? "crosshair" : "";
+    fit.onclick = (e) => { if (!pinPlace) return; const [u, v] = at(e); S.pinFix[pinPlace] = { place, u: +u.toFixed(4), v: +v.toFixed(4) }; pinPlace = null; render(); };
+    for (const c of list) {
+      const p = pinOf(c.n, key);
+      if (!p) continue;
+      const pin = h("div", { class: `pin ${c.st}`, style: `left:${p[1] * 100}%;top:${p[2] * 100}%;cursor:grab`, title: `${shownName(c.n)}\nDrag to move · right-click to take it off the map`,
+        oncontextmenu: (e) => { e.preventDefault(); S.pinFix[c.n] = { hide: true }; render(); } });
+      pin.onpointerdown = (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault(); e.stopPropagation(); pin.setPointerCapture(e.pointerId);
+        pin.onpointermove = (ev) => { const [u, v] = at(ev); pin.style.left = `${u * 100}%`; pin.style.top = `${v * 100}%`; };
+        pin.onpointerup = (ev) => { pin.onpointermove = null; pin.onpointerup = null; const [u, v] = at(ev); S.pinFix[c.n] = { place, u: +u.toFixed(4), v: +v.toFixed(4) }; render(); };
+      };
+      pin.onclick = (e) => e.stopPropagation();
+      fit.append(pin);
+    }
+    return fit;
+  }
   const groups = pinGroups(key, list.filter((c) => S.show[c.st]));
   for (const g of groups) {
     const n = g.cs.length, open = pinOpen === g.id;
@@ -2584,7 +2625,12 @@ function mapWithPins(area, key, list) {
 function mapSide(area, key, list) {
   const t = tally(list);
   const chip = (k, label) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label);
-  const off = list.filter((c) => !pinOf(c.n, key) && S.show[c.st]).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  const off = list.filter((c) => !pinOf(c.n, key) && (S.pinEdit || S.show[c.st])).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  if (S.pinEdit) return h("div", { class: "mapside" },
+    h("h2", {}, `Not on the map (${off.length})`),
+    off.map((c) => h("div", { class: `ck st-${c.st}`, style: pinPlace === c.n ? "background:var(--panel2)" : "" }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
+      h("button", { class: "btn", style: "padding:1px 8px", onclick: () => { pinPlace = pinPlace === c.n ? null : c.n; renderMap(); } }, pinPlace === c.n ? "Cancel" : "Place"))),
+    h("div", { class: "hint" }, "Moved or placed pins are kept in this browser. Copy my pin changes and send them to the tracker's author to make them part of the tracker for everyone."));
   return h("div", { class: "mapside" },
     h("div", { class: "chips", style: "padding:10px 12px 4px" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
     PINS ? null : h("p", { class: "hint" }, "Pins need OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps) and it's read along with them."),
