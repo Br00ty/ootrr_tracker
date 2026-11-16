@@ -65,6 +65,9 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .area:hover{background:var(--panel)}
 .area.sel{background:var(--panel2);border-left-color:var(--gold)}
 .area .nm{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.area .door{display:block;font-size:11px;line-height:1.3;color:var(--gold);white-space:normal}
+.area .door.hid{color:var(--faint)}
+.area .door:hover{text-decoration:underline}
 .area.done .nm{color:var(--faint)}
 .pills{display:flex;gap:3px}
 .pill{min-width:20px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:700;text-align:center;color:#111}
@@ -223,6 +226,7 @@ const DEFAULT = {
   items: {}, done: {}, auto: { items: {}, done: {} }, ignore: {}, follow: true, area: "Kokiri Forest", show: { g: true, y: true, r: true, done: false },
   settings: Object.fromEntries(MANUAL.map((id) => [id, SCHEMA.get(id).default])),
   seed: null,
+  reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -262,14 +266,35 @@ function settingsFor(tricks) {
   return s;
 }
 let worlds = null, worldKey = "";
+// Dungeon entrance shuffle: the seed's entrances map rewires the dungeon doors in the logic (entr/logic.rs).
+// LAYOUT is { door: dungeon } with OOTRR's pool names; ENTR_ERR says why a seed's layout couldn't be used.
+let LAYOUT = {}, ENTR_ERR = "";
 function ensureWorlds() {
   const sw = switches();
-  const k = JSON.stringify(sw);
+  const ent = (S.seed && S.seed.entrances) || {};
+  const k = JSON.stringify([sw, ent]);
   if (worlds && k === worldKey) return;
   const p = Seed.patchesOf(sw);
   worlds = [Engine.buildWorld(DATA, settingsFor(false), p), Engine.buildWorld(DATA, settingsFor(true), p)];
+  LAYOUT = {}; ENTR_ERR = "";
+  try { for (const w of worlds) LAYOUT = Seed.applyEntrances(w, DATA.entrances, ent); }
+  catch (e) {
+    ENTR_ERR = e.message; LAYOUT = {};
+    worlds = [Engine.buildWorld(DATA, settingsFor(false), p), Engine.buildWorld(DATA, settingsFor(true), p)];
+  }
   worldKey = k;
 }
+// OOTRR's pool names ("Dodongos Cavern", "Zoras Fountain") → the tracker's area names
+const plain = (n) => n.toLowerCase().replace(/'/g, "").replace(/s\b/g, "");
+const AREA_OF = new Map([...OVERWORLD, ...DUNGEON_AREAS].map((a) => [plain(a), a]));
+const areaName = (n) => AREA_OF.get(plain(n)) || n;
+const POOL = new Map((DATA.entrances || []).map((r) => [areaName(r[0]), r]));
+// the door a dungeon (tracker area name) sits behind, or null when it is in its own place / not shuffled
+function doorOf(dungeon) {
+  for (const [door, dun] of Object.entries(LAYOUT)) if (areaName(dun) === dungeon) return door === dun ? null : areaName(door);
+  return null;
+}
+const entrancesShuffled = () => Object.entries(LAYOUT).some(([a, b]) => a !== b);
 // With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
 function trackedNames() {
   if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n]);
@@ -539,8 +564,19 @@ function areaRow(name) {
   const list = [...R.values()].filter((c) => c.a === name);
   if (!list.length) return null;
   const t = tally(list);
+  // with dungeon entrances shuffled, where the dungeon's door is (hidden until the player uncovers it)
+  let door = null;
+  if (DUNGEON_AREAS.includes(name) && entrancesShuffled() && POOL.has(name)) {
+    const at = doorOf(name), shown = S.reveal[name];
+    const where = at ? `the ${at} door, ${areaName(POOL.get(at)[1])}` : "its own door";
+    door = h("span", {
+      class: `door ${shown ? "" : "hid"}`,
+      title: shown ? `${name} is behind the ${at || name} entrance. Click to hide again.` : "Click to show which door leads to this dungeon. It also shows by itself once your save has Link inside it.",
+      onclick: (e) => { e.stopPropagation(); S.reveal[name] = !shown; render(); },
+    }, shown ? `behind ${where}` : "door: ?");
+  }
   return h("div", { class: `area ${S.area === name ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
-    h("span", { class: "nm" }, name),
+    h("span", { class: "nm" }, name, door),
     h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
 }
 function renderAreas() {
@@ -757,7 +793,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = "";
   }
   W.err = "";
   render();
@@ -776,7 +812,10 @@ function paintSeed() {
   const notes = [];
   if (S.seed) {
     const v = S.seed.vals;
-    if (v.shuffle_entrances && v.shuffle_entrances !== "off") notes.push("Entrances are shuffled in this seed. The tracker's logic still assumes vanilla entrances.");
+    if (ENTR_ERR) notes.push(`This seed's dungeon entrances couldn't be read (${ENTR_ERR}). The tracker's logic assumes vanilla entrances.`);
+    else if (v.shuffle_entrances && v.shuffle_entrances !== "off" && v.shuffle_entrances !== "dungeons") notes.push("Entrances are shuffled in this seed. The tracker only follows shuffled dungeon entrances; the rest of its logic assumes vanilla entrances.");
+    else if (entrancesShuffled()) notes.push(h("span", {}, "Dungeon entrances are shuffled in this seed, and the logic follows them. Under each dungeon, click ", h("b", {}, "door: ?"), " to show which door leads to it, or ",
+      h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
   }
@@ -832,6 +871,8 @@ function applyPeek(p, label) {
   const area = Auto.areaOf(p.map, DATA.maps);
   W.where = area || ""; W.child = p.child; W.read = new Date(); W.err = ""; W.name = label;
   if (S.follow && area && p.map !== lastMap) S.area = area;
+  // Link inside a dungeon has walked through its door, so that door is no secret any more
+  if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
   lastMap = p.map || "";
   render();
 }

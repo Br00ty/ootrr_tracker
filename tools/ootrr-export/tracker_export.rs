@@ -105,6 +105,15 @@ fn main() {
         }
     }
     out.push('}');
+    // dungeon entrance pool: [door name, area, entry exit from, entry exit to, exit from, exit to]
+    out.push_str(",\"entrances\":[");
+    for (i, c) in ootrr_core::entr::pools::DUNGEONS.iter().enumerate() {
+        if i > 0 { out.push(','); }
+        out.push('[');
+        for (j, v) in [c.name, c.area, c.entry.0, c.entry.1, c.exit.0, c.exit.1].iter().enumerate() { if j > 0 { out.push(','); } esc(v, &mut out); }
+        out.push(']');
+    }
+    out.push(']');
     out.push_str(",\"vanilla\":{");
     let mut vs: Vec<(&String, &String)> = d.vanilla.iter().collect();
     vs.sort();

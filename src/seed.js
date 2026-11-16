@@ -161,6 +161,31 @@ const Seed = (() => {
     };
   }
 
-  return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile };
+  // entr/logic.rs wire(): the seed's entrances map says which dungeon is behind each dungeon door
+  // ({ door: dungeon }, names from entr/pools.rs). The door's way in leads to that dungeon's first room,
+  // and that dungeon's way out leads back outside the door. pool: data.entrances,
+  // rows [door, area, entry from, entry to, exit from, exit to]. Returns the layout { door: dungeon }.
+  function applyEntrances(w, pool, map) {
+    const lay = {};
+    if (!pool || !map || !Object.keys(map).length) return lay;
+    const row = new Map(pool.map((r) => [r[0].toLowerCase(), r]));
+    const ex = new Map(w.exits.map((x, i) => [x.name, i]));
+    const exit = (a, b) => { const i = ex.get(`${a} -> ${b}`); if (i === undefined) throw new Error(`the logic has no exit ${a} -> ${b}`); return i; };
+    const reg = (n) => { const i = w.rix.get(n); if (i === undefined) throw new Error(`the logic has no region ${n}`); return i; };
+    const seen = new Set();
+    for (const [door, dun] of Object.entries(map)) {
+      const s = row.get(door.toLowerCase()), d = row.get(String(dun).toLowerCase());
+      if (!s || !d) throw new Error(`the seed moves an entrance the tracker doesn't know: ${door} → ${dun}`);
+      if (seen.has(d[0])) throw new Error(`the seed puts ${d[0]} behind two doors`);
+      seen.add(d[0]); lay[s[0]] = d[0];
+    }
+    // every door not named keeps its own dungeon (Layout::from_map)
+    for (const r of pool) if (!(r[0] in lay)) { if (seen.has(r[0])) throw new Error(`the seed puts ${r[0]} behind two doors`); lay[r[0]] = r[0]; }
+    const moves = Object.entries(lay).map(([door, dun]) => [row.get(door.toLowerCase()), row.get(dun.toLowerCase())]).map(([s, d]) => [exit(s[2], s[3]), reg(d[3]), exit(d[4], d[5]), reg(s[5])]);
+    for (const [entry, inner, out, outer] of moves) { w.exits[entry].to = inner; w.exits[out].to = outer; }
+    return lay;
+  }
+
+  return { decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

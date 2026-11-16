@@ -144,6 +144,6 @@ schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'mi
 items = [[n, a] for n, a in L['items']]
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],
        'settings': L['settings'], 'items': items, 'vanilla': L['vanilla'], 'checks': checks, 'classic': classic, 'detect': det, 'maps': maps,
-       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']}}
+       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']}}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)

@@ -1,15 +1,16 @@
 // Compares the tracker's logic with ootrr's own Search (tools/ootrr-export/tracker_check.rs).
-// Usage: node tools/crosscheck.js <folder with default.ootrr, keysanity.ootrr, wild.ootrr> <path to tracker_check>
+// Usage: node tools/crosscheck.js <folder with default, keysanity, wild, dungeons, dungeons_plain .ootrr> <path to tracker_check>
 const [SEEDS, CHECK] = process.argv.slice(2);
 const E=require('../src/engine.js'),Seed=require('../src/seed.js'),data=require('../data/data.json'),fs=require('fs'),cp=require('child_process');
 const always={'Ocarina A Button':1,'Ocarina C up Button':1,'Ocarina C down Button':1,'Ocarina C left Button':1,'Ocarina C right Button':1,'Small Key (Treasure Chest Game)':6};
 const kits={none:{},early:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':1,'Zeldas Lullaby':1,'Sarias Song':1,'Bomb Bag':1,'Kokiri Emerald':1},
   mid:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':2,'Zeldas Lullaby':1,'Sarias Song':1,'Eponas Song':1,'Song of Time':1,'Bomb Bag':2,'Bow':1,'Progressive Hookshot':1,'Progressive Strength Upgrade':1,'Kokiri Emerald':1,'Goron Ruby':1,'Zora Sapphire':1,'Bottle':1,'Rutos Letter':1,'Magic Meter':1,'Dins Fire':1,'Small Key (Forest Temple)':3}};
 let bad=0;
-for (const f of ['default','keysanity','wild']) {
+for (const f of ['default','keysanity','wild','dungeons','dungeons_plain']) {
   const text=fs.readFileSync(`${SEEDS}/${f}.ootrr`,'utf8'); const sd=Seed.parseFile(text,data);
   const settings=Seed.applySwitches(data.settings,sd.switches);
   const w=E.buildWorld(data,settings,Seed.patchesOf(sd.switches));
+  Seed.applyEntrances(w,data.entrances,sd.entrances);
   const placed=new Set(Object.keys(sd.placements));
   const p=new Array(w.locs.length).fill(null);
   w.locs.forEach((l,k)=>{if(l.event!==null||placed.has(l.name))return;const v=data.vanilla[l.name];if(v!==undefined){const i=w.items.find(v);if(i!==undefined)p[k]=i;}});

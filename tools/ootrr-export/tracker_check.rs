@@ -12,7 +12,12 @@ fn main() {
     let over_s: String = a.get(2).cloned().unwrap_or_default();
     let over: Vec<(&str, &str)> = over_s.split(',').filter(|x| !x.is_empty()).map(|kv| { let (k, v) = kv.split_once('=').unwrap(); (k, v) }).collect();
     let d = Data::load().unwrap();
-    let w = world_with(&d, &over).unwrap();
+    let mut w = world_with(&d, &over).unwrap();
+    // dungeon entrance shuffle: rewire the doors the seed lists
+    if let Some(e) = j.get("entrances").and_then(|e| e.as_obj()) {
+        let m: std::collections::BTreeMap<String, String> = e.iter().map(|(k, v)| (k.clone(), v.as_str().unwrap().to_string())).collect();
+        if !m.is_empty() { ootrr_core::entr::logic::apply(&mut w, &ootrr_core::entr::Layout::from_map(&m).unwrap()).unwrap(); }
+    }
     let mut p = Placement::new(w.locs.len());
     for l in &w.real { let n = &w.locs[*l].name; if placed.contains(n) { continue; } if let Some(v) = d.vanilla.get(n) { if let Some(i) = w.item(v) { p.put(*l, i); } } }
     let mut s = Search::new(&w);
