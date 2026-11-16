@@ -134,6 +134,23 @@ for t in T:
     if t['kind'] == 'gift': r['g'] = 1
     if t['kind'] == 'cow': r['c'] = 1
     if r: det.setdefault(o, []).append(r)
+# Gold Skulltulas: OOTRR's shuffle drops a check's item at the skulltula skull_names.json names for it
+# (slice/skull_names.rs hashes()), which overrides the older tracker_targets pairing for 48 skulltulas.
+# Seen in a real save: the lone Hyrule Field tree skulltula (2177746409373494991) dropped the item of
+# "LLR GS Rain Shed" while tracker_targets called it "LH GS Small Island".
+SN = json.load(open(os.path.join(D, 'skull_names.json')))
+skull_notes = {}
+for sp in SN['spots']:
+    h, n = str(sp['hash']), sp['name']
+    for o, rules in list(det.items()):
+        for r in rules:
+            if h in (r.get('k') or []): r['k'] = [k for k in r['k'] if k != h]
+        det[o] = [r for r in rules if r.get('k') or r.get('f') or not ('k' in r)]
+        if not det[o]: del det[o]
+    if n in checks:
+        det[n] = [{'k': [h]}]
+        skull_notes[n] = [sp['grade'], sp['why']]
+print('skull names', len(SN['spots']), 'notes', len(skull_notes), file=sys.stderr)
 mapc = collections.defaultdict(collections.Counter)
 for t in T:
     o = t.get('ootr')
@@ -144,6 +161,6 @@ schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'mi
 items = [[n, a] for n, a in L['items']]
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],
        'settings': L['settings'], 'items': items, 'vanilla': L['vanilla'], 'checks': checks, 'classic': classic, 'detect': det, 'maps': maps,
-       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']}}
+       'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'skull_notes': skull_notes, 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']}}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)

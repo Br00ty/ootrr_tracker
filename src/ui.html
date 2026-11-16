@@ -700,6 +700,12 @@ const ruleText = (a) => {
   return "…";
 };
 
+function skullNote(n) {
+  const sn = (DATA.skull_notes || {})[n];
+  if (!sn || sn[0] === "release") return null;
+  const what = sn[0] === "tour" ? "This name is OOTRR's placeholder for a remake Skulltula" : "OOTRR thinks this name fits this remake Skulltula, but it isn't settled";
+  return h("div", { class: "cross" }, h("span", { class: "xa" }, "GS"), `${what}: ${sn[1].replace(/^placeholder, /, "")}.`);
+}
 function describe(n) {
   const [area, , region, rule] = DATA.checks[n];
   // dungeon checks never show the way in: the dungeon's own rooms and keys are the route
@@ -708,6 +714,8 @@ function describe(n) {
   const shown = ways.slice(0, 6);
   return h("div", { class: "desc" },
     cross.map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
+    // Skulltulas whose OoTR name is OOTRR's guess or placeholder for a remake spot: OOTRR's own note on where it is
+    skullNote(n),
     h("div", {}, "Region: ", h("b", {}, region)),
     h("code", { class: "q" }, rule || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
