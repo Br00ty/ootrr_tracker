@@ -914,6 +914,9 @@ const OWN_FLAGS = {
   "ZD King Zora Thawed": ["HavePlayedEvent.SageOfWater_KingZora_IsMelted_Ice", "SageOfWater_KingZora_adult_Talk_Event198"],
   // confirmed in a real save: the "all four carpenters rescued" scene, where the card check is handed over
   "Hideout Gerudo Membership Card": ["HavePlayedEvent.Meet_FourCarpenter_ClearEvent"],
+  // confirmed in a real save: Sheik's song scenes, each with a Piece of Heart in the user's seed
+  "Sheik at Colossus": ["HavePlayedEvent.Dm_MelodyGet_Spilit"],
+  "Sheik at Temple": ["HavePlayedEvent.Dm_MelodyGet_Shine"],
 };
 const EXTRA_FLAGS = {
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
@@ -932,8 +935,6 @@ const EXTRA_FLAGS = {
   "Sheik in Crater": ["HavePlayedEvent.Dm_MelodyGet_Fire"],
   "Sheik in Ice Cavern": ["HavePlayedEvent.Dm_MelodyGet_Water"],
   "Sheik in Kakariko": ["HavePlayedEvent.Dm_MelodyGet_Shadow"],
-  "Sheik at Colossus": ["HavePlayedEvent.Dm_MelodyGet_Spilit"],
-  "Sheik at Temple": ["HavePlayedEvent.Dm_MelodyGet_Shine"],
 };
 function detectMap() {
   const out = detectMapBase();
