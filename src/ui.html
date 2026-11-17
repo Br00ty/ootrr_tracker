@@ -2069,12 +2069,20 @@ for (const [n, , m] of COUNTERS) if (typeof m !== "function") MAX[n] = m;
 for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
 
 function applyPeek(p, label) {
-  // Items and found checks stay once seen: keys are spent and trade items are swapped,
-  // so a later save can show less than you collected.
+  // Items and found checks stay once seen: trade items are swapped, so a later save can show less
+  // than you collected. Small keys: the save holds the keys you have now, so each rise from one read
+  // to the next is a key picked up and adds to the count; a drop is a key spent and is ignored.
+  const held = (S.auto.held ||= {});
   for (let [n, v] of Object.entries(Auto.items(p))) {
     if (n === "Big Poes Sold") v = Math.min(v, bigPoes());
-    if (MAX[n] != null) v = Math.min(v, MAX[n]);
-    S.auto.items[n] = Math.max(S.auto.items[n] || 0, v);
+    const cur = S.auto.items[n] || 0;
+    let got = Math.max(cur, v);
+    if (n.startsWith("Small Key (")) {
+      if (held[n] !== undefined) got = cur + Math.max(0, v - held[n]);
+      held[n] = v;
+    }
+    if (MAX[n] != null) got = Math.min(got, MAX[n]);
+    S.auto.items[n] = got;
   }
   for (const n of Auto.checks(p, detectMap())) S.auto.done[n] = 1;
   const area = Auto.areaOf(p.map, DATA.maps, p.pos);
