@@ -399,6 +399,66 @@ public static class OotrrLive
         }
     }
 
+    // ---------- research: where the game keeps Link's position (run with OOTRR_PROBE set) ----------
+    // Scans the GameDataMgr's first 4 KB for type tables shaped like the Bool one (count u32 at +0,
+    // entries u64 at +8, table u64 at +16, size u32 at +28), notes which hold Player_Pos_For_Map and its
+    // neighbours, then samples the small tables once a second while the player moves. Reads only.
+    static string Hex(byte[] b) { if (b == null) return "null"; StringBuilder sb = new StringBuilder("\""); foreach (byte x in b) sb.Append(x.ToString("x2")); return sb.Append('"').ToString(); }
+    public static void Probe(string outDir, int seconds)
+    {
+        Directory.CreateDirectory(outDir);
+        uint[] wanted = { 0x960AD56AU, 0xA4AEE8CDU, 0x1D6189DAU, 0xD4B395C7U, 0xCEA220D3U };   // Player_Pos/Rot_For_Map, Sequence_CurrentBanc, Horse_Pos_For_Map, Sequence_IsChildhood
+        string why = null;
+        for (int i = 0; i < 20; i++) { nextScan = DateTime.MinValue; why = Attach(); if (why == null) break; Console.WriteLine("Waiting for the game: " + why); Thread.Sleep(1000); }
+        if (why != null) { File.WriteAllText(Path.Combine(outDir, "probe.json"), "{\"ok\":false,\"why\":" + Str(why) + "}"); return; }
+        ulong holder = U64(slot), manager = holder != 0 ? U64(holder) : 0;
+        byte[] head = manager != 0 ? Read(manager, 0x1000) : null;
+        StringBuilder js = new StringBuilder();
+        js.Append("{\"ok\":true,\"game\":").Append(Str(game)).Append(",\"base\":").Append(baseAddr).Append(",\"slot\":").Append(slot).Append(",\"manager\":").Append(manager).Append(",\"head\":").Append(Hex(head)).Append(",\"tables\":[");
+        List<ulong[]> small = new List<ulong[]>();   // [offset, entries, count]
+        bool firstT = true;
+        if (head != null)
+        {
+            for (int o = 0; o + 32 <= head.Length; o += 8)
+            {
+                uint count = BitConverter.ToUInt32(head, o), size = BitConverter.ToUInt32(head, o + 28);
+                ulong entries = BitConverter.ToUInt64(head, o + 8), table = BitConverter.ToUInt64(head, o + 16);
+                if (count == 0 || count > MAX_ITEMS || size == 0 || size > MAX_ITEMS || entries == 0 || table == 0 || (entries & 3) != 0 || (table & 3) != 0 || entries >= (1UL << 48) || table >= (1UL << 48)) continue;
+                byte[] raw = Read(table, (int)(size * 8));
+                if (raw == null) continue;
+                StringBuilder found = new StringBuilder();
+                foreach (uint w in wanted) { long ix = BoolSlot(raw, size, w); if (ix >= 0 && ix < count) { if (found.Length > 0) found.Append(','); found.Append("\"").Append(w.ToString("X8")).Append("\":").Append(ix); } }
+                if (!firstT) js.Append(','); firstT = false;
+                js.Append("{\"o\":").Append(o).Append(",\"count\":").Append(count).Append(",\"size\":").Append(size).Append(",\"entries\":").Append(entries).Append(",\"table\":").Append(table).Append(",\"found\":{").Append(found).Append("}}");
+                if (count <= 400) small.Add(new ulong[] { (ulong)o, entries, count });
+            }
+        }
+        js.Append("],\"samples\":[");
+        string saveSig = "";
+        for (int t = 0; t < seconds; t++)
+        {
+            if (t > 0) js.Append(',');
+            js.Append("{\"t\":").Append(t).Append(",\"dumps\":{");
+            bool firstD = true;
+            foreach (ulong[] sm in small)
+            {
+                byte[] d = Read(sm[1], (int)Math.Min(sm[2] * 64, 32768));
+                if (!firstD) js.Append(','); firstD = false;
+                js.Append("\"").Append(sm[0]).Append("\":").Append(Hex(d));
+            }
+            js.Append("}");
+            FileInfo f = NewestSave();
+            string sig = f != null ? f.LastWriteTimeUtc.Ticks + ":" + f.Length : "";
+            if (f != null && sig != saveSig) { saveSig = sig; string name = "save-" + t + ".sav"; try { File.Copy(f.FullName, Path.Combine(outDir, name), true); js.Append(",\"save\":").Append(Str(name)); } catch { } }
+            js.Append("}");
+            Console.WriteLine("Sample " + (t + 1) + " of " + seconds + ": keep moving Link around (stairs, other floors)" + (t == seconds / 2 ? ", and save the game once now" : ""));
+            Thread.Sleep(1000);
+        }
+        js.Append("]}");
+        File.WriteAllText(Path.Combine(outDir, "probe.json"), js.ToString());
+        Console.WriteLine("Done: " + Path.Combine(outDir, "probe.json"));
+    }
+
     public static void Run(int port)
     {
         TcpListener listener = new TcpListener(IPAddress.Loopback, port);
@@ -416,4 +476,11 @@ public static class OotrrLive
 '@
 }
 
-[OotrrLive]::Run(47811)
+if ($env:OOTRR_PROBE) {
+    # research mode: samples where the game keeps Link's position, into %LOCALAPPDATA%\ootrr\tracker-probe
+    $out = Join-Path $env:LOCALAPPDATA 'ootrr\tracker-probe'
+    [OotrrLive]::Probe($out, [int]$env:OOTRR_PROBE)
+    Write-Host "Finished. Tell Claude it's done; you can close this window."
+} else {
+    [OotrrLive]::Run(47811)
+}
