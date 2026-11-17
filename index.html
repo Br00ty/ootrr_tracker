@@ -3301,15 +3301,17 @@ function renderMap() {
 const ORDER = { g: 0, y: 1, r: 2, done: 3 };
 // how many of a pin's checks are still to get (its number counts down as they're picked up)
 const left = (cs) => cs.filter((c) => c.st !== "done").length;
-// checks in different states make a pie: a slice per state, sized by how many (null when they're all alike)
+// checks in different states make a pie: a slice per state, sized by how many (null when they're all alike).
+// Done checks are left out: the pie shows only what's still to get (a pin with everything done is grey).
 function pieOf(cs) {
-  const n = { g: 0, y: 0, r: 0, done: 0 };
-  for (const c of cs) n[c.st]++;
-  const parts = ["g", "y", "r", "done"].filter((k) => n[k]);
+  const n = { g: 0, y: 0, r: 0 };
+  let total = 0;
+  for (const c of cs) if (c.st in n) { n[c.st]++; total++; }
+  const parts = ["g", "y", "r"].filter((k) => n[k]);
   if (parts.length < 2) return null;
-  const col = { g: "var(--green)", y: "var(--yellow)", r: "var(--red)", done: "var(--grey)" };
+  const col = { g: "var(--green)", y: "var(--yellow)", r: "var(--red)" };
   let at = 0;
-  return "conic-gradient(" + parts.map((k) => { const from = at; at += (n[k] / cs.length) * 360; return `${col[k]} ${from}deg ${at}deg`; }).join(",") + ")";
+  return "conic-gradient(" + parts.map((k) => { const from = at; at += (n[k] / total) * 360; return `${col[k]} ${from}deg ${at}deg`; }).join(",") + ")";
 }
 // pins for the area's checks; checks close together share one pin
 function pinGroups(key, list) {
