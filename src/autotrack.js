@@ -139,7 +139,7 @@ const Auto = (() => {
     ZoraFountain: "Zora's Fountain", LakeHylia: "Lake Hylia", GerudoValley: "Gerudo Valley", GerudoFortress: "Gerudo's Fortress", HountedWasteland: "Haunted Wasteland",
     HauntedWasteland: "Haunted Wasteland", DesertColossus: "Desert Colossus", GanonCastle: "Outside Ganon's Castle", InsideTheDekuTree: "Deku Tree", DodongoCavern: "Dodongo's Cavern",
     InsideJabuJabuBelly: "Jabu Jabu's Belly", ForestTemple: "Forest Temple", FireTemple: "Fire Temple", WaterTemple: "Water Temple", ShadowTemple: "Shadow Temple",
-    SpiritTemple: "Spirit Temple", BottomOfTheWell: "Bottom of the Well", IceCavern: "Ice Cavern", GerudoTrainingGround: "Gerudo Training Ground", InsideGanonCastle: "Ganon's Castle",
+    SpiritTemple: "Spirit Temple", BottomOfTheWell: "Bottom of the Well", IceCavern: "Ice Cavern", GerudoTrainingGround: "Gerudo Proving Ground", InsideGanonCastle: "Ganon's Castle",
   };
   // Lake Hylia and Lon Lon Ranch are part of the Hyrule Field map in the remake. OOTRR's tracker
   // (tracker/index.rs pin()) moves a Hyrule Field position into one of them when it falls inside that

@@ -53,7 +53,7 @@ PREFIX=[("KF ","Kokiri Forest"),("Deku Tree","Deku Tree"),("Queen Gohma","Deku T
 ("Kak ","Kakariko Village"),("Song from Windmill","Kakariko Village"),("Sheik in Kakariko","Kakariko Village"),("Graveyard ","Graveyard"),("Song from Royal","Graveyard"),("Bottom of the Well","Bottom of the Well"),
 ("DMT ","Death Mountain Trail"),("GC ","Goron City"),("Darunias","Goron City"),("DMC ","Death Mountain Crater"),("Sheik in Crater","Death Mountain Crater"),("Dodongos Cavern","Dodongo's Cavern"),("King Dodongo","Dodongo's Cavern"),
 ("ZR ","Zora's River"),("ZD ","Zora's Domain"),("ZF ","Zora's Fountain"),("Jabu","Jabu Jabu's Belly"),("Barinade","Jabu Jabu's Belly"),("Ice Cavern","Ice Cavern"),("Sheik in Ice","Ice Cavern"),
-("LH ","Lake Hylia"),("Water Temple","Water Temple"),("Morpha","Water Temple"),("GV ","Gerudo Valley"),("GF ","Gerudo's Fortress"),("Hideout ","Thieves' Hideout"),("Gerudo Training","Gerudo Training Ground"),("Wasteland ","Haunted Wasteland"),
+("LH ","Lake Hylia"),("Water Temple","Water Temple"),("Morpha","Water Temple"),("GV ","Gerudo Valley"),("GF ","Gerudo's Fortress"),("Hideout ","Thieves' Hideout"),("Gerudo Training","Gerudo Proving Ground"),("Wasteland ","Haunted Wasteland"),
 ("Colossus ","Desert Colossus"),("Sheik at Colossus","Desert Colossus"),("Forest Temple","Forest Temple"),("Phantom Ganon","Forest Temple"),("Fire Temple","Fire Temple"),("Volvagia","Fire Temple"),("Shadow Temple","Shadow Temple"),("Bongo","Shadow Temple"),
 ("Spirit Temple","Spirit Temple"),("Twinrova","Spirit Temple"),("Ganons Castle","Ganon's Castle"),("Ganons Tower","Ganon's Castle"),("Ganondorf","Ganon's Castle"),("Ganon","Ganon's Castle"),("Links Pocket","Temple of Time"),("Pierre","Lake Hylia")]
 AREAS = sorted({a for _, a in PREFIX} | {"Hyrule Castle", "Lon Lon Ranch", "Gerudo Valley", "Haunted Wasteland"}, key=len, reverse=True)
@@ -237,7 +237,8 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
        'settings': L['settings'], 'items': items, 'vanilla': L['vanilla'], 'checks': checks, 'classic': classic, 'detect': det, 'maps': maps,
        'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'skull_notes': skull_notes, 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']},
        # OOTRR's settings page: its groups (tabs), presets and the help text of each setting and choice
-       'tips': {s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']},
+       # the remake calls it the Gerudo Proving Ground
+       'tips': json.loads(json.dumps({s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']}).replace('Gerudo Training Ground', 'Gerudo Proving Ground')),
        'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)

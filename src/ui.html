@@ -252,7 +252,12 @@ const RENAMES = {
   "GV GS Behind Tent": { name: "GV GS Pillar" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
-const shownName = (n) => (RENAMES[n] ? RENAMES[n].name : n);
+// The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
+// for its checks, regions and items (seed import and the logic match on it), so the tracker shows the
+// new name and lists OOTRR's under each check.
+const gpg = (s) => String(s).replace(/Gerudo Training Ground/g, "Gerudo Proving Ground");
+const shownName = (n) => (RENAMES[n] ? RENAMES[n].name : gpg(n));
+const renamed = (n) => !!RENAMES[n] || shownName(n) !== n;
 const $ = (s, r = document) => r.querySelector(s);
 const K = (...a) => a.flat(3).filter((x) => x != null && x !== false);
 const h = (tag, attrs = {}, ...kids) => {
@@ -309,7 +314,7 @@ const DUNGEONS = [
   ["Shadow Temple","Small Key (Shadow Temple)",5,"Boss Key (Shadow Temple)"],
   ["Spirit Temple","Small Key (Spirit Temple)",5,"Boss Key (Spirit Temple)"],
   ["Bottom of the Well","Small Key (Bottom of the Well)",3,null],
-  ["Gerudo Training Ground","Small Key (Gerudo Training Ground)",9,null],
+  ["Gerudo Proving Ground","Small Key (Gerudo Training Ground)",9,null],
   ["Thieves' Hideout","Small Key (Thieves Hideout)",4,null],
   ["Ganon's Castle","Small Key (Ganons Castle)",2,"Boss Key (Ganons Castle)"],
 ];
@@ -372,7 +377,7 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e
 
 // ---------- logic ----------
 const OVERWORLD = ["Kokiri Forest","Lost Woods","Sacred Forest Meadow","Hyrule Field","Lon Lon Ranch","Market","Temple of Time","Hyrule Castle","Kakariko Village","Graveyard","Death Mountain Trail","Goron City","Death Mountain Crater","Zora's River","Zora's Domain","Zora's Fountain","Lake Hylia","Gerudo Valley","Gerudo's Fortress","Thieves' Hideout","Haunted Wasteland","Desert Colossus","Outside Ganon's Castle"];
-const DUNGEON_AREAS = ["Deku Tree","Dodongo's Cavern","Jabu Jabu's Belly","Forest Temple","Fire Temple","Water Temple","Shadow Temple","Spirit Temple","Bottom of the Well","Ice Cavern","Gerudo Training Ground","Ganon's Castle"];
+const DUNGEON_AREAS = ["Deku Tree","Dodongo's Cavern","Jabu Jabu's Belly","Forest Temple","Fire Temple","Water Temple","Shadow Temple","Spirit Temple","Bottom of the Well","Ice Cavern","Gerudo Proving Ground","Ganon's Castle"];
 
 // The logic switches in force: the seed's, or the manual settings run through the same mapping.
 function switches() {
@@ -408,6 +413,7 @@ function ensureWorlds() {
 // OOTRR's pool names ("Dodongos Cavern", "Zoras Fountain") → the tracker's area names
 const plain = (n) => n.toLowerCase().replace(/'/g, "").replace(/s\b/g, "");
 const AREA_OF = new Map([...OVERWORLD, ...DUNGEON_AREAS].map((a) => [plain(a), a]));
+AREA_OF.set(plain("Gerudo Training Ground"), "Gerudo Proving Ground");  // OOTRR's name for it
 const areaName = (n) => AREA_OF.get(plain(n)) || n;
 const POOL = new Map((DATA.entrances || []).map((r) => [areaName(r[0]), r]));
 // the door a dungeon (tracker area name) sits behind, or null when it is in its own place / not shuffled
@@ -786,7 +792,7 @@ body:hover .opts{opacity:1}
 .t .lb{position:absolute;left:0;right:0;top:1px;font-size:8.5px;font-weight:700;color:#e9d7a6;text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:.02em}
 `;
 const CAST_SHORT = { "Forest Temple": "Forest", "Fire Temple": "Fire", "Water Temple": "Water", "Shadow Temple": "Shadow", "Spirit Temple": "Spirit",
-  "Bottom of the Well": "Well", "Gerudo Training Ground": "GTG", "Thieves' Hideout": "Hideout", "Ganon's Castle": "Ganon" };
+  "Bottom of the Well": "Well", "Gerudo Proving Ground": "GPG", "Thieves' Hideout": "Hideout", "Ganon's Castle": "Ganon" };
 function openBroadcast() {
   if (BW && !BW.closed) { BW.focus(); return; }
   BW = window.open("", "ootrr-broadcast", "popup=yes,width=430,height=760");
@@ -1667,11 +1673,11 @@ function describe(n) {
     cross.map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
     // Skulltulas whose OoTR name is OOTRR's guess or placeholder for a remake spot: OOTRR's own note on where it is
     skullNote(n),
-    RENAMES[n] ? h("div", { class: "cross" }, `OOTRR name: ${n}`) : null,
-    h("div", {}, "Region: ", h("b", {}, region)),
+    renamed(n) ? h("div", { class: "cross" }, `OOTRR name: ${n}`) : null,
+    h("div", {}, "Region: ", h("b", {}, gpg(region))),
     h("code", { class: "q" }, rule || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
-    shown.map(([from, q]) => h("code", { class: "q" }, h("span", { class: "from" }, `${from} → `), q)),
+    shown.map(([from, q]) => h("code", { class: "q" }, h("span", { class: "from" }, `${gpg(from)} → `), q)),
     ways.length > shown.length ? h("div", { class: "way" }, `+ ${ways.length - shown.length} more`) : null);
 }
 
