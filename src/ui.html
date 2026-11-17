@@ -178,8 +178,9 @@ main.mapmode #mapview{display:flex}
 .mapside .desc{padding-left:24px}
 .mapfit{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;width:100%}
 .mapfit img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
-.pin{position:absolute;transform:translate(-50%,-50%);width:16px;height:16px;border-radius:50%;border:2px solid #111;box-shadow:0 0 0 1px #0008,0 1px 4px #000c;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#111;z-index:1}
-.pin.many{width:20px;height:20px}
+.pin{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2px solid #111;box-shadow:0 0 0 1px #0008,0 1px 4px #000c;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#111;z-index:1}
+.pin.many{width:22px;height:22px}
+.pin.pie{color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 3px #000;opacity:1}
 .pin:hover{transform:translate(-50%,-50%) scale(1.25);z-index:3}
 .pin.g{background:var(--green)}.pin.y{background:var(--yellow)}.pin.r{background:var(--red);color:#fff}.pin.done{background:var(--grey);opacity:.75}
 .pin.sel{outline:2px solid var(--gold);outline-offset:2px;z-index:3}
@@ -1485,6 +1486,15 @@ function pinGroups(key, list) {
   for (const g of groups) {
     g.cs.sort((a, b) => ORDER[a.st] - ORDER[b.st]);
     g.st = g.cs[0].st;  // the best state among them: green if any is in logic
+    // a pin with checks in different states is a pie: a slice per state, sized by how many
+    const n = { g: 0, y: 0, r: 0, done: 0 };
+    for (const c of g.cs) n[c.st]++;
+    const parts = ["g", "y", "r", "done"].filter((k) => n[k]);
+    if (parts.length > 1) {
+      const col = { g: "var(--green)", y: "var(--yellow)", r: "var(--red)", done: "var(--grey)" };
+      let at = 0;
+      g.pie = "conic-gradient(" + parts.map((k) => { const from = at; at += (n[k] / g.cs.length) * 360; return `${col[k]} ${from}deg ${at}deg`; }).join(",") + ")";
+    }
     g.id = g.cs.map(pinKey).join("|");
   }
   return groups;
@@ -1517,7 +1527,7 @@ function mapWithPins(area, key, list) {
   for (const g of groups) {
     const n = g.cs.length, open = pinOpen === g.id;
     fit.append(h("div", {
-      class: `pin ${g.st} ${n > 1 ? "many" : ""} ${open ? "sel" : ""}`, style: `left:${g.u * 100}%;top:${g.v * 100}%`,
+      class: `pin ${g.st} ${n > 1 ? "many" : ""} ${g.pie ? "pie" : ""} ${open ? "sel" : ""}`, style: `left:${g.u * 100}%;top:${g.v * 100}%${g.pie ? `;background:${g.pie}` : ""}`,
       title: g.cs.map((c) => shownName(c.n) + (c.vanilla ? ` (${c.vanilla})` : "")).join("\n") + (n === 1 ? "\nDouble-click to mark it done" : ""),
       onclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); const id = g.id; clickTimer = setTimeout(() => { pinOpen = pinOpen === id ? null : id; openCheck = null; renderMap(); }, 230); },
       ondblclick: (e) => { e.stopPropagation(); clearTimeout(clickTimer); if (n === 1) toggleDone(g.cs[0].n); },
