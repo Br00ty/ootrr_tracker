@@ -2649,8 +2649,9 @@ const DOORS = {
   "Ice Cavern": "Zora's Fountain", "Gerudo Proving Ground": "Gerudo's Fortress", "Ganon's Castle": "Outside Ganon's Castle",
 };
 const doorKey = (d) => `${d} (entrance)`;
-// doors only one age's map shows (Jabu Jabu is gone from the adult Zora's Fountain)
-const DOOR_AGE = { "Jabu Jabu's Belly": "child" };
+// doors only one age's map shows: Jabu Jabu is gone from the adult Zora's Fountain, the well is
+// drained only as a child, and the Ice Cavern is reachable once the fountain has frozen over
+const DOOR_AGE = { "Jabu Jabu's Belly": "child", "Bottom of the Well": "child", "Ice Cavern": "adult" };
 // the dungeon behind a door: with dungeon entrances shuffled, the seed's layout says
 function behindDoor(d) {
   for (const [door, dun] of Object.entries(LAYOUT)) if (areaName(door) === d) return areaName(dun);
