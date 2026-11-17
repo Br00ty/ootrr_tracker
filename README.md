@@ -62,7 +62,6 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 
 - Shuffled entrances: only **dungeon entrance shuffle** is followed (the only kind OOTRR 0.6.0 can generate besides vanilla). Overworld and other entrance pools will come when OOTRR builds them.
 - Shuffled shop shelves: shop items and prices aren't tracked.
-- Small keys: the save stores only the keys you hold, so the tracker counts each key it sees you gain between saves and ignores keys you spend. A key picked up and spent between two saves of the game isn't seen; add it by clicking.
 
 The page shows a banner when a loaded seed uses entrance or shop shuffle.
 

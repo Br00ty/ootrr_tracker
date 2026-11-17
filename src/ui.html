@@ -372,7 +372,25 @@ function manualVals() {
 const startTable = () => (S.seed ? S.seed.start : manualVals().__start) || {};
 const skippedList = () => (S.seed ? S.seed.skipped : manualVals().__skipped) || [];
 const startOf = (n) => startTable()[n] || 0;
-const have = (n) => Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n));
+const have = (n) => Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n), keysFound(n));
+// Small keys gotten: every done check that holds a dungeon's small key (the seed's item there, or the
+// vanilla one where the seed doesn't shuffle that spot) counts one; a key ring counts them all.
+let KEYS_FOUND = null;
+function keysFound(n) {
+  if (!n.startsWith("Small Key (")) return 0;
+  if (!KEYS_FOUND) {
+    KEYS_FOUND = {};
+    const pl = (S.seed && S.seed.placements) || {};
+    for (const c of Object.keys(DATA.checks)) {
+      const it = pl[c] ?? DATA.vanilla[c];
+      if (!it || !it.startsWith("Small Key") || !isDone(c)) continue;
+      const ring = /^Small Key Ring \((.+)\)$/.exec(it), k = ring ? `Small Key (${ring[1]})` : it;
+      KEYS_FOUND[k] = ring ? 99 : (KEYS_FOUND[k] || 0) + 1;
+    }
+    for (const [, sk, m] of DUNGEONS) if (KEYS_FOUND[sk]) KEYS_FOUND[sk] = Math.min(KEYS_FOUND[sk], m);
+  }
+  return KEYS_FOUND[n] || 0;
+}
 const isDone = (n) => !!S.done[n] || (!!S.auto.done[n] && !S.ignore[n]);
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
@@ -476,6 +494,7 @@ function compute() {
 // ---------- render ----------
 let R = new Map(), VSONGS = new Map();
 function render() {
+  KEYS_FOUND = null;
   R = compute();
   if (typeof paintAuto === "function") paintAuto();
   if (typeof paintSeed === "function") paintSeed();
