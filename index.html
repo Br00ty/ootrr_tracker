@@ -2262,7 +2262,14 @@ const ICON = {
   "Kokiri Emerald": "Item_Stone_Forest", "Goron Ruby": "Item_Stone_Fire", "Zora Sapphire": "Item_Stone_Water",
   "Light Medallion": "Item_Medal_Light", "Forest Medallion": "Item_Medal_Forest", "Fire Medallion": "Item_Medal_Fire",
   "Water Medallion": "Item_Medal_Water", "Shadow Medallion": "Item_Medal_Shadow", "Spirit Medallion": "Item_Medal_Spirit",
-  "Gold Skulltula Token": "Item_Token_Gold", "Piece of Heart": "Obj_Heart_Piece", "Heart Container": "Obj_Heart_Piece", "Big Poes Sold": "Item_Bottle_BigPoe",
+  "Gold Skulltula Token": "Item_Token_Gold", "Piece of Heart": "Obj_Heart_Piece", "Heart Container": "Obj_Heart_Piece", "Big Poes Sold": "Item_Bottle_Poe",
+  // pictures OOTRR doesn't save: read from the game's own icon folder (romfs\UI\Tex\Icon) with the maps
+  "Rutos Letter": "Item_Bottle_Letter", "Stone of Agony": "Item_AgonyStone",
+  "Weird Egg": "Item_WeirdEgg", "Zeldas Letter": "Item_ZeldaLetter", "Keaton Mask": "Armor_Child_Mask_Keaton", "Skull Mask": "Armor_Child_Mask_Skull",
+  "Spooky Mask": "Armor_Child_Mask_Spooky", "Bunny Hood": "Armor_Child_Mask_Bunny", "Mask of Truth": "Armor_Child_Mask_Truth",
+  "Pocket Egg": "Item_PocketEgg", "Cojiro": "Item_CojiroCucco", "Odd Mushroom": "Item_OddMushroom", "Odd Potion": "Item_OddPowder",
+  "Poachers Saw": "Item_PoacherSaw", "Broken Sword": "Weapon_Sword_BrokenGiant", "Prescription": "Item_Prescription",
+  "Eyeball Frog": "Item_EyeballFrog", "Eyedrops": "Item_EyeDrop", "Claim Check": "Item_ClaimCheck",
   "small key": "Item_Dungeon_SmallKey", "boss key": "Item_Dungeon_BossKey",
 };
 const ICON_IDS = new Set(Object.values(ICON).flat());
@@ -2313,8 +2320,33 @@ const NONE_FOUND = `No OOTRR pictures were found in that folder. Pick the ootrr 
 // a picked or dropped folder: the game's map textures, or OOTRR's pictures (whose folder also holds
 // OOTRR's settings, with the game folder the maps are read from)
 function usePicked(files) {
-  if (files.some((f) => /\.bntx\.zs$/i.test(f.name))) return useMapFiles(files);
+  if (files.some((f) => /\.bntx\.zs$/i.test(f.name))) return useGameFiles(files);
   return useIconFiles(files);
+}
+// the game's UI folder: its maps (CustomTex\Map) and the item pictures OOTRR doesn't save (Tex\Icon)
+async function useGameFiles(files) {
+  const icons = files.filter((f) => ICON_IDS.has(f.name.replace(/\.bntx\.zs$/i, "")) && !/CustomTex/i.test(f.webkitRelativePath || ""));
+  let n = 0;
+  if (icons.length) {
+    mapBusy = true; mapMsg = "Reading item pictures…"; iconView = "main"; openIcons();
+    const next = { ...PICS };
+    for (const f of icons) {
+      const id = f.name.replace(/\.bntx\.zs$/i, "");
+      if (PICS[id]) continue;  // a picture OOTRR already saved stays
+      try {
+        const t = TexDec.readTextures(new Uint8Array(await f.arrayBuffer()))[0];
+        const c = document.createElement("canvas"); c.width = t.w; c.height = t.h;
+        c.getContext("2d").putImageData(new ImageData(t.rgba, t.w, t.h), 0, 0);
+        next[id] = await shrink(await new Promise((ok) => c.toBlob(ok, "image/png"))); n++;
+      } catch (e) { console.warn("icon", id, e); }
+      await new Promise((r) => setTimeout(r, 0));
+    }
+    PICS = next;
+    try { localStorage.setItem(ICON_KEY, JSON.stringify(PICS)); } catch (e) {}
+    mapBusy = false;
+  }
+  if (mapPicks(files).size) { await useMapFiles(files); if (n) { mapMsg += ` Also ${n} item pictures from the game.`; openIcons(); } }
+  else { mapMsg = n ? `Loaded ${n} item pictures from the game.` : MAP_NONE; iconView = "main"; openIcons(); render(); }
 }
 async function useIconFiles(files) {
   const idx = files.filter((f) => f.name === "index.json" && /tracker-cache/i.test(f.webkitRelativePath || f.name)).sort((a, b) => b.lastModified - a.lastModified)[0]
@@ -2329,8 +2361,8 @@ async function useIconFiles(files) {
   openIcons();
 }
 // the maps' folder: from OOTRR's settings when known, otherwise the part inside the game folder
-const mapPath = () => { let d = null; try { d = localStorage.getItem(MAP_PATH_KEY); } catch (e) {} return d ? `${d.replace(/[\\/]+$/, "")}\\UI\\CustomTex\\Map` : null; };
-const MAP_NONE = "No map files were found in that folder. Pick the Map folder inside your game files: romfs → UI → CustomTex → Map.";
+const mapPath = () => { let d = null; try { d = localStorage.getItem(MAP_PATH_KEY); } catch (e) {} return d ? `${d.replace(/[\\/]+$/, "")}\\UI` : null; };
+const MAP_NONE = "No maps or pictures were found in that folder. Pick the UI folder inside your game files: romfs → UI.";
 async function pickMaps(auto) {
   copied = false;
   const p = mapPath();
@@ -2399,13 +2431,13 @@ function openIcons() {
     const p = mapPath();
     body = [h("h3", {}, "Finding the game's maps"),
       h("p", {}, p ? (copied ? "The Map folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:")
-        : "In the folder window that just opened, go to your game files (the extracted romfs folder), then into UI → CustomTex → Map."),
+        : "In the folder window that just opened, go to your game files (the extracted romfs folder) and pick its UI folder."),
       p && !copied ? h("p", {}, h("code", { class: "q" }, p)) : null,
       p ? h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
         h("li", {}, "Click the address bar at the top (or press ", h("b", {}, "Alt + D"), ")."),
         h("li", {}, copied ? h("span", {}, "Press ", h("b", {}, "Ctrl + V"), " to paste, then ", h("b", {}, "Enter"), ".") : "Type the address above, then press Enter."),
         h("li", {}, "Click ", h("b", {}, "Upload"), ", then ", h("b", {}, "Upload"), " again when the browser asks to confirm.")) : h("p", {}, "Then click ", h("b", {}, "Upload"), ", and ", h("b", {}, "Upload"), " again when the browser asks to confirm."),
-      h("p", { class: "hint", style: "padding:6px 0 0" }, "About 70 maps are read and shrunk; it takes a little while. They're kept in your browser; nothing is sent anywhere."),
+      h("p", { class: "hint", style: "padding:6px 0 0" }, "About 70 maps and a few pictures are read and shrunk; it takes a little while. When the browser asks to upload the folder's files, that only means reading them into this page: they're kept in your browser and nothing is sent anywhere."),
       row(h("button", { class: "btn", onclick: () => pickMaps(false) }, "Open the folder window again"), h("button", { class: "btn", onclick: () => { iconView = "main"; openIcons(); } }, "Back"))];
   } else if (iconView === "finding") {
     body = [h("h3", {}, "Finding the pictures"),
@@ -2437,8 +2469,8 @@ function openIcons() {
         h("button", { class: "btn", style: "text-align:left;padding:8px 12px", onclick: () => { iconView = "manual"; iconMsg = ""; openIcons(); } },
           h("b", {}, "I'll do it myself"), h("br"),
           h("span", { style: "color:var(--dim);font-size:12px" }, "Pick the folder with the pictures, or drag it onto the tracker."))),
-      h("h3", { style: "margin-top:18px" }, "Game maps"),
-      h("p", {}, "The Map Tracker shows the game's own maps. They're read from your game files (romfs → UI → CustomTex → Map)."),
+      h("h3", { style: "margin-top:18px" }, "Game maps and more pictures"),
+      h("p", {}, "The Map Tracker shows the game's own maps, read from your game files: pick the UI folder (romfs → UI). The pictures OOTRR doesn't save (Ruto's Letter, the Big Poe bottle, the trade items and masks) are read from it too."),
       mapMsg ? h("p", { style: "color:var(--gold)" }, mapMsg) : null,
       mapBusy ? null : h("p", { style: "color:var(--dim)" }, nMaps() ? `${nMaps()} maps stored in this browser.` : "No maps stored yet."),
       mapBusy ? null : h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
