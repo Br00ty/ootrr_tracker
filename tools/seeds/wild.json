@@ -1,7 +1,7 @@
 {"id":"wild","name":"Wild test","tip":"test","order":99,"settings":{
  "open_forest":"open","open_kakariko":"open","open_door_of_time":true,"zora_fountain":"open",
  "shuffle_skulltulas":"pinned","shuffle_cows":true,"shuffle_cows_other":true,"shuffle_beehives":true,
- "shuffle_rocks":"overworld","shuffle_remake_pots":"overworld","shuffle_freestanding_items":"all",
+ "shuffle_rocks":"overworld","shuffle_pots":"overworld","shuffle_crates":"overworld","shuffle_freestanding_items":"all",
  "shuffle_songs":"anywhere","shuffle_smallkeys":"keysanity","shuffle_potion_shop":true,"plant_beans":true,
  "starting_items":["bow","hookshot","longshot"],"starting_songs":["eponas_song"],"starting_hearts":5,
  "shuffle_frog_songs":true,"bombchus_in_logic":true,"anju_one_cucco":true,"jabu_open":true}}

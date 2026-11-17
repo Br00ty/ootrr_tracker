@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from realazk/ootrr 0.6.0:
+// Reading .ootrr seed files, ported from realazk/ootrr 0.6.2:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -82,7 +82,7 @@ const Seed = (() => {
       const num = Number(r.varint()), len = Number(r.varint());
       const p = new Rd(r.take(len));
       const s = byNum.get(num);
-      if (!s) { warn.push(`unknown setting number ${num} ignored`); continue; }
+      if (!s) { warn.push(RETIRED[num] ? `retired:${RETIRED[num]}` : `unknown setting number ${num} ignored`); continue; }
       let v;
       switch (s.kind) {
         case "toggle": v = p.take(1)[0] === 1; break;
@@ -97,6 +97,16 @@ const Seed = (() => {
     // Schema::normalize: a setting whose dependency does not hold takes its off value
     for (const s of schema) if (!enabled(s, vals)) vals[s.id] = "disabled" in s ? s.disabled : s.default;
     return { vals, warn };
+  }
+
+  // settings/list.rs RETIRED: settings OOTRR has removed, which older seeds still carry (0.6.2)
+  const RETIRED = { 55: "Remake chests", 59: "Shop prices", 60: "Shop price max", 61: "Shop price min", 62: "Shop deal items", 63: "Shop deal gear", 92: "Remake only pots" };
+  // one plain note for the retired settings a seed carries, in place of a line each
+  function retiredNote(warn, generator) {
+    const old = warn.filter((w) => w.startsWith("retired:")).map((w) => w.slice(8));
+    if (!old.length) return warn;
+    return [...warn.filter((w) => !w.startsWith("retired:")),
+      `made with ${generator || "an older OOTRR"}: ${old.join(", ")} ${old.length > 1 ? "are settings" : "is a setting"} OOTRR has since removed, so the tracker follows what the seed placed`];
   }
 
   // slice/support.rs Plan::logic, with the pieces it reads (open_world.rs, qol.rs, pot_slice/plan.rs …)
@@ -119,8 +129,10 @@ const Seed = (() => {
     if (v.gerudo_bridge_open === true) out.push(["gerudo_bridge_open", "1"]);
     if (v.shuffle_skulltulas && v.shuffle_skulltulas !== "off") out.push(["skull_rules", "strict"]);
     if ((v.shuffle_rocks && v.shuffle_rocks !== "off") || (v.shuffle_grass && v.shuffle_grass !== "off")) out.push(["rock_spots", "on"]);
-    if (v.shuffle_remake_pots && v.shuffle_remake_pots !== "off") out.push(["remake_pot_spots", "on"]);
-    if (v.shuffle_freestanding_items === "all") out.push(["free_remake_spots", "on"]);
+    // 0.6.2: the remake-only pots and crates come with shuffled pots or crates (pot_slice/plan.rs with_remake),
+    // and the remake-only freestanding spots with Dungeons, Overworld or All (slice/pickups.rs Free::remake)
+    if ((v.shuffle_pots && v.shuffle_pots !== "off") || (v.shuffle_crates && v.shuffle_crates !== "off")) out.push(["remake_pot_spots", "on"]);
+    if (["all", "dungeons", "overworld"].includes(v.shuffle_freestanding_items)) out.push(["free_remake_spots", "on"]);
     const rewards = v.shuffle_rewards === "supported";
     if (rewards && v.shuffle_dungeon_rewards === true) out.push(["medallion_gates", "true"]);
     if (rewards && v.shuffle_potion_shop === true) out.push(["potion_shop_checks", "on"]);
@@ -135,6 +147,17 @@ const Seed = (() => {
   }
   const PATCHED = ["rock_spots=on", "remake_pot_spots=on", "free_remake_spots=on", "skull_rules=strict", "potion_shop_checks=on"];
   const patchesOf = (sw) => sw.map(([k, v]) => `${k}=${v}`).filter((x) => PATCHED.includes(x));
+  // A seed that places items in checks only a logic patch adds needs that patch, whatever its settings
+  // say: seeds from an older OOTRR can carry a setting this version retired (0.6.0's shuffle_remake_pots).
+  function withPlacedPatches(sw, placements, data) {
+    const out = sw.slice(), have = new Set(sw.map(([k, v]) => `${k}=${v}`));
+    for (const key of PATCHED) {
+      if (have.has(key)) continue;
+      const p = (data.patches || {})[key] || {};
+      if (Object.values(p).some((d) => Object.keys(d.l || {}).some((l) => l in placements))) { const i = key.indexOf("="); out.push([key.slice(0, i), key.slice(i + 1)]); }
+    }
+    return out;
+  }
 
   // start_items/give.rs: each chosen item or song, as the logic counts it
   // slice/support.rs plan(): an open Kakariko gate skips child Zelda's story (unless the forest is closed),
@@ -165,11 +188,11 @@ const Seed = (() => {
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
     const { vals, warn } = decodeSettings(j.settings, data.schema);
-    const sw = logicSwitches(vals);
+    const sw = withPlacedPatches(logicSwitches(vals), j.placements, data);
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
-      vals, warn, switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
+      vals, warn: retiredNote(warn, String(j.generator || "")), switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
     };
   }
 
@@ -198,7 +221,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR 0.6.0's logic, where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.6.2), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
@@ -233,7 +256,7 @@ const Seed = (() => {
   // a seed stored by an older tracker: recompute what newer versions derive from it
   function refresh(sd, data) {
     if (!sd || !sd.vals || !sd.placements) return sd;
-    return { ...sd, switches: logicSwitches(sd.vals), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
   // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what

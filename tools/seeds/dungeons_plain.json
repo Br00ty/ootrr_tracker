@@ -1,0 +1,11 @@
+{
+ "id": "dungeons_plain",
+ "name": "Dungeon entrances, plain",
+ "tip": "test",
+ "order": 99,
+ "settings": {
+  "shuffle_entrances": "dungeons",
+  "open_forest": "open",
+  "shuffle_smallkeys": "keysanity"
+ }
+}

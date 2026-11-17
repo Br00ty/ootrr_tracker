@@ -107,6 +107,7 @@ noarea = []
 for n, rn in seen.items():
     base_n = n.split(' @ ')[0]
     a = area_hint.get(base_n) or area_of(base_n) or area_of(rn)
+    if a == "Gerudo Training Ground": a = "Gerudo Proving Ground"  # the remake's name for it
     if not a:
         noarea.append(n); a = 'Other'
     # area, kind, logic region, and the location's own logic rule (for the check's description)

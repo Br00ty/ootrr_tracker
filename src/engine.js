@@ -1,5 +1,5 @@
 // OOTRR logic engine, ported to JavaScript from realazk/ootrr (crates/core/src: rule_ast.rs, rules.rs, world.rs, search.rs).
-// Rules are the OoTR Python-subset strings in data/logic, as ootrr-core 0.6.0 assembles them.
+// Rules are the OoTR Python-subset strings in data/logic, as ootrr-core 0.6.2 assembles them.
 const Engine = (() => {
   "use strict";
   const DAY = 1, DAMPE = 2;
