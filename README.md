@@ -57,6 +57,9 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | HF GS Tree By KF (Hyrule Field) | LLR GS Rain Shed | A Gold Skulltula in a Hyrule Field tree near Kokiri Forest; OOTRR's data names it as Lon Lon Ranch's |
 | GV GS Behind Tent | GV GS Pillar | OOTRR's catalog has these two the wrong way round; the labels swap so each shows the item that drops there |
 | GV GS Pillar | GV GS Behind Tent | (the other half of the swap) |
+| Kak GS Tree | Kak GS House Under Construction | OOTRR's names for three Kakariko Skulltulas are rotated; confirmed in game (the tree Skulltula sets this one's flag) and by the game's object positions |
+| Kak GS Near Gate Guard | Kak GS Tree | (part of the same rotation) |
+| Kak GS House Under Construction | Kak GS Near Gate Guard | (part of the same rotation) |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet

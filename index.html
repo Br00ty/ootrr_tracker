@@ -1997,6 +1997,12 @@ const RENAMES = {
   "LLR GS Rain Shed": { name: "HF GS Tree By KF", area: "Hyrule Field" },
   "GV GS Pillar": { name: "GV GS Behind Tent" },
   "GV GS Behind Tent": { name: "GV GS Pillar" },
+  // Kakariko: OOTRR's names for three child Skulltulas are rotated from the game's (confirmed in game
+  // 2026-11-16: the tree skulltula sets key 7677963516305772491, and the game's object positions agree).
+  // Only the labels move; each keeps its OOTRR name's item and rule.
+  "Kak GS House Under Construction": { name: "Kak GS Tree" },        // key 7677963516305772491, on the tree
+  "Kak GS Tree": { name: "Kak GS Near Gate Guard" },                 // key 11629189455828560791, by the gate guard
+  "Kak GS Near Gate Guard": { name: "Kak GS House Under Construction" },  // key 14107117960174262321, at the house
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
@@ -2825,10 +2831,10 @@ const PIN_FIXES = {
   "Kak Anju as Child": { place: "KakarikoVillage", u: 0.4087, v: 0.6823 },
   "Kak Bazaar Item 1": { place: "KakarikoVillage", u: 0.4087, v: 0.3 },
   "Kak GS Above Impas House": { place: "KakarikoVillage", u: 0.5551, v: 0.8927 },
-  "Kak GS House Under Construction": { place: "KakarikoVillage", u: 0.4585, v: 0.6122 },
-  "Kak GS Near Gate Guard": { place: "KakarikoVillage", u: 0.3937, v: 0.2728 },
+  "Kak GS House Under Construction": { place: "KakarikoVillage", u: 0.4057, v: 0.5059 },  // shown as Kak GS Tree
+  "Kak GS Near Gate Guard": { place: "KakarikoVillage", u: 0.4585, v: 0.6122 },  // shown as Kak GS House Under Construction
   "Kak GS Skulltula House": { place: "KakarikoVillage", u: 0.5928, v: 0.6032 },
-  "Kak GS Tree": { place: "KakarikoVillage", u: 0.4057, v: 0.5059 },
+  "Kak GS Tree": { place: "KakarikoVillage", u: 0.3937, v: 0.2728 },  // shown as Kak GS Near Gate Guard
   "Kak Granny Trade Odd Mushroom": { place: "KakarikoVillage", u: 0.5943, v: 0.4244 },
   "Kak Impas House Cow": { place: "KakarikoVillage", u: 0.5038, v: 0.9041 },
   "Kak Impas House Freestanding PoH": { place: "KakarikoVillage", u: 0.5279, v: 0.895 },
