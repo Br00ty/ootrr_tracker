@@ -2494,6 +2494,18 @@ const CAST_CSS = `
 body{background:#0c0b08;color:#ece4cf;font:12px/1.2 system-ui,-apple-system,"Segoe UI",sans-serif;padding:8px;overflow:hidden}
 .panel{display:flex;margin:0 auto;flex-direction:column;gap:6px;background:linear-gradient(#1b2433,#141a24);border:3px solid #d9b45a;border-radius:12px;padding:8px;box-shadow:inset 0 0 0 1px #000}
 .row{display:grid;gap:4px}
+/* see-through: everything but the pictures, numbers, border and dividers is green, for OBS's Chroma Key filter */
+body.key,body.key .panel,body.key .t{background:#00ff00}
+body.key{padding:8px}
+body.key .panel{box-shadow:none}
+body.key .t{border-color:transparent}
+body.key .t img{opacity:1;filter:grayscale(1) brightness(.45)}
+body.key .t.on img{filter:none}
+body.key .t{color:#1b2433}
+.opts{position:fixed;top:0;left:0;right:0;display:flex;gap:6px;justify-content:center;padding:6px;background:#000c;opacity:0;transition:opacity .15s;z-index:5}
+body:hover .opts{opacity:1}
+.opts button{font:inherit;font-size:12px;color:#ece4cf;background:#1f2c40;border:1px solid #4d6890;border-radius:6px;padding:4px 10px;cursor:pointer}
+.opts button.on{border-color:#d9b45a;color:#d9b45a}
 .g4 .t{aspect-ratio:2/1}.g4 .t img{width:auto;height:84%}
 .g6{grid-template-columns:repeat(6,1fr)}.g9{grid-template-columns:repeat(9,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g4{grid-template-columns:repeat(4,1fr)}.g5{grid-template-columns:repeat(5,1fr)}
 .sep{height:1px;background:#d9b45a55;margin:2px 4px}
@@ -2547,7 +2559,14 @@ function renderBroadcast() {
     sep(), row("g6", REWARDS.filter((r) => r[3] === "med").map(([n, l, m]) => castTile(n, l, m))),
     sep(), row("g4", counters),
     row("g9", keys), row("g9", bosses));
-  d.body.replaceChildren(d.adoptNode(panel));
+  // options, shown only while the mouse is over the window (so the capture stays clean)
+  const key = S.castKey === true;
+  const opts = h("div", { class: "opts" },
+    h("button", { class: key ? "" : "on", onclick: () => { S.castKey = false; render(); } }, "Dark background"),
+    h("button", { class: key ? "on" : "", title: "A green background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter (green) to the window capture and the video shows through.",
+      onclick: () => { S.castKey = true; render(); } }, "See-through (green screen)"));
+  d.body.classList.toggle("key", key);
+  d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts));
   // fit the window: the tiles follow its width; when that makes the panel taller than the window, shrink it
   // fit the window: the tiles are square, so a panel taller than the window is made narrower (and centred)
   const fit = () => {
