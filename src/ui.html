@@ -2320,6 +2320,14 @@ async function restoreFolder() {
     else paintAuto();
   } catch (e) {}
 }
+// Disconnect: stop watching and forget the folder, so it doesn't reconnect on the next visit.
+// What the save already tracked stays.
+async function disconnect() {
+  clearInterval(W.timer); W.timer = 0;
+  W.dir = null; W.saved = null; W.mode = ""; W.err = ""; W.read = null; W.where = ""; W.name = ""; lastSig = "";
+  try { const db = await idb(); db.transaction("h", "readwrite").objectStore("h").delete("dir"); } catch (e) {}
+  paintAuto();
+}
 async function reconnect() {
   try { if ((await W.saved.requestPermission({ mode: "read" })) === "granted") startWatch(W.saved); } catch (e) { W.err = e.message; paintAuto(); }
 }
@@ -2372,6 +2380,7 @@ function paintAuto() {
     kids.push(h("span", { title: full, style: "max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
   }
   else kids.push(h("span", {}, "Auto-tracking off"));
+  if (watching || W.saved) kids.push(h("button", { class: "btn", onclick: disconnect, title: "Stop watching the save folder and forget it. Items and checks already tracked from your save stay." }, "Disconnect"));
   if (W.saved && !W.dir) kids.push(
     h("button", { class: "btn", title: "Copies the command that starts copying your saves (press Windows + R, Ctrl + V, Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "See ? for the command"; } }, "Copy start command"),
     h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
