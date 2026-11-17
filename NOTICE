@@ -15,4 +15,10 @@ OOTRR's logic engine follows the design of the OoT Randomizer (https://github.co
 MIT License, Copyright (c) 2025 OoTRandomizer), and its logic files come from the OoT Randomizer.
 Credit to AmazingAmpharos, Testrunner, Zannick, Junglechief87 and the other OoT Randomizer contributors.
 
+tools/live/ootrr-live.ps1 (the Longshot live helper) reads the game's memory with the layout documented
+by OotrR (https://github.com/Mozencaz/OotrR, MIT License, Copyright (c) 2026 Mozencaz;
+src/oot_rando/tracker/live_memory.py): the GameData slot and Bool table, which follow Hookshot's own
+cheat menu, the Bool64bitKey records from the sloperina practice menu, and the way emulators are found
+(MOD0 modules near 0x80000000). The helper's code is the tracker's own.
+
 No game files or game assets are included. Item tiles are text.

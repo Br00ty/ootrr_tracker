@@ -3742,7 +3742,7 @@ $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
   clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
-  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; render();
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; LIVE.saveSig = ""; render();
 };
 
 
@@ -3756,7 +3756,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = ""; LIVE.saveSig = "";
   }
   W.err = "";
   render();
@@ -3967,6 +3967,7 @@ async function poll() {
 }
 
 function startWatch(dir) {
+  if (LIVE.on) liveStop();
   W.dir = dir; W.mode = "watch"; lastSig = "";
   clearInterval(W.timer); W.timer = setInterval(poll, 2000); poll();
 }
@@ -4104,6 +4105,20 @@ document.addEventListener("drop", (e) => {
 function paintAuto() {
   const t = W.read ? W.read.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
   const watching = W.mode === "watch" && W.dir;
+  if (LIVE.on) {
+    // Longshot live tracking: its own status line
+    const st = LIVE.state, ok = st && st.ok, why = LIVE.err || (st && !st.ok ? st.why : "");
+    const lt = LIVE.read ? LIVE.read.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
+    const full = ok ? `Live: ${liveGame(st)} at ${lt}${W.where ? ` · Link in ${W.where} (${W.child ? "child" : "adult"})` : ""}` : why;
+    const kidsL = [h("span", { class: `live ${ok ? "on" : why ? "err" : ""}` }),
+      h("span", { title: full, style: `max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${ok ? "" : "color:var(--gold)"}` }, ok ? ["Live: ", h("b", {}, liveGame(st)), ` at ${lt}`, W.where ? [" · Link in ", h("b", {}, W.where)] : ""] : why || "Connecting…"),
+      h("button", { class: "btn", onclick: openLongshot, title: "Longshot live tracking: help and status" }, "Longshot"),
+      h("button", { class: "btn", onclick: liveStop, title: "Stop live tracking. What was already tracked stays." }, "Disconnect"),
+      h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
+        (() => { const c = h("input", { type: "checkbox" }); c.checked = S.follow; c.onchange = () => { S.follow = c.checked; save(); }; return c; })(), "Follow Link")];
+    $("#autoBox").replaceChildren(...kidsL);
+    return;
+  }
   const kids = [h("span", { class: `live ${W.err ? "err" : watching ? "on" : ""}` })];
   if (W.err) kids.push(h("span", { title: W.err, style: "color:var(--red);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, W.err));
   else if (W.read) {
@@ -4116,7 +4131,8 @@ function paintAuto() {
   if (W.saved && !W.dir) kids.push(
     h("button", { class: "btn", title: "Copies the command that starts copying your saves (press Windows + R, Ctrl + V, Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "See ? for the command"; } }, "Copy start command"),
     h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
-  else if (canWatch && !W.blocked && !watching) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
+  if (!watching) kids.push(h("button", { class: "btn", style: "border-color:var(--gold)", onclick: openLongshot, title: "Live tracking from the game's memory (Longshot, Hookshot or Lichii on Windows): checks tick the moment you get them" }, "Longshot"));
+  if (canWatch && !W.blocked && !watching && !W.saved) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
   if (!watching) kids.push(h("button", { class: "btn", style: "padding:5px 8px", onclick: openWatchHelp, title: canWatch ? "Can't pick your save folder? (Chrome refuses folders inside AppData)" : "Why can't this browser watch the save folder?" }, "?"));
   kids.push(h("button", { class: "btn", onclick: () => $("#saveFile").click(), title: "Pick the save folder (or any folder above the slots) to read the newest save of all slots once. Click again to read it again. You can also drop the folder here." }, watching ? "Load saves once" : "Load saves"));
   kids.push(h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
@@ -4124,7 +4140,91 @@ function paintAuto() {
   $("#autoBox").replaceChildren(...kids);
 }
 
-try { render(); restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
+// ---------- Longshot: live memory reading through a helper on the player's PC ----------
+// A web page can't read another program's memory, so a small helper (tools/live/ootrr-live.ps1, started
+// with one Windows + R command) reads the running game (Longshot, Hookshot or a yuzu-family emulator) and
+// answers on http://127.0.0.1:47811: /state is the set GameData flags and Bool64bitKey keys, read live,
+// and the newest progress.sav's slot and version; /save is that save. Checks come from memory the moment
+// they happen; items and Link's area come from the save whenever the game writes it.
+const LIVE_URL = "http://127.0.0.1:47811";
+const LIVE_SCRIPT = "https://raw.githubusercontent.com/Br00ty/ootrr_tracker/main/tools/live/ootrr-live.ps1";
+const LIVE_CMD = `powershell -NoExit -ExecutionPolicy Bypass -c "irm ${LIVE_SCRIPT} | iex"`;
+const LIVE = { on: false, timer: 0, state: null, err: "", saveSig: "", read: null, busy: false };
+async function livePoll() {
+  if (!LIVE.on || LIVE.busy) return;
+  LIVE.busy = true;
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 2000);
+    const r = await fetch(`${LIVE_URL}/state`, { cache: "no-store", signal: ctl.signal });
+    clearTimeout(t);
+    const st = await r.json();
+    LIVE.state = st; LIVE.err = ""; LIVE.read = new Date();
+    let changed = false;
+    if (st.ok) {
+      // checks straight from memory: the same flags and keys the save holds
+      const p = Auto.fromRows({ rows: (st.bools || []).map((x) => [x, 1]), keys: st.keys || [] });
+      for (const n of Auto.checks(p, detectMap())) if (!S.auto.done[n]) { S.auto.done[n] = 1; changed = true; }
+      W.child = !!st.child;
+    }
+    // items and Link's area: from the save, each time the game writes it
+    if (st.save && st.save.sig !== LIVE.saveSig) {
+      const s = await fetch(`${LIVE_URL}/save`, { cache: "no-store" });
+      if (s.ok) { LIVE.saveSig = st.save.sig; lastSig = ""; applyPeek(Auto.peek(await s.arrayBuffer()), st.save.slot); changed = false; }
+    }
+    if (changed) render(); else paintAuto();
+  } catch (e) {
+    LIVE.state = null;
+    LIVE.err = "Waiting for the Longshot helper: start it with the Longshot button (Windows + R command).";
+    paintAuto();
+  } finally {
+    LIVE.busy = false;
+    const el = $("#liveStatus"); if (el) el.replaceWith(liveStatus());
+  }
+}
+function liveStart() {
+  // one source at a time: stop watching a save folder
+  clearInterval(W.timer); W.timer = 0; W.dir = null; W.mode = "live";
+  LIVE.on = true; LIVE.saveSig = ""; S.live = true; save();
+  clearInterval(LIVE.timer); LIVE.timer = setInterval(livePoll, 1000); livePoll();
+}
+function liveStop() {
+  clearInterval(LIVE.timer); LIVE.timer = 0; LIVE.on = false; LIVE.state = null; LIVE.err = "";
+  if (W.mode === "live") W.mode = "";
+  S.live = false; save(); paintAuto();
+}
+// the game's name as the helper reports it (its exe: "longshot" → "Longshot")
+const liveGame = (st) => { const g = (st && st.game) || "the game"; return g.charAt(0).toUpperCase() + g.slice(1); };
+function liveStatus() {
+  const st = LIVE.state;
+  return h("p", { id: "liveStatus", style: `color:var(--${!LIVE.on ? "dim" : st && st.ok ? "green" : st ? "gold" : "dim"})` },
+    !LIVE.on ? "Not connected." : st && st.ok ? `Connected: reading ${liveGame(st)} live.` : st ? `The helper is running. ${st.why || ""}` : "Waiting for the helper…");
+}
+function openLongshot() {
+  const status = liveStatus();
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "Longshot: live tracking"),
+    h("div", { style: "max-width:600px;line-height:1.55" },
+      h("p", {}, "Reads the game's memory while you play, so checks tick the moment you get them instead of when the game next saves. Items and Link's area still come from your save, which the helper hands over too, so there's no save folder to pick. Works with ", h("b", {}, "Longshot"), " (and Hookshot) and with emulators like ", h("b", {}, "Lichii"), ", on Windows."),
+      h("p", { style: "color:var(--dim)" }, "A web page can't read other programs, so a small helper does it: a PowerShell script from this tracker's GitHub that only reads (it never changes the game or your files) and answers only this PC."),
+      h("div", { style: "display:flex;gap:10px;margin-top:12px" },
+        h("div", { style: "flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid var(--gold);color:var(--gold)" }, "1"),
+        h("div", { style: "flex:1" }, h("b", {}, "Start the helper"),
+          h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "Copies the start command. Press Windows + R, then Ctrl + V and Enter. Leave the window that opens running while you play (close it to stop)."),
+          h("button", { class: "btn", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(LIVE_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "Copy it from below"; } }, "Copy start command"),
+          h("code", { class: "q", style: "display:block;margin-top:6px;word-break:break-all;font-size:11px" }, LIVE_CMD))),
+      h("div", { style: "display:flex;gap:10px;margin-top:12px" },
+        h("div", { style: "flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid var(--gold);color:var(--gold)" }, "2"),
+        h("div", { style: "flex:1" }, h("b", {}, "Connect the tracker"),
+          h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "The tracker finds the helper by itself. If your browser asks to let this site reach devices on your network, allow it: the helper is on this PC."),
+          LIVE.on ? h("button", { class: "btn", onclick: () => { liveStop(); openLongshot(); } }, "Disconnect")
+            : h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => { liveStart(); openLongshot(); } }, "Connect"))),
+      status,
+      h("p", { class: "hint", style: "padding:10px 0 0" }, "Next time: run the start command again; the tracker reconnects by itself. The memory layout comes from OotrR (MIT License).")),
+    h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
+
+try { render(); if (S.live) liveStart(); else restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
 </script>
 </body>
 </html>
