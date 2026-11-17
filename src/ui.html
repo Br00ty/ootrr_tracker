@@ -917,6 +917,8 @@ const DOORS = {
   "Ice Cavern": "Zora's Fountain", "Gerudo Proving Ground": "Gerudo's Fortress", "Ganon's Castle": "Outside Ganon's Castle",
 };
 const doorKey = (d) => `${d} (entrance)`;
+// doors only one age's map shows (Jabu Jabu is gone from the adult Zora's Fountain)
+const DOOR_AGE = { "Jabu Jabu's Belly": "child" };
 // the dungeon behind a door: with dungeon entrances shuffled, the seed's layout says
 function behindDoor(d) {
   for (const [door, dun] of Object.entries(LAYOUT)) if (areaName(door) === d) return areaName(dun);
@@ -925,7 +927,10 @@ function behindDoor(d) {
 // with dungeon entrances shuffled, a door stays a mystery until Link has been through it
 const doorHidden = (d) => entrancesShuffled() && POOL.has(d) && !S.reveal[behindDoor(d)];
 // the doors on a game map (by its place: "KokiriForest")
-const doorsOn = (key) => { const place = key.replace(/_(Child|Adult)$/, ""); return Object.keys(DOORS).filter((d) => MAP_ZONES[DOORS[d]] === place); };
+const doorsOn = (key) => {
+  const place = key.replace(/_(Child|Adult)$/, ""), age = (/_(Child|Adult)$/.exec(key) || [])[1];
+  return Object.keys(DOORS).filter((d) => MAP_ZONES[DOORS[d]] === place && !(age && DOOR_AGE[d] && DOOR_AGE[d] !== age.toLowerCase()));
+};
 const MAP_DB = "ootrr-tracker-maps", MAP_PATH_KEY = "ootrr-tracker-gamedir";
 const FIELD_RE = /^(?!Mini_)([A-Za-z]+)_(Child|Adult)_00$/;
 const FLOOR_RE = /^([A-Za-z]+)_(B\d|\dF)(?:_Lv(\d))?(?:_State(\d\d))?_Main$/;
