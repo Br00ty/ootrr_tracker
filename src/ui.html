@@ -2241,22 +2241,31 @@ function applyPeek(p, label) {
     S.auto.items[n] = got;
   }
   for (const n of Auto.checks(p, detectMap())) S.auto.done[n] = 1;
-  const area = Auto.areaOf(p.map, DATA.maps, p.pos);
-  W.where = area || ""; W.child = p.child; W.read = new Date(); W.err = ""; W.name = label;
+  W.read = new Date(); W.err = ""; W.name = label;
+  // with the Longshot helper reading Link live, a save (written a moment later) doesn't move him back
+  if (!(LIVE.on && LIVE.where)) followLink(p.map, p.pos, p.child);
+  render();
+}
+// Where Link is (a game map name and his position, from a save or live from memory): the area and
+// the dungeon floor he's in. Returns true when the tracker's view moved.
+function followLink(map, pos, child) {
+  const area = Auto.areaOf(map, DATA.maps, pos);
+  const before = `${S.area}|${S.mapAge}|${JSON.stringify(S.floor)}`;
+  W.where = area || ""; W.child = !!child;
   // follow the area, not the map: Lake Hylia and Lon Lon Ranch share the Hyrule Field map
   if (S.follow && area && area !== lastMap) S.area = area;
-  if (S.follow && area) S.mapAge = p.child ? "child" : "adult";
+  if (S.follow && area) S.mapAge = child ? "child" : "adult";
   // Link inside a dungeon has walked through its door, so that door is no secret any more
   if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
   // in a dungeon: the floor Link is on, from his height. The map follows it when he changes floor,
   // so a floor you pick by hand stays until he moves to another one.
-  const fl = area && MAP_DUNGEONS[area] && p.pos ? floorAt(MAP_DUNGEONS[area], p.pos[1]) : null;
+  const fl = area && MAP_DUNGEONS[area] && pos ? floorAt(MAP_DUNGEONS[area], pos[1]) : null;
   W.floor = fl || "";
   const fk = fl ? `${area}:${fl}` : "";
   if (S.follow && fl && fk !== lastFloor) S.floor[area] = fl;
   lastFloor = fk;
   lastMap = area || "";
-  render();
+  return before !== `${S.area}|${S.mapAge}|${JSON.stringify(S.floor)}`;
 }
 
 async function newestSave(dir) {
@@ -2463,14 +2472,15 @@ function paintAuto() {
 
 // ---------- Longshot: live memory reading through a helper on the player's PC ----------
 // A web page can't read another program's memory, so a small helper (tools/live/ootrr-live.ps1, started
-// with one Windows + R command) reads the running game (Longshot, Hookshot or a yuzu-family emulator) and
+// with one command pasted into PowerShell) reads the running game (Longshot, Hookshot or a yuzu-family emulator) and
 // answers on http://127.0.0.1:47811: /state is the set GameData flags and Bool64bitKey keys, read live,
 // and the newest progress.sav's slot and version; /save is that save. Checks come from memory the moment
 // they happen; items and Link's area come from the save whenever the game writes it.
 const LIVE_URL = "http://127.0.0.1:47811";
 const LIVE_SCRIPT = "https://raw.githubusercontent.com/Br00ty/ootrr_tracker/main/tools/live/ootrr-live.ps1";
-const LIVE_CMD = `powershell -NoExit -ExecutionPolicy Bypass -c "irm ${LIVE_SCRIPT} | iex"`;
-const LIVE = { on: false, timer: 0, state: null, err: "", saveSig: "", read: null, busy: false };
+// pasted into a PowerShell window (Windows + R can be blocked on some PCs; this works everywhere)
+const LIVE_CMD = `irm ${LIVE_SCRIPT} | iex`;
+const LIVE = { on: false, timer: 0, state: null, err: "", saveSig: "", read: null, busy: false, where: false, whereKey: "" };
 async function livePoll() {
   if (!LIVE.on || LIVE.busy) return;
   LIVE.busy = true;
@@ -2486,6 +2496,12 @@ async function livePoll() {
       const p = Auto.fromRows({ rows: (st.bools || []).map((x) => [x, 1]), keys: st.keys || [] });
       for (const n of Auto.checks(p, detectMap())) if (!S.auto.done[n]) { S.auto.done[n] = 1; changed = true; }
       W.child = !!st.child;
+      // where Link is, live (the map he's on and his position), so areas and floors follow him at once
+      LIVE.where = !!(st.map && st.pos);
+      if (LIVE.where) {
+        const k = `${st.map}|${st.pos.map((x) => Math.round(x)).join(",")}|${st.child}`;
+        if (k !== LIVE.whereKey) { LIVE.whereKey = k; if (followLink(st.map, st.pos, st.child)) changed = true; }
+      }
     }
     // items and Link's area: from the save, each time the game writes it
     if (st.save && st.save.sig !== LIVE.saveSig) {
@@ -2495,7 +2511,7 @@ async function livePoll() {
     if (changed) render(); else paintAuto();
   } catch (e) {
     LIVE.state = null;
-    LIVE.err = "Waiting for the Longshot helper: start it with the Longshot button (Windows + R command).";
+    LIVE.err = "Waiting for the Longshot helper: start it from the Longshot button.";
     paintAuto();
   } finally {
     LIVE.busy = false;
@@ -2509,7 +2525,7 @@ function liveStart() {
   clearInterval(LIVE.timer); LIVE.timer = setInterval(livePoll, 1000); livePoll();
 }
 function liveStop() {
-  clearInterval(LIVE.timer); LIVE.timer = 0; LIVE.on = false; LIVE.state = null; LIVE.err = "";
+  clearInterval(LIVE.timer); LIVE.timer = 0; LIVE.on = false; LIVE.state = null; LIVE.err = ""; LIVE.where = false; LIVE.whereKey = "";
   if (W.mode === "live") W.mode = "";
   S.live = false; save(); paintAuto();
 }
@@ -2525,13 +2541,13 @@ function openLongshot() {
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Longshot: live tracking"),
     h("div", { style: "max-width:600px;line-height:1.55" },
-      h("p", {}, "Reads the game's memory while you play, so checks tick the moment you get them instead of when the game next saves. Items and Link's area still come from your save, which the helper hands over too, so there's no save folder to pick. Works with ", h("b", {}, "Longshot"), " (and Hookshot) and with emulators like ", h("b", {}, "Lichii"), ", on Windows."),
+      h("p", {}, "Reads the game's memory while you play, so checks tick the moment you get them and the map follows Link from area to area and floor to floor, instead of waiting for the game to save. Items still come from your save, which the helper hands over too, so there's no save folder to pick. Works with ", h("b", {}, "Longshot"), " (and Hookshot) and with emulators like ", h("b", {}, "Lichii"), ", on Windows."),
       h("p", { style: "color:var(--dim)" }, "A web page can't read other programs, so a small helper does it: a PowerShell script from this tracker's GitHub that only reads (it never changes the game or your files) and answers only this PC."),
       h("div", { style: "display:flex;gap:10px;margin-top:12px" },
         h("div", { style: "flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid var(--gold);color:var(--gold)" }, "1"),
         h("div", { style: "flex:1" }, h("b", {}, "Start the helper"),
-          h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "Copies the start command. Press Windows + R, then Ctrl + V and Enter. Leave the window that opens running while you play (close it to stop)."),
-          h("button", { class: "btn", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(LIVE_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "Copy it from below"; } }, "Copy start command"),
+          h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "Copies the start command. Press the Windows key, type powershell and press Enter, then paste it into the PowerShell window (right-click) and press Enter. Leave that window open while you play (close it to stop)."),
+          h("button", { class: "btn", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(LIVE_CMD)) ? "Copied: paste it into PowerShell" : "Copy it from below"; } }, "Copy start command"),
           h("code", { class: "q", style: "display:block;margin-top:6px;word-break:break-all;font-size:11px" }, LIVE_CMD))),
       h("div", { style: "display:flex;gap:10px;margin-top:12px" },
         h("div", { style: "flex:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;border:1px solid var(--gold);color:var(--gold)" }, "2"),

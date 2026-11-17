@@ -8,8 +8,8 @@
 # It only ever reads: nothing is written to the game or to your files. It answers only this PC
 # (http://127.0.0.1:47811), and only the tracker page asks it anything. Close this window to stop it.
 #
-# Start it from the tracker's Longshot button (Windows + R, paste, Enter), or run this file with
-# PowerShell. The memory layout (GameData Bool table and Bool64bitKey records) is the one documented by
+# Start it from the tracker's Longshot button (paste the command into a PowerShell window), or run
+# this file with PowerShell. The memory layout (GameData Bool table and Bool64bitKey records) is the one documented by
 # OotrR (github.com/Mozencaz/OotrR, MIT License, src/oot_rando/tracker/live_memory.py), which follows
 # Hookshot's own cheat menu and the sloperina practice menu.
 
@@ -21,6 +21,7 @@ Add-Type -TypeDefinition @'
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Net;
 using System.Net.Sockets;
@@ -232,7 +233,64 @@ public static class OotrrLive
         if (!known) { Close(); return "{\"ok\":false,\"why\":\"Game data not recognised (a different game version?).\"" + Saves() + "}"; }
         sb.Append("],\"child\":").Append(child ? "true" : "false").Append(",\"keys\":");
         sb.Append(Bool64(manager));
+        try { sb.Append(Where(manager)); } catch { }
         sb.Append(Saves()).Append('}');
+        return sb.ToString();
+    }
+
+    // ---------- where Link is, live: Player_Pos_For_Map (Vector3) and Sequence_CurrentBanc (String64) ----------
+    // Their type tables sit in the GameDataMgr's first 4 KB, shaped like the Bool one (count u32 at +0,
+    // entries u64 at +8, table u64 at +16, size u32 at +28). Found with the research probe (Longshot v3,
+    // 2026-11-16): Vector3 entries are 64 bytes with the current value at +36; String64 entries are 264
+    // bytes with the current text at +116. The game updates both as Link moves, between saves.
+    const uint PLAYER_POS = 0x960AD56AU, CURRENT_BANC = 0x1D6189DAU;
+    static Dictionary<uint, int[]> typed = new Dictionary<uint, int[]>();   // hash -> [table offset, index]
+    static ulong typedFor = 0;
+    static ulong TypedValue(ulong manager, uint hash, int stride, int off)
+    {
+        if (typedFor != manager) { typed.Clear(); typedFor = manager; }
+        int[] at;
+        if (!typed.TryGetValue(hash, out at))
+        {
+            at = null;
+            byte[] head = Read(manager, 0x1000);
+            for (int o = 0; head != null && at == null && o + 32 <= head.Length; o += 8)
+            {
+                uint count = BitConverter.ToUInt32(head, o), size = BitConverter.ToUInt32(head, o + 28);
+                ulong entries = BitConverter.ToUInt64(head, o + 8), table = BitConverter.ToUInt64(head, o + 16);
+                if (count == 0 || count > 4096 || size == 0 || size > 8192 || entries == 0 || table == 0 || (entries & 3) != 0 || (table & 3) != 0 || entries >= (1UL << 48) || table >= (1UL << 48)) continue;
+                byte[] raw = Read(table, (int)(size * 8));
+                if (raw == null) continue;
+                long ix = BoolSlot(raw, size, hash);
+                if (ix >= 0 && ix < count) at = new int[] { o, (int)ix };
+            }
+            if (at == null) return 0;   // not found yet: look again next time
+            typed[hash] = at;
+        }
+        ulong e = U64(manager + (ulong)at[0] + 8);
+        return e == 0 ? 0 : e + (ulong)((long)at[1] * stride + off);
+    }
+    static string Where(ulong manager)
+    {
+        StringBuilder sb = new StringBuilder();
+        ulong pa = TypedValue(manager, PLAYER_POS, 64, 36);
+        byte[] pv = pa != 0 ? Read(pa, 12) : null;
+        if (pv != null)
+        {
+            float x = BitConverter.ToSingle(pv, 0), y = BitConverter.ToSingle(pv, 4), z = BitConverter.ToSingle(pv, 8);
+            if (!float.IsNaN(x) && !float.IsNaN(y) && !float.IsNaN(z) && Math.Abs(x) < 1e6 && Math.Abs(y) < 1e6 && Math.Abs(z) < 1e6)
+                sb.Append(",\"pos\":[").Append(x.ToString("R", CultureInfo.InvariantCulture)).Append(',').Append(y.ToString("R", CultureInfo.InvariantCulture)).Append(',').Append(z.ToString("R", CultureInfo.InvariantCulture)).Append(']');
+        }
+        ulong ma = TypedValue(manager, CURRENT_BANC, 264, 116);
+        byte[] mv = ma != 0 ? Read(ma, 64) : null;
+        if (mv != null)
+        {
+            int end = Array.IndexOf(mv, (byte)0);
+            string map = Encoding.ASCII.GetString(mv, 0, end < 0 ? mv.Length : end);
+            bool plain = map.Length > 0;
+            foreach (char c in map) if (!(char.IsLetterOrDigit(c) || c == '_' || c == '/')) plain = false;
+            if (plain) sb.Append(",\"map\":").Append(Str(map.Substring(map.LastIndexOf('/') + 1)));   // "LostWood/LostWood_Child" -> "LostWood_Child"
+        }
         return sb.ToString();
     }
 
