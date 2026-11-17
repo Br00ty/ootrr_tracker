@@ -698,7 +698,7 @@ function openIcons() {
   if (iconView === "mapfind") {
     const p = mapPath();
     body = [h("h3", {}, "Finding the game's maps"),
-      h("p", {}, p ? (copied ? "The Map folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:")
+      h("p", {}, p ? (copied ? "The UI folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:")
         : "In the folder window that just opened, go to your game files (the extracted romfs folder) and pick its UI folder."),
       p && !copied ? h("p", {}, h("code", { class: "q" }, p)) : null,
       p ? h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
@@ -744,7 +744,7 @@ function openIcons() {
       mapBusy ? null : h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
         h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => pickMaps(true) }, nMaps() ? "Load the maps again" : "Load the game's maps"),
         nMaps() ? h("button", { class: "btn", onclick: async () => { await mapsClear(); mapMsg = "Maps removed."; render(); openIcons(); } }, "Remove maps") : null),
-      mapPath() || mapBusy ? null : h("p", { class: "hint", style: "padding:6px 0 0" }, "Tip: load the item pictures first. Their folder tells the tracker where your game files are, so it can copy the Map folder's address for you."),
+      mapPath() || mapBusy ? null : h("p", { class: "hint", style: "padding:6px 0 0" }, "Tip: load the item pictures first. Their folder tells the tracker where your game files are, so it can copy the UI folder's address for you."),
       row(n ? h("button", { class: "btn", onclick: () => { PICS = {}; try { localStorage.removeItem(ICON_KEY); } catch (e) {} iconMsg = "Pictures removed."; render(); openIcons(); } }, "Remove pictures") : null,
         first ? h("button", { class: "btn", title: "You can still add them from the Icons button", onclick: () => { try { localStorage.setItem(ASK_KEY, "no"); } catch (e) {} close(); } }, "Don't ask again") : null,
         h("button", { class: "btn", onclick: close }, first ? "Not now" : "Close"))];
