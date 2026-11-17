@@ -3086,10 +3086,26 @@ function floorOfCheck(n, dungeon) {
 }
 // a dungeon floor's map key ("DodongoCavern_1F") → [dungeon, floor]
 const FLOOR_KEY = /^([A-Za-z]+)_(B\d|\dF)$/;
+// a map picture's frame in the world: [camera x, camera z, width] (OOTRR's index; these two built in)
+const capOf = (place) => CAPS[place] || CAPS[`${place}_Child`] || CAPS[`${place}_Adult`] || { LonLonRanch: [-86, 239, 276], HyruleField: [-23, 197, 736] }[place];
+// a spot on one map's picture → the same ground on another map's picture (project.rs uv), or null
+function respot(from, to, u, v) {
+  const a = capOf(from), b = capOf(to), K = 2000 / 1440;
+  if (!a || !b) return null;
+  const x = a[0] + (u - 0.5) * a[2], z = a[1] + ((v - 0.5) * a[2]) / K;
+  const u2 = 0.5 + (x - b[0]) / b[2], v2 = 0.5 + ((z - b[1]) / b[2]) * K;
+  return u2 >= 0 && u2 <= 1 && v2 >= 0 && v2 <= 1 ? [u2, v2] : null;
+}
 function pinOwn(k, mapKey) {
   const place = mapKey.replace(/_(Child|Adult)$/, "");
   const fix = fixOf(k), n = realName(k);
-  if (fix !== undefined) return fix && !fix.hide && fix.place === place ? [mapKey, fix.u, fix.v, null, false] : null;
+  if (fix !== undefined) {
+    if (!fix || fix.hide) return null;
+    if (fix.place === place) return [mapKey, fix.u, fix.v, null, false];
+    // a pin placed on the ranch's own map shows on the field's map (the Map Tracker folds the ranch in)
+    if (place === "HyruleField" && fix.place === "LonLonRanch") { const q = respot(fix.place, place, fix.u, fix.v); return q ? [mapKey, q[0], q[1], null, false] : null; }
+    return null;
+  }
   if (!PINS) return null;
   // dungeons: OOTRR pins each object on its floor of the dungeon's map
   const fk = FLOOR_KEY.exec(mapKey);
@@ -3220,20 +3236,27 @@ function renderMode() {
   $("#modeBox").replaceChildren(b("list", "Location Tracker"), b("map", "Map Tracker"));
   $("main").classList.toggle("mapmode", S.view === "map");
 }
+// The Map Tracker folds Lon Lon Ranch into Hyrule Field: the remake draws the ranch inside the field's map,
+// and following Link into a ranch of its own switched too early (its frame reaches out into the field).
+// Its checks show on the Hyrule Field map; the Location Tracker keeps its own list.
+const MAP_MERGE = { "Hyrule Field": ["Lon Lon Ranch"] };
+const mapAreaOf = (a) => Object.keys(MAP_MERGE).find((k) => MAP_MERGE[k].includes(a)) || a;
+const inMapArea = (area, a) => a === area || (MAP_MERGE[area] || []).includes(a);
+const MAP_OVERWORLD = OVERWORLD.filter((a) => mapAreaOf(a) === a);
 function renderMap() {
   const el = $("#mapview");
-  const areas = [...OVERWORLD, ...DUNGEON_AREAS];
+  const areas = [...MAP_OVERWORLD, ...DUNGEON_AREAS];
   const sel = h("select", { onchange: (e) => { S.area = e.target.value; render(); } },
-    h("optgroup", { label: "Overworld" }, OVERWORLD.map((a) => h("option", { value: a }, a))),
+    h("optgroup", { label: "Overworld" }, MAP_OVERWORLD.map((a) => h("option", { value: a }, a))),
     h("optgroup", { label: "Dungeons" }, DUNGEON_AREAS.map((a) => h("option", { value: a }, a))));
-  sel.value = areas.includes(S.area) ? S.area : "Kokiri Forest";
+  sel.value = areas.includes(mapAreaOf(S.area)) ? mapAreaOf(S.area) : "Kokiri Forest";
   const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
   const noMap = nMaps() && !m.key && !(MAP_ZONES[area] || MAP_DUNGEONS[area]);  // the game has none for it
   const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
-  const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
+  const list = [...R.values()].filter((c) => inMapArea(area, c.a)), t = tally(list);
   // copies of other areas' checks that show on this map too (not counted in this area's tally)
   const copies = (MAP_ALSO[area] || []).filter((n) => R.has(n)).map((n) => ({ ...R.get(n), pk: `${n} @${area}` }));
-  const songs = [...VSONGS.values()].filter((c) => c.a === area);
+  const songs = [...VSONGS.values()].filter((c) => inMapArea(area, c.a));
   const bar = h("div", { class: "mapbar" }, sel,
     dungeon ? (m.floors.length ? seg(m.floors.map((f) => { const g = list.filter((c) => c.st === "g" && floorOfCheck(c.n, MAP_DUNGEONS[area]) === f).length;
       return [f, g ? h("span", {}, f, h("span", { style: "color:var(--green);font-weight:700;margin-left:4px" }, String(g))) : f]; }), m.floor, (v) => { S.floor[area] = v; }) : null)
@@ -3450,8 +3473,8 @@ function renderItems() {
   else { el.replaceChildren(...K(main, more)); el2.replaceChildren(); }
   el.scrollTop = top; el2.scrollTop = top2;
 }
-function areaRow(name) {
-  const list = [...R.values()].filter((c) => c.a === name);
+function areaRow(name, also = []) {
+  const list = [...R.values()].filter((c) => c.a === name || also.includes(c.a));
   if (!list.length) return null;
   const t = tally(list);
   // with dungeon entrances shuffled, where the dungeon's door is (hidden until the player uncovers it)
@@ -3465,7 +3488,7 @@ function areaRow(name) {
       onclick: (e) => { e.stopPropagation(); S.reveal[name] = !shown; render(); },
     }, shown ? `behind ${where}` : "door: ?");
   }
-  return h("div", { class: `area ${S.area === name ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
+  return h("div", { class: `area ${S.area === name || also.includes(S.area) ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
     h("span", { class: "nm" }, name, door),
     h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
 }
@@ -3473,14 +3496,14 @@ function areaRow(name) {
 function mapAreas() {
   const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
   const old = $("#mapview .mapareas"), top = old ? old.scrollTop : 0;
-  const el = h("div", { class: "mapareas" }, ...K(h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)));
+  const el = h("div", { class: "mapareas" }, ...K(h("h2", {}, "Overworld"), MAP_OVERWORLD.concat(others).map((a) => areaRow(a, MAP_MERGE[a])), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map((a) => areaRow(a))));
   requestAnimationFrame(() => { el.scrollTop = top; });
   return el;
 }
 function renderAreas() {
   const el = $("#areas"), el2 = $("#dungeons"); const top = el.scrollTop, top2 = el2.scrollTop;
   const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
-  const over = [h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow)], dun = [h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)];
+  const over = [h("h2", {}, "Overworld"), OVERWORLD.concat(others).map((a) => areaRow(a))], dun = [h("h2", {}, "Dungeons"), DUNGEON_AREAS.map((a) => areaRow(a))];
   // wide screens: the dungeons get their own column to the right of the overworld
   if (WIDE.matches) { el.replaceChildren(...K(over)); el2.replaceChildren(...K(dun)); }
   else { el.replaceChildren(...K(over, dun)); el2.replaceChildren(); }
