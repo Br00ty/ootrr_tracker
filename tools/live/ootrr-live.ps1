@@ -283,6 +283,10 @@ public static class OotrrLive
     {
         List<string> roots = new List<string>();
         string home = Environment.GetEnvironmentVariable("USERPROFILE") ?? "", appdata = Environment.GetEnvironmentVariable("APPDATA") ?? "";
+        // Longshot and Hookshot keep their saves in %APPDATA%\<name>\save (Longshot's log: "fs: mounted save");
+        // older Longshot builds used %USERPROFILE%\Games\Longshot\user\save
+        roots.Add(Path.Combine(appdata, @"Longshot\save"));
+        roots.Add(Path.Combine(appdata, @"Hookshot\save"));
         roots.Add(Path.Combine(home, @"Games\Longshot\user\save"));
         foreach (string emu in new string[] { "lichii", "ryuchii", "eden", "yuzu", "suyu", "citron", "sudachi" })
             roots.Add(Path.Combine(appdata, emu + @"\nand\user\save"));
