@@ -174,6 +174,12 @@ main.mapmode #mapview{display:flex}
 .maplist{flex:1;min-height:0;overflow:auto}
 .mapside{width:300px;flex:none;border-left:1px solid var(--line);overflow:auto}
 .mapside h2{margin-top:12px}
+/* the Map Tracker's squeezed area list, far right: every area's counts at a glance */
+.mapareas{width:158px;flex:none;border-left:1px solid var(--line);overflow:auto;font-size:11.5px;padding-bottom:8px}
+.mapareas h2{margin:10px 8px 3px;font-size:10px}
+.mapareas .area{padding:2px 6px 2px 8px;gap:4px;border-left-width:2px}
+.mapareas .pill{min-width:16px;padding:0 4px;font-size:10px;line-height:15px}
+.mapareas .door{display:none}
 .mapside .ck{padding:4px 12px}
 .mapside .desc{padding-left:24px}
 .mapfit{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;width:100%}
@@ -1526,12 +1532,12 @@ function renderMap() {
   if (noMap) {
     const old = el.querySelector(".maplist"), top = old ? old.scrollTop : 0;
     const box = h("section", { class: "maplist" }, ...checksPanel(area, renderMap));
-    el.replaceChildren(...K(bar, box));
+    el.replaceChildren(...K(bar, h("div", { class: "mapwrap" }, box, mapAreas())));
     box.scrollTop = top;
     return;
   }
   el.replaceChildren(...K(bar, edit, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
-    h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side)));
+    h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side, mapAreas())));
 }
 const ORDER = { g: 0, y: 1, r: 2, done: 3 };
 // checks in different states make a pie: a slice per state, sized by how many (null when they're all alike)
@@ -1722,6 +1728,14 @@ function areaRow(name) {
   return h("div", { class: `area ${S.area === name ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
     h("span", { class: "nm" }, name, door),
     h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
+}
+// the Map Tracker's squeezed area list: the same rows (and counts) as the Location Tracker's columns
+function mapAreas() {
+  const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
+  const old = $("#mapview .mapareas"), top = old ? old.scrollTop : 0;
+  const el = h("div", { class: "mapareas" }, ...K(h("h2", {}, "Overworld"), OVERWORLD.concat(others).map(areaRow), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map(areaRow)));
+  requestAnimationFrame(() => { el.scrollTop = top; });
+  return el;
 }
 function renderAreas() {
   const el = $("#areas"), el2 = $("#dungeons"); const top = el.scrollTop, top2 = el2.scrollTop;
