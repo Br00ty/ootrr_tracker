@@ -171,6 +171,7 @@ main.mapmode #mapview{display:flex}
 .mapbox img{max-width:100%;max-height:100%;aspect-ratio:3/2;object-fit:fill;width:auto;height:auto;display:block}
 .mapbox .empty{max-width:520px;text-align:center;line-height:1.6}
 .mapwrap{flex:1;min-height:0;display:flex}
+.maplist{flex:1;min-height:0;overflow:auto}
 .mapside{width:300px;flex:none;border-left:1px solid var(--line);overflow:auto}
 .mapside h2{margin-top:12px}
 .mapside .ck{padding:4px 12px}
@@ -1405,6 +1406,7 @@ function renderMap() {
     h("optgroup", { label: "Dungeons" }, DUNGEON_AREAS.map((a) => h("option", { value: a }, a))));
   sel.value = areas.includes(S.area) ? S.area : "Kokiri Forest";
   const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
+  const noMap = nMaps() && !m.key && !(MAP_ZONES[area] || MAP_DUNGEONS[area]);  // the game has none for it
   const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
   const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
   // copies of other areas' checks that show on this map too (not counted in this area's tally)
@@ -1413,10 +1415,10 @@ function renderMap() {
   const bar = h("div", { class: "mapbar" }, sel,
     dungeon ? (m.floors.length ? seg(m.floors.map((f) => { const g = list.filter((c) => c.st === "g" && floorOfCheck(c.n, MAP_DUNGEONS[area]) === f).length;
       return [f, g ? h("span", {}, f, h("span", { style: "color:var(--green);font-weight:700;margin-left:4px" }, String(g))) : f]; }), m.floor, (v) => { S.floor[area] = v; }) : null)
-      : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
+      : noMap ? null : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
-    list.length ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
+    list.length && !noMap ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
     DEV && m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
       onclick: () => { S.pinEdit = !S.pinEdit; pinPlace = null; pinOpen = null; render(); } }, S.pinEdit ? "Done editing" : "Edit pins") : null,
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
@@ -1437,6 +1439,15 @@ function renderMap() {
     h("button", { class: "btn", title: "Copies your pin changes as text: paste them to the tracker's author so they become part of the tracker",
       onclick: async (e) => { const txt = JSON.stringify(S.pinFix || {}, null, 1); try { await navigator.clipboard.writeText(txt); e.target.textContent = "Copied"; } catch (x) { prompt("Copy this:", txt); } } }, `Copy my pin changes (${Object.keys(S.pinFix || {}).length})`),
     Object.keys(S.pinFix || {}).length ? h("button", { class: "btn", onclick: (e) => { if (e.target.dataset.sure) { S.pinFix = {}; render(); } else { e.target.dataset.sure = 1; e.target.textContent = "Click again to undo all"; } } }, "Undo all") : null) : null;
+  // the game has no map for this area (Gerudo Proving Ground, Ganon's Castle): show its check list
+  // instead, still in the Map Tracker, so Follow Link moves on to a map when Link leaves
+  if (noMap) {
+    const old = el.querySelector(".maplist"), top = old ? old.scrollTop : 0;
+    const box = h("section", { class: "maplist" }, ...checksPanel(area, renderMap));
+    el.replaceChildren(...K(bar, box));
+    box.scrollTop = top;
+    return;
+  }
   el.replaceChildren(...K(bar, edit, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
     h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side)));
 }
@@ -1734,24 +1745,27 @@ function ckRow(c, again, open = false) {
     open || openCheck === c.n ? describe(c.n) : null];
 }
 function renderChecks() {
-  const el = $("#checks"); const top = el.scrollTop;
-  const list = [...R.values()].filter((c) => c.a === S.area);
+  const el = $("#checks"), top = el.scrollTop;
+  el.replaceChildren(...checksPanel(S.area, renderChecks));
+  el.scrollTop = top;
+}
+// an area's check list, as the Location Tracker shows it; again() redraws whatever holds it
+function checksPanel(area, again) {
+  const list = [...R.values()].filter((c) => c.a === area);
   const t = tally(list);
   const vis = list.filter((c) => S.show[c.st]);
   const order = { g: 0, y: 1, r: 2, done: 3 };
   vis.sort((a, b) => order[a.st] - order[b.st]);
   const chip = (k, label) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label);
-  el.replaceChildren(...K(
-    h("div", { class: "ckhead" }, h("h3", {}, S.area), h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`),
+  return K(
+    h("div", { class: "ckhead" }, h("h3", {}, area), h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`),
       h("span", { class: "spacer" }), list.some((c) => c.st === "g") ? h("button", { class: "btn", onclick: () => { list.filter((c) => c.st === "g").forEach((c) => (S.done[c.n] = 1)); render(); } }, "Mark all in-logic done") : null),
     h("div", { class: "chips" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    vis.length ? vis.map((c) => ckRow(c, renderChecks)) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
+    vis.length ? vis.map((c) => ckRow(c, again)) : h("div", { class: "empty" }, list.length ? "Nothing to show with these filters." : "No tracked checks here."),
     h("div", { class: "legend" },
       h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
       h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),
-      h("span", {}, "C / A: which age can get it"), h("span", {}, h("span", { class: "xa" }, "C→A"), "do something as one age first"), h("span", {}, "click: logic · double-click: done")),
-  ));
-  el.scrollTop = top;
+      h("span", {}, "C / A: which age can get it"), h("span", {}, h("span", { class: "xa" }, "C→A"), "do something as one age first"), h("span", {}, "click: logic · double-click: done")));
 }
 
 // ---------- settings dialog ----------
