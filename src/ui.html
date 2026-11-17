@@ -207,6 +207,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <button class="btn" id="setBtn">Settings</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
   <a class="btn" id="bugBtn" href="https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml" target="_blank" rel="noopener" title="Found something wrong? Open a bug report on GitHub (needs a GitHub account)">Report a bug</a>
+  <button class="btn" id="aboutBtn" title="What this tracker is, which randomizer it's for, and how it was made">About</button>
 </header>
 <div class="banner" id="banner" hidden></div>
 <main>
@@ -1915,6 +1916,22 @@ $("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.v
 // the folder window was closed without picking
 $("#iconFile").addEventListener("cancel", () => { if (iconView === "finding") { iconView = "main"; openIcons(); } });
 let armed = 0;
+// ---------- about ----------
+$("#aboutBtn").onclick = () => {
+  const a = (href, text) => h("a", { href, target: "_blank", rel: "noopener", style: "color:var(--gold)" }, text);
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "About the OOTRR Tracker"),
+    h("div", { style: "max-width:560px;line-height:1.55" },
+      h("p", {}, "A location and item tracker for ", h("b", {}, "OOTRR"), ", the ", a("https://github.com/realazk/ootrr", "Ocarina of Time remake randomizer"),
+        " by REALAZK. It is built for that randomizer only: it doesn't track the original Ocarina of Time Randomizer (OoTR) or other randomizers."),
+      h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
+      h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
+        "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+        a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
+    h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
+  $("#dlg").showModal();
+};
 $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
