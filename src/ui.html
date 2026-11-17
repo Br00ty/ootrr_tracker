@@ -950,12 +950,32 @@ const PIN_AREAS = new Set(["Deku Tree", "Dodongo's Cavern", "Jabu Jabu's Belly",
   "Haunted Wasteland", "Desert Colossus", "Outside Ganon's Castle"]);  // areas whose pins are shown so far
 let PINS = null;  // hash → [[map id, u, v, floor label, tray, world x, world z]]
 let CAPS = {};    // map id → [camera x, camera z, height]: the map picture's frame in the world
-try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; } else PINS = j; } catch (e) { PINS = null; }
+// dungeon map id → { min: lowest floor (-2 = B2), ys: each floor's base height }: OOTRR's map index
+// (MapCaptureInfo's Floor TransY). Built in from OOTRR 0.6.0, replaced by the index when it's loaded.
+let FLOORS = {
+  InsideTheDekuTree: { min: -2, ys: [45, 73, 93.5, 106.5, 118] }, DodongoCavern: { min: 0, ys: [90.36, 108.0165] },
+  InsideJabuJabuBelly: { min: -1, ys: [66.2422, 88.524, 95.9245] }, ForestTemple: { min: -2, ys: [55.4153, 69.1653, 94.5195, 112.1985, 122.5445] },
+  FireTemple: { min: 0, ys: [99.9, 126.9543, 145.014, 166.9103, 185.3993] }, WaterTemple: { min: -1, ys: [85, 96.9742, 108.7, 115.6098] },
+  ShadowTemple: { min: -4, ys: [-47.1483, 49.3423, 72.8526, 89.8542] }, SpiritTemple: { min: 0, ys: [94.4704, 113.7637, 128, 150.2692] },
+  BottomOfTheWell: { min: -2, ys: [82.6465, 96.0404] }, IceCavern: { min: 0, ys: [65] },
+};
+try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; if (j.floors) FLOORS = { ...FLOORS, ...j.floors }; } else PINS = j; } catch (e) { PINS = null; }
+// the floor Link is on, from his height (OOTRR's project.rs floor_of: the highest floor whose base is at
+// most half a unit above him; floors are named from the lowest, B2 B1 1F 2F…), or null
+function floorAt(id, y) {
+  const fl = FLOORS[id];
+  if (!fl || !fl.ys.length || typeof y !== "number" || !isFinite(y)) return null;
+  let best = 0;
+  fl.ys.forEach((t, i) => { if (t <= y + 0.5 && fl.ys[best] <= t) best = i; });
+  const f = best + fl.min;
+  return f < 0 ? `B${-f}` : `${f + 1}F`;
+}
 let pinOpen = null;  // the open pin's key
 function takePins(idx) {
   if (!idx || !Array.isArray(idx.locations)) return 0;
-  const out = {}, caps = {};
+  const out = {}, caps = {}, floors = {};
   for (const m of idx.maps || []) if (m && m.id && Array.isArray(m.cap)) caps[m.id] = m.cap;
+  for (const m of idx.maps || []) if (m && m.id && m.floors && Array.isArray(m.floors.ys) && m.floors.ys.length) floors[m.id] = { min: m.floors.min | 0, ys: m.floors.ys };
   for (const l of idx.locations) {
     const hsh = String(l.id || "").split(":").pop();
     if (!hsh || !Array.isArray(l.pins)) continue;
@@ -964,8 +984,8 @@ function takePins(idx) {
       (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray, ...pos]);
     }
   }
-  PINS = out; CAPS = caps; AGES.clear();
-  try { localStorage.setItem(PIN_KEY, JSON.stringify({ pins: out, caps })); } catch (e) {}
+  PINS = out; CAPS = caps; FLOORS = { ...FLOORS, ...floors }; AGES.clear();
+  try { localStorage.setItem(PIN_KEY, JSON.stringify({ pins: out, caps, floors })); } catch (e) {}
   return Object.keys(out).length;
 }
 // the object hashes behind a check: its save keys and the hashes at the end of its flags
@@ -2010,7 +2030,7 @@ $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
   clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
-  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; LIVE.saveSig = ""; render();
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
 };
 
 
@@ -2024,7 +2044,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = ""; LIVE.saveSig = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
   }
   W.err = "";
   render();
@@ -2170,7 +2190,7 @@ function detectMapBase() {
 // Watches the game's save folder: Longshot's ...\Games\Longshot\user\save, or Lichii's
 // %APPDATA%\lichii\nand\user\save\...\0400486024DEC000. The newest slot's progress.sav wins.
 const W = { dir: null, timer: 0, read: null, err: "", where: "", child: false, name: "", mode: "", saved: null, blocked: false };
-let lastSig = "", lastMap = "";
+let lastSig = "", lastMap = "", lastFloor = "";
 const canWatch = typeof window.showDirectoryPicker === "function";
 
 const MAX = {};
@@ -2202,6 +2222,13 @@ function applyPeek(p, label) {
   if (S.follow && area) S.mapAge = p.child ? "child" : "adult";
   // Link inside a dungeon has walked through its door, so that door is no secret any more
   if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
+  // in a dungeon: the floor Link is on, from his height. The map follows it when he changes floor,
+  // so a floor you pick by hand stays until he moves to another one.
+  const fl = area && MAP_DUNGEONS[area] && p.pos ? floorAt(MAP_DUNGEONS[area], p.pos[1]) : null;
+  W.floor = fl || "";
+  const fk = fl ? `${area}:${fl}` : "";
+  if (S.follow && fl && fk !== lastFloor) S.floor[area] = fl;
+  lastFloor = fk;
   lastMap = area || "";
   render();
 }
@@ -2377,9 +2404,9 @@ function paintAuto() {
     // Longshot live tracking: its own status line
     const st = LIVE.state, ok = st && st.ok, why = LIVE.err || (st && !st.ok ? st.why : "");
     const lt = LIVE.read ? LIVE.read.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }) : "";
-    const full = ok ? `Live: ${liveGame(st)} at ${lt}${W.where ? ` · Link in ${W.where} (${W.child ? "child" : "adult"})` : ""}` : why;
+    const full = ok ? `Live: ${liveGame(st)} at ${lt}${W.where ? ` · Link in ${W.where}${W.floor ? ` ${W.floor}` : ""} (${W.child ? "child" : "adult"})` : ""}` : why;
     const kidsL = [h("span", { class: `live ${ok ? "on" : why ? "err" : ""}` }),
-      h("span", { title: full, style: `max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${ok ? "" : "color:var(--gold)"}` }, ok ? ["Live: ", h("b", {}, liveGame(st)), ` at ${lt}`, W.where ? [" · Link in ", h("b", {}, W.where)] : ""] : why || "Connecting…"),
+      h("span", { title: full, style: `max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${ok ? "" : "color:var(--gold)"}` }, ok ? ["Live: ", h("b", {}, liveGame(st)), ` at ${lt}`, W.where ? [" · Link in ", h("b", {}, W.where + (W.floor ? ` ${W.floor}` : ""))] : ""] : why || "Connecting…"),
       h("button", { class: "btn", onclick: openLongshot, title: "Longshot live tracking: help and status" }, "Longshot"),
       h("button", { class: "btn", onclick: liveStop, title: "Stop live tracking. What was already tracked stays." }, "Disconnect"),
       h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
@@ -2391,8 +2418,8 @@ function paintAuto() {
   if (W.err) kids.push(h("span", { title: W.err, style: "color:var(--red);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, W.err));
   else if (W.read) {
     // one line that shortens itself, so the header doesn't wrap; the full text is in the tooltip
-    const full = `${watching ? "Watching" : "Read"} ${W.name} at ${t}${W.where ? ` · Link in ${W.where} (${W.child ? "child" : "adult"})` : ""}`;
-    kids.push(h("span", { title: full, style: "max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where), W.child ? " (child)" : " (adult)"] : ""));
+    const full = `${watching ? "Watching" : "Read"} ${W.name} at ${t}${W.where ? ` · Link in ${W.where}${W.floor ? ` ${W.floor}` : ""} (${W.child ? "child" : "adult"})` : ""}`;
+    kids.push(h("span", { title: full, style: "max-width:210px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" }, watching ? "Watching " : "Read ", h("b", {}, W.name), ` at ${t}`, W.where ? [" · Link in ", h("b", {}, W.where + (W.floor ? ` ${W.floor}` : "")), W.child ? " (child)" : " (adult)"] : ""));
   }
   else kids.push(h("span", {}, "Auto-tracking off"));
   if (watching || W.saved) kids.push(h("button", { class: "btn", onclick: disconnect, title: "Stop watching the save folder and forget it. Items and checks already tracked from your save stay." }, "Disconnect"));
