@@ -80,6 +80,8 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .area .door:hover{text-decoration:underline}
 .area.done .nm{color:var(--faint)}
 .pills{display:flex;gap:3px}
+.tilehelp{width:15px;height:15px;border-radius:50%;border:1px solid var(--faint);color:var(--faint);font-size:10px;line-height:13px;text-align:center;cursor:pointer;text-transform:none;letter-spacing:0;font-weight:700}
+.tilehelp:hover{color:var(--gold);border-color:var(--gold)}
 .pill{min-width:20px;padding:0 5px;border-radius:9px;font-size:11px;font-weight:700;text-align:center;color:#111}
 .pill.g{background:var(--green)}.pill.y{background:var(--yellow)}.pill.r{background:var(--red);color:#fff}
 /* checks */
@@ -3412,11 +3414,16 @@ function counter(name, max, step = 1) {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
+  // a small ? above the Boomerang: how the tiles work, and the license note
+  const help = h("span", { class: "tilehelp", title: ITEMS_HELP, onclick: () => {
+    $("#dlgBody").replaceChildren(h("h3", {}, "Items"), h("p", { style: "max-width:460px;line-height:1.55" }, ITEMS_HELP), h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")));
+    $("#dlg").showModal(); } }, "?");
   const main = [
-    h("h2", {}, "Items"), h("div", { class: "grid" }, INV.map(tile)),
+    h("h2", { style: "display:flex;align-items:center;margin-right:12px" }, h("span", { style: "flex:1" }, "Items"), help), h("div", { class: "grid" }, INV.map(tile)),
     h("h2", {}, "Magic arrows"), h("div", { class: "grid" }, ARROWS.map(tile)),
     h("h2", {}, "Equipment"), h("div", { class: "grid" }, GEAR.map(tile)),
     h("h2", {}, "Songs"), h("div", { class: "grid" }, SONGS.map(tile)),
@@ -3437,9 +3444,8 @@ function renderItems() {
     h("h2", {}, "Child trade"), h("div", { class: g }, CHILD_TRADE.map(tile)),
     h("h2", {}, "Adult trade"), h("div", { class: g }, ADULT_TRADE.map(tile)),
   ];
-  const hint = h("p", { class: "hint" }, "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.0 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.");
-  if (wide) { el.replaceChildren(...K(main, hint)); el2.replaceChildren(...K(more)); }
-  else { el.replaceChildren(...K(main, more, hint)); el2.replaceChildren(); }
+  if (wide) { el.replaceChildren(...K(main)); el2.replaceChildren(...K(more)); }
+  else { el.replaceChildren(...K(main, more)); el2.replaceChildren(); }
   el.scrollTop = top; el2.scrollTop = top2;
 }
 function areaRow(name) {
