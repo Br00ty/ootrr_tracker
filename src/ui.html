@@ -1160,6 +1160,13 @@ let pinPlace = null;  // edit mode: the check waiting for a click on the map
 // name (OOTRR names one-age objects "Child …" / "Adult …").
 const AGES = new Map();
 // ages set by hand: "child", "adult", or null for both (OOTRR's data is unclear for these)
+// Checks that also show on another area's map, as a copy with its own pin (its pin changes are kept
+// under "<check> @<area>"). The Spirit Temple's two hand chests sit outside, on the Colossus.
+const MAP_ALSO = {
+  "Desert Colossus": ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"],
+};
+const pinKey = (c) => c.pk || c.n;
+const realName = (k) => k.replace(/ @[^@]*$/, "");
 const AGE_FIXES = {
   // the two Know-it-All Brothers' house pots share an object in OOTRR's data; both ages until checked in game
   "KF Know it All House Pot 1": null, "KF Know it All House Pot 2": null,
@@ -1231,9 +1238,9 @@ function floorOfCheck(n, dungeon) {
 }
 // a dungeon floor's map key ("DodongoCavern_1F") → [dungeon, floor]
 const FLOOR_KEY = /^([A-Za-z]+)_(B\d|\dF)$/;
-function pinOwn(n, mapKey) {
+function pinOwn(k, mapKey) {
   const place = mapKey.replace(/_(Child|Adult)$/, "");
-  const fix = fixOf(n);
+  const fix = fixOf(k), n = realName(k);
   if (fix !== undefined) return fix && !fix.hide && fix.place === place ? [mapKey, fix.u, fix.v, null, false] : null;
   if (!PINS) return null;
   // dungeons: OOTRR pins each object on its floor of the dungeon's map
@@ -1375,6 +1382,8 @@ function renderMap() {
   const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
   const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
   const list = [...R.values()].filter((c) => c.a === area), t = tally(list);
+  // copies of other areas' checks that show on this map too (not counted in this area's tally)
+  const copies = (MAP_ALSO[area] || []).filter((n) => R.has(n)).map((n) => ({ ...R.get(n), pk: `${n} @${area}` }));
   const songs = [...VSONGS.values()].filter((c) => c.a === area);
   const bar = h("div", { class: "mapbar" }, sel,
     dungeon ? (m.floors.length ? seg(m.floors.map((f) => { const g = list.filter((c) => c.st === "g" && floorOfCheck(c.n, MAP_DUNGEONS[area]) === f).length;
@@ -1388,7 +1397,7 @@ function renderMap() {
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
   // on a child or adult map, only the checks that age can get (dungeon maps have no age)
   const age = /_(Child|Adult)$/.exec(m.key || "");
-  const shown = (age ? [...list, ...songs].filter((c) => { const a = ageOf(c.n); return !a || a === age[1].toLowerCase(); }) : [...list, ...songs]);
+  const shown = (age ? [...list, ...copies, ...songs].filter((c) => { const a = ageOf(c.n); return !a || a === age[1].toLowerCase(); }) : [...list, ...copies, ...songs]);
   let body;
   if (!nMaps()) body = h("div", { class: "empty" }, h("p", {}, "The map tracker shows the game's own maps. They come from your copy of the game, so they aren't included with the tracker."),
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, "Load the game's maps"));
@@ -1397,7 +1406,7 @@ function renderMap() {
   const side = m.key && PIN_AREAS.has(area) ? mapSide(area, m.key, shown) : null;
   if (!DEV) S.pinEdit = false;
   const edit = S.pinEdit && m.key && PIN_AREAS.has(area) ? h("div", { class: "banner", style: "display:flex;gap:10px;align-items:center;flex-wrap:wrap" },
-    h("span", { style: "flex:1;min-width:260px" }, pinPlace ? ["Click on the map where ", h("b", {}, shownName(pinPlace)), " goes."]
+    h("span", { style: "flex:1;min-width:260px" }, pinPlace ? ["Click on the map where ", h("b", {}, shownName(realName(pinPlace))), " goes."]
       : "Drag a pin to its right spot. Right-click a pin to take it off the map. To place a check that has no pin, click Place next to it on the right."),
     pinPlace ? h("button", { class: "btn", onclick: () => { pinPlace = null; renderMap(); } }, "Cancel") : null,
     h("button", { class: "btn", title: "Copies your pin changes as text: paste them to the tracker's author so they become part of the tracker",
@@ -1411,7 +1420,7 @@ const ORDER = { g: 0, y: 1, r: 2, done: 3 };
 function pinGroups(key, list) {
   const groups = [];
   for (const c of list) {
-    const p = pinOf(c.n, key);
+    const p = pinOf(pinKey(c), key);
     if (!p) continue;
     let g = S.pinEdit ? null : groups.find((x) => Math.hypot(x.u - p[1], (x.v - p[2]) / 1.5) < 0.02);
     if (!g) { g = { u: p[1], v: p[2], cs: [] }; groups.push(g); }
@@ -1420,7 +1429,7 @@ function pinGroups(key, list) {
   for (const g of groups) {
     g.cs.sort((a, b) => ORDER[a.st] - ORDER[b.st]);
     g.st = g.cs[0].st;  // the best state among them: green if any is in logic
-    g.id = g.cs.map((c) => c.n).join("|");
+    g.id = g.cs.map(pinKey).join("|");
   }
   return groups;
 }
@@ -1433,15 +1442,15 @@ function mapWithPins(area, key, list) {
     fit.style.cursor = pinPlace ? "crosshair" : "";
     fit.onclick = (e) => { if (!pinPlace) return; const [u, v] = at(e); setPin(pinPlace, { place, u: +u.toFixed(4), v: +v.toFixed(4) }); pinPlace = null; render(); };
     for (const c of list) {
-      const p = pinOf(c.n, key);
+      const p = pinOf(pinKey(c), key);
       if (!p) continue;
       const pin = h("div", { class: `pin ${c.st}`, style: `left:${p[1] * 100}%;top:${p[2] * 100}%;cursor:grab`, title: `${shownName(c.n)}\nDrag to move · right-click to take it off the map`,
-        oncontextmenu: (e) => { e.preventDefault(); S.pinFix[c.n] = { hide: true }; render(); } });
+        oncontextmenu: (e) => { e.preventDefault(); S.pinFix[pinKey(c)] = { hide: true }; render(); } });
       pin.onpointerdown = (e) => {
         if (e.button !== 0) return;
         e.preventDefault(); e.stopPropagation(); pin.setPointerCapture(e.pointerId);
         pin.onpointermove = (ev) => { const [u, v] = at(ev); pin.style.left = `${u * 100}%`; pin.style.top = `${v * 100}%`; };
-        pin.onpointerup = (ev) => { pin.onpointermove = null; pin.onpointerup = null; const [u, v] = at(ev); setPin(c.n, { place, u: +u.toFixed(4), v: +v.toFixed(4) }); render(); };
+        pin.onpointerup = (ev) => { pin.onpointermove = null; pin.onpointerup = null; const [u, v] = at(ev); setPin(pinKey(c), { place, u: +u.toFixed(4), v: +v.toFixed(4) }); render(); };
       };
       pin.onclick = (e) => e.stopPropagation();
       fit.append(pin);
@@ -1471,8 +1480,8 @@ function mapSide(area, key, list) {
   const t = tally(list);
   const chip = (k, label) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label);
   const fk = FLOOR_KEY.exec(key), dun = fk && MAP_DUNGEON_IDS.has(fk[1]) ? fk[1] : null;
-  const elsewhere = dun ? list.filter((c) => !pinOf(c.n, key) && floorOfCheck(c.n, dun) && (S.pinEdit || S.show[c.st])) : [];
-  const off = list.filter((c) => !pinOf(c.n, key) && !elsewhere.includes(c) && (S.pinEdit || S.show[c.st])).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
+  const elsewhere = dun ? list.filter((c) => !pinOf(pinKey(c), key) && floorOfCheck(c.n, dun) && (S.pinEdit || S.show[c.st])) : [];
+  const off = list.filter((c) => !pinOf(pinKey(c), key) && !elsewhere.includes(c) && (S.pinEdit || S.show[c.st])).sort((a, b) => ORDER[a.st] - ORDER[b.st]);
   // a dungeon's checks on its other floors, by floor: click a floor to go there
   const floors = dun ? [...new Set(elsewhere.map((c) => floorOfCheck(c.n, dun)))].sort((a, b) => floorRank(b) - floorRank(a)) : [];
   const other = floors.length ? [h("h2", {}, `On other floors (${elsewhere.length})`),
@@ -1480,8 +1489,8 @@ function mapSide(area, key, list) {
       elsewhere.filter((c) => floorOfCheck(c.n, dun) === f).sort((a, b) => ORDER[a.st] - ORDER[b.st]).map((c) => S.pinEdit ? h("div", { class: `ck st-${c.st}` }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n))) : ckRow(c, renderMap))])] : [];
   if (S.pinEdit) return h("div", { class: "mapside" },
     h("h2", {}, `Not on the map (${off.length})`),
-    off.map((c) => h("div", { class: `ck st-${c.st}`, style: pinPlace === c.n ? "background:var(--panel2)" : "" }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
-      h("button", { class: "btn", style: "padding:1px 8px", onclick: () => { pinPlace = pinPlace === c.n ? null : c.n; renderMap(); } }, pinPlace === c.n ? "Cancel" : "Place"))),
+    off.map((c) => h("div", { class: `ck st-${c.st}`, style: pinPlace === pinKey(c) ? "background:var(--panel2)" : "" }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n)),
+      h("button", { class: "btn", style: "padding:1px 8px", onclick: () => { pinPlace = pinPlace === pinKey(c) ? null : pinKey(c); renderMap(); } }, pinPlace === pinKey(c) ? "Cancel" : "Place"))),
     other,
     h("div", { class: "hint" }, "Moved or placed pins are kept in this browser. Copy my pin changes and send them to the tracker's author to make them part of the tracker for everyone."));
   return h("div", { class: "mapside" },
