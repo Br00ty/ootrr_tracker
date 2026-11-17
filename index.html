@@ -3020,6 +3020,13 @@ const MAP_ALSO = {
   "Desert Colossus": ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"],
 };
 const pinKey = (c) => c.pk || c.n;
+// Dungeon checks that also show on another floor's map, at the same spot (a dungeon's floors share one frame):
+// the Forest Temple's first room is reached from 1F but drawn on 2F.
+const FLOOR_ALSO = {
+  "Forest Temple First Room Chest": ["1F"],
+  "Forest Temple GS First Room": ["1F"],
+};
+const alsoOnFloor = (n, floor) => (FLOOR_ALSO[n] || []).includes(floor);
 const realName = (k) => k.replace(/ @[^@]*$/, "");
 const AGE_FIXES = {
   // the two Know-it-All Brothers' house pots share an object in OOTRR's data; both ages until checked in game
@@ -3108,6 +3115,7 @@ function pinOwn(k, mapKey) {
   if (fix !== undefined) {
     if (!fix || fix.hide) return null;
     if (fix.place === place) return [mapKey, fix.u, fix.v, null, false];
+    { const a = FLOOR_KEY.exec(fix.place || ""), b = FLOOR_KEY.exec(mapKey); if (a && b && a[1] === b[1] && alsoOnFloor(n, b[2])) return [mapKey, fix.u, fix.v, b[2], false]; }
     // a pin placed on the ranch's own map shows on the field's map (the Map Tracker folds the ranch in)
     if (place === "HyruleField" && fix.place === "LonLonRanch") { const q = respot(fix.place, place, fix.u, fix.v); return q ? [mapKey, q[0], q[1], null, false] : null; }
     return null;
@@ -3117,6 +3125,7 @@ function pinOwn(k, mapKey) {
   const fk = FLOOR_KEY.exec(mapKey);
   if (fk && MAP_DUNGEON_IDS.has(fk[1])) {
     for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) if (!p[4] && p[1] != null && p[0] === fk[1] && p[3] === fk[2]) return p;
+    if (alsoOnFloor(n, fk[2])) for (const hs of hashesOf(n)) for (const p of PINS[hs] || []) if (!p[4] && p[1] != null && p[0] === fk[1]) return [mapKey, p[1], p[2], fk[2], false];
     return null;
   }
   // OOTRR pins each object on one map; Lake Hylia and Lon Lon Ranch lie inside Hyrule Field's picture too,
@@ -3265,7 +3274,7 @@ function renderMap() {
   const copies = (MAP_ALSO[area] || []).filter((n) => R.has(n)).map((n) => ({ ...R.get(n), pk: `${n} @${area}` }));
   const songs = [...VSONGS.values()].filter((c) => inMapArea(area, c.a));
   const bar = h("div", { class: "mapbar" }, sel,
-    dungeon ? (m.floors.length ? seg(m.floors.map((f) => { const g = list.filter((c) => c.st === "g" && floorOfCheck(c.n, MAP_DUNGEONS[area]) === f).length;
+    dungeon ? (m.floors.length ? seg(m.floors.map((f) => { const g = list.filter((c) => c.st === "g" && (floorOfCheck(c.n, MAP_DUNGEONS[area]) === f || alsoOnFloor(c.n, f))).length;
       return [f, g ? h("span", {}, f, h("span", { style: "color:var(--green);font-weight:700;margin-left:4px" }, String(g))) : f]; }), m.floor, (v) => { S.floor[area] = v; }) : null)
       : noMap ? null : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
