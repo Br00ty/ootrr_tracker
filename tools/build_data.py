@@ -1,6 +1,6 @@
 """Builds data/data.json from an OOTRR checkout and the two exports in tools/out (see README).
 Usage: python tools/build_data.py <ootrr checkout>/data"""
-import json, os, sys, collections
+import json, os, re, sys, collections
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 D = sys.argv[1]
 L = json.load(open('tools/out/logic.json'))
@@ -139,6 +139,13 @@ for t in T:
     if t['kind'] == 'gift': r['g'] = 1
     if t['kind'] == 'cow': r['c'] = 1
     if r: det.setdefault(o, []).append(r)
+# Silver rupees: OOTRR's silver rupee slice (crates/core/src/slice/silver.rs) lists every shuffled silver rupee's
+# save key. tracker_targets misses one (BotW Ladders Top), so fill any silver rupee it has no key for from there.
+_sil = os.path.join(D, '..', 'crates', 'core', 'src', 'slice', 'silver.rs')
+if os.path.exists(_sil):
+    for n, ks in re.findall(r'\("([^"]+)",\s*&\[([\d,\s]+)\]\)', open(_sil).read()):
+        ks = [k.strip() for k in ks.split(',') if k.strip()]
+        if n in checks and not any(r.get('k') for r in det.get(n, [])): det.setdefault(n, []).append({'k': ks})
 # The generator writes each location's item into the game objects its catalog (locations.json "refs")
 # names, so that catalog decides which object belongs to which check. tracker_targets only guesses some
 # (57 differ, e.g. Mido's chests, DMT Chest vs DMT Storms Grotto Chest: in a real save the chest on
