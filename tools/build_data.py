@@ -1,5 +1,8 @@
 """Builds data/data.json from an OOTRR checkout and the two exports in tools/out (see README).
-Usage: python tools/build_data.py <ootrr checkout>/data"""
+Usage: python tools/build_data.py <ootrr checkout>/data [<OOTRR tracker-cache>/<game>/index.json]
+
+The map index (where each check sits on each game map) is made by OOTRR's tracker from the game files. Pass it
+to take the pins from it; without it, the pins already in data/data.json are kept."""
 import json, os, re, sys, collections
 os.chdir(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 D = sys.argv[1]
@@ -241,6 +244,27 @@ if POOLS:
     if os.path.exists('tools/out/deal_room.json'): POOLS['deals'] |= json.load(open('tools/out/deal_room.json'))
 schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
+# Map pins: OOTRR's map index, cut down to what the Map Tracker uses ({pins: hash -> [[map, u, v, floor, tray,
+# x, z]], caps: map -> [x, z, size], floors: map -> {min, ys}}), so players don't need OOTRR's folder for them.
+def map_index(path):
+    j = json.load(open(path))
+    pins, caps, floors = {}, {}, {}
+    for m in j.get('maps') or []:
+        if m.get('id') and isinstance(m.get('cap'), list): caps[m['id']] = m['cap']
+        fl = m.get('floors')
+        if m.get('id') and fl and fl.get('ys'): floors[m['id']] = {'min': int(fl.get('min') or 0), 'ys': fl['ys']}
+    for l in j.get('locations') or []:
+        h = str(l.get('id') or '').split(':')[-1]
+        for p in l.get('pins') or []:
+            if not (h and p and p.get('map')): continue
+            pos = p.get('pos') if isinstance(p.get('pos'), list) else None
+            pins.setdefault(h, []).append([p['map'], None if p.get('u') is None else round(p['u'], 4), None if p.get('v') is None else round(p['v'], 4), p.get('floor_label') or None, bool(p.get('tray')),
+                                           round(pos[0], 2) if pos else None, round(pos[2], 2) if pos else None])
+    return {'game': j.get('game'), 'pins': pins, 'caps': caps, 'floors': floors}
+if len(sys.argv) > 2: MAP_INDEX = map_index(sys.argv[2])
+else:
+    try: MAP_INDEX = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('map_index')
+    except Exception: MAP_INDEX = None
 out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helpers': helpers, 'groups': L['groups'], 'root': L['root'],
        'settings': L['settings'], 'items': items, 'vanilla': L['vanilla'], 'checks': checks, 'classic': classic, 'detect': det, 'maps': maps,
        'schema': schema, 'start_items': L['start_items'], 'item_actors': L['item_actors'], 'cow_flags': L['cow_flags'], 'entrances': L['entrances'], 'skull_notes': skull_notes, 'shop_rules': L['shop_rules'], 'labels': {s['id']: {c['id']: c['label'] for c in s.get('choices', [])} | {'_': s['label']} for s in SCH['settings']},
@@ -249,6 +273,7 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
        'tips': json.loads(json.dumps({s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']}).replace('Gerudo Training Ground', 'Gerudo Proving Ground')),
        'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS,
        # OOTRR's settings menu (pages, sections, its own labels and choices), minus the "not supported yet" stubs
+       'map_index': MAP_INDEX,
        'setting_menu': json.loads(json.dumps([{**pg, 'sections': [{**sc, 'items': [it for it in sc.get('items') or [{'id': i} for i in sc['ids']] if not it.get('stub')]}
                                                                  for sc in pg['sections']]} for pg in SCH['menu']]).replace('Gerudo Training Ground', 'Gerudo Proving Ground'))}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))

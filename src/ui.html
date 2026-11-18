@@ -583,10 +583,9 @@ const TIERS = {
   "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
 };
 // ---------- item pictures ----------
-// The pictures are the game's own art, so they aren't shipped with the tracker. OOTRR's tracker decodes
-// them from your game files and caches them as PNGs (%LOCALAPPDATA%\\ootrr\\tracker-cache\\<game>\\icons-v1);
-// picking that folder (or any folder above it) copies small versions into this browser.
-// item name -> OOTRR icon id, or one id per tier for items whose picture changes as they upgrade
+// The pictures are the game's own art, so they aren't shipped with the tracker: they're decoded from the game's
+// UI folder when the player picks it (Icons & Maps), and small versions are kept in this browser.
+// item name -> the game's icon id, or one id per tier for items whose picture changes as they upgrade
 const ICON = {
   "Deku Stick Drop": "Item_DekuStick", "Deku Nut Drop": "Item_DekuNut",
   "Slingshot": "Weapon_Range_SlingShot", "Ocarina": ["Item_Ocarina_Fairy", "Item_Ocarina_Time"], "Bomb Bag": "Item_Bomb",
@@ -653,75 +652,81 @@ async function takeIcons(files) {
   render();
   return best.size;
 }
-// The pictures are read with the browser's plain folder picker (<input webkitdirectory>): it works inside the
-// claude.ai page and for folders under AppData, which Chrome's newer folder API refuses. Pick any folder that
-// has the PNGs somewhere inside it and every picture in it is read. "Find them for me" copies the folder's
-// address first, so picking it is paste + Enter. The pictures stay stored in the browser afterwards.
-const ICON_PATH = "%LOCALAPPDATA%\\ootrr";
+// Everything is read from the game's own UI folder (romfs\UI), with the browser's plain folder picker
+// (<input webkitdirectory>): it works inside the claude.ai page and for any folder. The item pictures are
+// UI\Tex\Icon\<id>.bntx.zs; songs, stones, medallions and the heart piece are textures in
+// UI\Layout2Archive\Common….bntx.zs (where OOTRR takes them from, tracker/icon_map.rs, with its tints for the
+// warp songs); the maps are UI\CustomTex\Map. All of it stays stored in the browser afterwards.
 const ASK_KEY = "ootrr-tracker-icons-ask";
-let iconMsg = "", iconView = "main", copied = false;
+let iconMsg = "", iconView = "main";
 const nPics = () => Object.keys(PICS).filter((k) => ICON_IDS.has(k)).length;
-const NONE_FOUND = `No OOTRR pictures were found in that folder. Pick the ootrr folder in AppData\\Local (${ICON_PATH}). If OOTRR has never shown its tracker with your game folder set, open it once so it saves the pictures.`;
-// a picked or dropped folder: the game's map textures, or OOTRR's pictures (whose folder also holds
-// OOTRR's settings, with the game folder the maps are read from)
+// picture id → [texture in the Common file, tint]
+const SHARED_ICONS = {
+  Item_Stone_Forest: ["DataFileImportantIcon_00"], Item_Stone_Fire: ["DataFileImportantIcon_01"], Item_Stone_Water: ["DataFileImportantIcon_02"],
+  Item_Medal_Light: ["DataFileImportantIcon_03"], Item_Medal_Forest: ["DataFileImportantIcon_04"], Item_Medal_Fire: ["DataFileImportantIcon_05"],
+  Item_Medal_Water: ["DataFileImportantIcon_06"], Item_Medal_Spirit: ["DataFileImportantIcon_07"], Item_Medal_Shadow: ["DataFileImportantIcon_08"],
+  Obj_Heart_Piece: ["CollectHeartBase_00"],
+  Item_Melody_ZeldaLullaby: ["OcarinaMelodyIcon_00"], Item_Melody_EponaSong: ["OcarinaMelodyIcon_01"], Item_Melody_SariaSong: ["OcarinaMelodyIcon_02"],
+  Item_Melody_SunSong: ["OcarinaMelodyIcon_03"], Item_Melody_TimeSong: ["OcarinaMelodyIcon_04"], Item_Melody_StormSong: ["OcarinaMelodyIcon_05"],
+  Item_Melody_ForestMinuet: ["OcarinaMelodyIcon_07", [112, 214, 110]], Item_Melody_FireBolero: ["OcarinaMelodyIcon_08", [240, 104, 84]],
+  Item_Melody_WaterSerenade: ["OcarinaMelodyIcon_09", [110, 160, 250]], Item_Melody_SpiritRequiem: ["OcarinaMelodyIcon_10", [244, 160, 82]],
+  Item_Melody_ShadowNocturne: ["OcarinaMelodyIcon_11", [184, 128, 240]], Item_Melody_LightPrelude: ["OcarinaMelodyIcon_12", [240, 220, 100]],
+};
+// a decoded texture → a small stored picture (tinted like OOTRR's warp song icons)
+async function texPic(tx, tint) {
+  const px = new Uint8ClampedArray(tx.rgba);
+  if (tint) for (let i = 0; i < px.length; i += 4) for (let k = 0; k < 3; k++) px[i + k] = Math.round((px[i + k] * tint[k]) / 255);
+  const c = document.createElement("canvas"); c.width = tx.w; c.height = tx.h;
+  c.getContext("2d").putImageData(new ImageData(px, tx.w, tx.h), 0, 0);
+  return shrink(await new Promise((ok) => c.toBlob(ok, "image/png")));
+}
+// a picked or dropped folder: the game's UI folder (or a folder inside it)
 function usePicked(files) {
   if (files.some((f) => /\.bntx\.zs$/i.test(f.name))) return useGameFiles(files);
-  return useIconFiles(files);
+  mapMsg = MAP_NONE; iconView = "main"; openIcons();
 }
-// the game's UI folder: its maps (CustomTex\Map) and the item pictures OOTRR doesn't save (Tex\Icon)
+// the game's UI folder: the item pictures (Tex\Icon and the Common file) and the maps (CustomTex\Map)
 async function useGameFiles(files) {
   const icons = files.filter((f) => ICON_IDS.has(f.name.replace(/\.bntx\.zs$/i, "")) && !/CustomTex/i.test(f.webkitRelativePath || ""));
+  const common = files.find((f) => /^Common\..*\.bntx\.zs$/i.test(f.name));
   let n = 0;
-  if (icons.length) {
+  if (icons.length || common) {
     mapBusy = true; mapMsg = "Reading item pictures…"; iconView = "main"; openIcons();
     const next = { ...PICS };
     for (const f of icons) {
       const id = f.name.replace(/\.bntx\.zs$/i, "");
-      if (PICS[id]) continue;  // a picture OOTRR already saved stays
-      try {
-        const t = TexDec.readTextures(new Uint8Array(await f.arrayBuffer()))[0];
-        const c = document.createElement("canvas"); c.width = t.w; c.height = t.h;
-        c.getContext("2d").putImageData(new ImageData(t.rgba, t.w, t.h), 0, 0);
-        next[id] = await shrink(await new Promise((ok) => c.toBlob(ok, "image/png"))); n++;
-      } catch (e) { console.warn("icon", id, e); }
+      try { next[id] = await texPic(TexDec.readTextures(new Uint8Array(await f.arrayBuffer()))[0]); n++; } catch (e) { console.warn("icon", id, e); }
       await new Promise((r) => setTimeout(r, 0));
+    }
+    if (common) {
+      mapMsg = "Reading the song, stone and medallion pictures…"; openIcons();
+      await new Promise((r) => setTimeout(r, 30));
+      try {
+        // a big file (about 65 MB): unpacked once, and only these few of its textures are decoded
+        let b = TexDec.decompress(new Uint8Array(await common.arrayBuffer()));
+        const ts = TexDec.bntx(b);
+        for (const [id, [tex, tint]] of Object.entries(SHARED_ICONS)) {
+          const tx = ts.find((x) => x.name === tex);
+          if (!tx) continue;
+          try { next[id] = await texPic(TexDec.surface(b, tx), tint); n++; } catch (e) { console.warn("icon", id, e); }
+        }
+        b = null;
+      } catch (e) { console.warn("common", e); }
     }
     PICS = next;
     try { localStorage.setItem(ICON_KEY, JSON.stringify(PICS)); } catch (e) {}
     mapBusy = false;
   }
-  if (mapPicks(files).size) { await useMapFiles(files); if (n) { mapMsg += ` Also ${n} item pictures from the game.`; openIcons(); } }
-  else { mapMsg = n ? `Loaded ${n} item pictures from the game.` : MAP_NONE; iconView = "main"; openIcons(); render(); }
+  const tail = n ? ` ${n} item pictures too.` : "";
+  if (mapPicks(files).size) { await useMapFiles(files); if (n) { mapMsg += tail; openIcons(); } }
+  else { mapMsg = n ? `Loaded ${n} item pictures from the game.${common ? "" : " For the songs, stones and medallions, pick the whole UI folder (they're in its Layout2Archive folder)."}` : MAP_NONE; iconView = "main"; openIcons(); render(); }
 }
-async function useIconFiles(files) {
-  const idx = files.filter((f) => f.name === "index.json" && /tracker-cache/i.test(f.webkitRelativePath || f.name)).sort((a, b) => b.lastModified - a.lastModified)[0]
-    || files.find((f) => f.name === "index.json");
-  if (idx) try { takePins(JSON.parse(await idx.text())); } catch (e) {}
-  const set = files.find((f) => f.name === "settings.json");
-  if (set) try { const d = JSON.parse(await set.text()); if (d && d.game_dir) localStorage.setItem(MAP_PATH_KEY, d.game_dir); } catch (e) {}
-  iconView = "main"; iconMsg = "Reading pictures…"; openIcons();
-  const n = await takeIcons(files.filter((f) => /\.png$/i.test(f.name)));
-  if (n || idx) assetsLoaded();
-  iconMsg = n ? `Loaded ${n} pictures.` : NONE_FOUND;
-  openIcons();
-}
-// the maps' folder: from OOTRR's settings when known, otherwise the part inside the game folder
-const mapPath = () => { let d = null; try { d = localStorage.getItem(MAP_PATH_KEY); } catch (e) {} return d ? `${d.replace(/[\\/]+$/, "")}\\UI` : null; };
 const MAP_NONE = "No maps or pictures were found in that folder. Pick the UI folder inside your game files: romfs → UI.";
-async function pickMaps(auto) {
-  copied = false;
-  const p = mapPath();
-  if (auto && p) { try { await navigator.clipboard.writeText(p); copied = true; } catch (e) {} }
+function pickMaps() {
   iconMsg = ""; mapMsg = ""; iconView = "mapfind"; openIcons();
   $("#iconFile").click();
 }
-// auto: copy the folder's address first, so the folder window only needs paste + Enter
-async function pickIcons(auto) {
-  copied = false;
-  if (auto) { try { await navigator.clipboard.writeText(ICON_PATH); copied = true; } catch (e) {} iconMsg = ""; iconView = "finding"; openIcons(); }
-  $("#iconFile").click();
-}
-// a folder dropped on the page: walk it for the PNGs
+// a folder dropped on the page: walk it for saves and game files
 async function droppedFolderFiles(entries) {
   const out = [];
   const walk = (entry, depth) => new Promise((done) => {
@@ -738,92 +743,38 @@ async function droppedFolderFiles(entries) {
   for (const e of entries) await walk(e, 0);
   return out;
 }
-// What the item pictures and OOTRR's map index were loaded for. When the tracker needs more from OOTRR's folder
-// (ASSET_VERSION goes up) or comes with a newer OOTRR, a browser that loaded them for an older one is asked to
-// load them again, once per new version.
-const ASSET_VERSION = 2;  // 2: the map index's world positions and map frames (pins across maps)
-const ASSET_KEY = "ootrr-tracker-assets";
-const assetsNow = () => ({ v: ASSET_VERSION, ootrr: DATA.generator });
-function assetsLoaded() { try { localStorage.setItem(ASSET_KEY, JSON.stringify(assetsNow())); } catch (e) {} }
-function assetsStale() {
-  if (!nPics() && !PINS) return null;
-  let had = null; try { had = JSON.parse(localStorage.getItem(ASSET_KEY) || "null"); } catch (e) {}
-  // loaded before this check existed: version 1, or 2 when the index already has map frames
-  if (!had) had = { v: PINS && Object.keys(CAPS).length ? 2 : 1, ootrr: DATA.generator };
-  if (had.v >= ASSET_VERSION && had.ootrr === DATA.generator) return null;
-  return had.ootrr !== DATA.generator ? `This tracker now follows ${DATA.generator.replace("ootrr-core", "OOTRR")}. Its pictures and map data may have changed, so load them again from the ootrr folder.`
-    : "The tracker was updated and needs more of OOTRR's map data for its pins. Load the item pictures again from the ootrr folder and it's read along with them.";
-}
+// the first time: ask whether to load the game's pictures and maps
 function restoreIcons() {
   let ask = null; try { ask = localStorage.getItem(ASK_KEY); } catch (e) {}
   if ($("#dlg").open) return;
-  if (!nPics() && ask !== "no") { iconMsg = ""; iconView = "main"; openIcons(); return; }
-  const stale = assetsStale();
-  let told = null; try { told = localStorage.getItem(ASSET_KEY + "-told"); } catch (e) {}
-  const key = `${ASSET_VERSION}|${DATA.generator}`;
-  if (stale && told !== key) {
-    try { localStorage.setItem(ASSET_KEY + "-told", key); } catch (e) {}
-    iconMsg = stale; iconView = "main"; openIcons();
-  }
+  if (!nPics() && !nMaps() && ask !== "no") { iconMsg = ""; iconView = "main"; openIcons(); }
 }
 function openIcons() {
   const n = nPics(), close = () => { iconMsg = ""; iconView = "main"; $("#dlg").close(); };
-  const msg = iconMsg ? h("p", { style: "color:var(--gold)" }, iconMsg) : null;
   const row = (...b) => h("div", { style: "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px" }, ...b);
-  const path = h("p", {}, h("code", { class: "q" }, ICON_PATH), " ", h("button", { class: "btn", style: "padding:2px 8px", onclick: async (e) => { try { await navigator.clipboard.writeText(ICON_PATH); e.target.textContent = "Copied"; } catch (x) { e.target.textContent = "Select it and copy"; } } }, "Copy"));
   let body;
   if (iconView === "mapfind") {
-    const p = mapPath();
-    body = [h("h3", {}, "Finding the game's maps"),
-      h("p", {}, p ? (copied ? "The UI folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:")
-        : "In the folder window that just opened, go to your game files (the extracted romfs folder) and pick its UI folder."),
-      p && !copied ? h("p", {}, h("code", { class: "q" }, p)) : null,
-      p ? h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
-        h("li", {}, "Click the address bar at the top (or press ", h("b", {}, "Alt + D"), ")."),
-        h("li", {}, copied ? h("span", {}, "Press ", h("b", {}, "Ctrl + V"), " to paste, then ", h("b", {}, "Enter"), ".") : "Type the address above, then press Enter."),
-        h("li", {}, "Click ", h("b", {}, "Upload"), ", then ", h("b", {}, "Upload"), " again when the browser asks to confirm.")) : h("p", {}, "Then click ", h("b", {}, "Upload"), ", and ", h("b", {}, "Upload"), " again when the browser asks to confirm."),
-      h("p", { class: "hint", style: "padding:6px 0 0" }, "About 70 maps and a few pictures are read and shrunk; it takes a little while. When the browser asks to upload the folder's files, that only means reading them into this page: they're kept in your browser and nothing is sent anywhere."),
-      row(h("button", { class: "btn", onclick: () => pickMaps(false) }, "Open the folder window again"), h("button", { class: "btn", onclick: () => { iconView = "main"; openIcons(); } }, "Back"))];
-  } else if (iconView === "finding") {
-    body = [h("h3", {}, "Finding the pictures"),
-      h("p", {}, copied ? "The folder's address is copied. In the folder window that just opened:" : "In the folder window that just opened, go to this folder:"),
-      copied ? null : path,
+    body = [h("h3", {}, "Pick the game's UI folder"),
+      h("p", {}, "In the folder window that just opened, go to your extracted game files and pick the ", h("b", {}, "UI"), " folder inside ", h("b", {}, "romfs"), "."),
       h("ol", { style: "margin:6px 0 0 18px;line-height:1.7" },
-        h("li", {}, "Click the address bar at the top (or press ", h("b", {}, "Alt + D"), ")."),
-        h("li", {}, copied ? h("span", {}, "Press ", h("b", {}, "Ctrl + V"), " to paste, then ", h("b", {}, "Enter"), ".") : "Type the address above, then press Enter."),
-        h("li", {}, "Click ", h("b", {}, "Upload"), " (", h("b", {}, "Select Folder"), " in some browsers), then ", h("b", {}, "Upload"), " again when the browser asks to confirm.")),
-      h("p", { class: "hint", style: "padding:6px 0 0" }, "The pictures are only read into this page and kept in your browser; nothing is sent anywhere."),
-      row(h("button", { class: "btn", onclick: () => pickIcons(false) }, "Open the folder window again"), h("button", { class: "btn", onclick: close }, "Cancel"))];
-  } else if (iconView === "manual") {
-    body = [h("h3", {}, "Add the pictures yourself"),
-      h("p", {}, "OOTRR keeps them in this folder:"), path,
-      h("p", {}, "Pick that folder, or any folder inside it that holds the pictures (tracker-cache → your game → icons-v1). You can also drag the folder onto the tracker."),
-      msg,
-      row(h("button", { class: "btn", onclick: () => { iconView = "main"; iconMsg = ""; openIcons(); } }, "Back"),
-        h("button", { class: "btn", onclick: () => pickIcons(false) }, "Pick folder"))];
+        h("li", {}, "Open the folder that holds your game files, then ", h("b", {}, "romfs"), "."),
+        h("li", {}, "Click the ", h("b", {}, "UI"), " folder once and click ", h("b", {}, "Upload"), " (", h("b", {}, "Select Folder"), " in some browsers)."),
+        h("li", {}, "Click ", h("b", {}, "Upload"), " again when the browser asks to confirm.")),
+      h("p", { class: "hint", style: "padding:6px 0 0" }, "About 70 maps and 90 pictures are read and shrunk; it takes a little while. When the browser asks to upload the folder's files, that only means reading them into this page: they're kept in your browser and nothing is sent anywhere."),
+      row(h("button", { class: "btn", onclick: () => pickMaps() }, "Open the folder window again"), h("button", { class: "btn", onclick: () => { iconView = "main"; openIcons(); } }, "Back"))];
   } else {
-    const first = !n;
-    body = [h("h3", {}, first ? "Show item pictures?" : iconMsg && /load them again|Load the item pictures again/.test(iconMsg) ? "Update the item pictures and map data" : "Item pictures and maps"),
-      h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys. They come from your copy of the game, so they aren't included with the tracker: OOTRR saves them on your PC the first time its tracker runs with your game folder set."),
-      msg,
-      h("p", { style: "color:var(--dim)" }, n ? `${n} of ${ICON_IDS.size} pictures stored in this browser.` : "No pictures stored yet."),
-      h("div", { style: "display:grid;gap:8px;margin-top:8px" },
-        h("button", { class: "btn", style: "text-align:left;padding:8px 12px;border-color:var(--gold)", onclick: () => pickIcons(true) },
-          h("b", {}, n ? "Find them again for me" : "Find them for me (recommended)"), h("br"),
-          h("span", { style: "color:var(--dim);font-size:12px" }, "Copies the folder's address and opens the folder window: paste it, press Enter, then Upload.")),
-        h("button", { class: "btn", style: "text-align:left;padding:8px 12px", onclick: () => { iconView = "manual"; iconMsg = ""; openIcons(); } },
-          h("b", {}, "I'll do it myself"), h("br"),
-          h("span", { style: "color:var(--dim);font-size:12px" }, "Pick the folder with the pictures, or drag it onto the tracker."))),
-      h("h3", { style: "margin-top:18px" }, "Game maps and more pictures"),
-      h("p", {}, "The Map Tracker shows the game's own maps, read from your game files: pick the UI folder (romfs → UI). The pictures OOTRR doesn't save (Ruto's Letter, the Big Poe bottle, the trade items and masks) are read from it too."),
+    const first = !n && !nMaps();
+    body = [h("h3", {}, first ? "Show the game's pictures and maps?" : "Item pictures and maps"),
+      h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys, and the game's own maps in the Map Tracker. They come from your copy of the game, so they aren't included with the tracker: pick the ", h("b", {}, "UI"), " folder in your extracted game files (romfs → UI) and both are read from it."),
+      iconMsg ? h("p", { style: "color:var(--gold)" }, iconMsg) : null,
       mapMsg ? h("p", { style: "color:var(--gold)" }, mapMsg) : null,
-      mapBusy ? null : h("p", { style: "color:var(--dim)" }, nMaps() ? `${nMaps()} maps stored in this browser.` : "No maps stored yet."),
+      mapBusy ? null : h("p", { style: "color:var(--dim)" }, n || nMaps() ? `${n} of ${ICON_IDS.size} pictures and ${nMaps()} maps stored in this browser.` : "Nothing stored yet."),
       mapBusy ? null : h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
-        h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => pickMaps(true) }, nMaps() ? "Load the maps again" : "Load the game's maps"),
-        nMaps() ? h("button", { class: "btn", onclick: async () => { await mapsClear(); mapMsg = "Maps removed."; render(); openIcons(); } }, "Remove maps") : null),
-      mapPath() || mapBusy ? null : h("p", { class: "hint", style: "padding:6px 0 0" }, "Tip: load the item pictures first. Their folder tells the tracker where your game files are, so it can copy the UI folder's address for you."),
+        h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => pickMaps() }, n || nMaps() ? "Load them again from the UI folder" : "Pick the game's UI folder"),
+        h("span", { style: "color:var(--dim);font-size:12px;align-self:center" }, "or drag the UI folder onto the tracker")),
       row(n ? h("button", { class: "btn", onclick: () => { PICS = {}; try { localStorage.removeItem(ICON_KEY); } catch (e) {} iconMsg = "Pictures removed."; render(); openIcons(); } }, "Remove pictures") : null,
-        first ? h("button", { class: "btn", title: "You can still add them from the Icons button", onclick: () => { try { localStorage.setItem(ASK_KEY, "no"); } catch (e) {} close(); } }, "Don't ask again") : null,
+        nMaps() ? h("button", { class: "btn", onclick: async () => { await mapsClear(); mapMsg = "Maps removed."; render(); openIcons(); } }, "Remove maps") : null,
+        first ? h("button", { class: "btn", title: "You can still add them from the Icons & Maps button", onclick: () => { try { localStorage.setItem(ASK_KEY, "no"); } catch (e) {} close(); } }, "Don't ask again") : null,
         h("button", { class: "btn", onclick: close }, first ? "Not now" : "Close"))];
   }
   $("#dlgBody").replaceChildren(...K(...body));
@@ -979,16 +930,17 @@ const doorsOn = (key) => {
   const place = key.replace(/_(Child|Adult)$/, ""), age = (/_(Child|Adult)$/.exec(key) || [])[1];
   return Object.keys(DOORS).filter((d) => MAP_ZONES[DOORS[d]] === place && !(age && DOOR_AGE[d] && DOOR_AGE[d] !== age.toLowerCase()));
 };
-const MAP_DB = "ootrr-tracker-maps", MAP_PATH_KEY = "ootrr-tracker-gamedir";
+const MAP_DB = "ootrr-tracker-maps";
 const FIELD_RE = /^(?!Mini_)([A-Za-z]+)_(Child|Adult)_00$/;
 const FLOOR_RE = /^([A-Za-z]+)_(B\d|\dF)(?:_Lv(\d))?(?:_State(\d\d))?_Main$/;
 const floorRank = (f) => (f[0] === "B" ? -+f[1] : +f[0]);  // 5F … 1F, B1 … B4
 let MAPS = new Map();      // texture key → Blob
 const MAP_URL = new Map(); // texture key → object URL
 let mapMsg = "", mapBusy = false;
-// Pins: OOTRR's own map index (tracker-cache\<game>\index.json, made by OOTRR's tracker from the game files)
+// Pins: OOTRR's map index (tracker-cache\<game>\index.json, made by OOTRR's tracker from the game files)
 // gives each location object its spot on the game's maps as fractions of the map picture (u across, v down).
-// The tracker finds a check's objects through the hashes in its save detection, and keeps the spots in the browser.
+// The tracker finds a check's objects through the hashes in its save detection. The spots come with the tracker
+// (tools/build_data.py takes them from the index into data.json), so players don't need OOTRR's folder.
 const PIN_KEY = "ootrr-tracker-pins";
 const PIN_AREAS = new Set(["Deku Tree", "Dodongo's Cavern", "Jabu Jabu's Belly", "Forest Temple", "Fire Temple", "Water Temple",
   "Shadow Temple", "Spirit Temple", "Bottom of the Well", "Ice Cavern", "Kokiri Forest", "Lost Woods", "Sacred Forest Meadow", "Hyrule Field", "Lon Lon Ranch", "Market",
@@ -1006,7 +958,9 @@ let FLOORS = {
   ShadowTemple: { min: -4, ys: [-47.1483, 49.3423, 72.8526, 89.8542] }, SpiritTemple: { min: 0, ys: [94.4704, 113.7637, 128, 150.2692] },
   BottomOfTheWell: { min: -2, ys: [82.6465, 96.0404] }, IceCavern: { min: 0, ys: [65] },
 };
-try { const j = JSON.parse(localStorage.getItem(PIN_KEY) || "null"); if (j && j.pins) { PINS = j.pins; CAPS = j.caps || {}; if (j.floors) FLOORS = { ...FLOORS, ...j.floors }; } else PINS = j; } catch (e) { PINS = null; }
+// the pins come with the tracker (data.json map_index, from OOTRR's map index); one an older version stored is dropped
+if (DATA.map_index && DATA.map_index.pins) { PINS = DATA.map_index.pins; CAPS = DATA.map_index.caps || {}; FLOORS = { ...FLOORS, ...(DATA.map_index.floors || {}) }; }
+try { localStorage.removeItem(PIN_KEY); localStorage.removeItem("ootrr-tracker-gamedir"); localStorage.removeItem("ootrr-tracker-assets"); localStorage.removeItem("ootrr-tracker-assets-told"); } catch (e) {}
 // the floor Link is on, from his height (OOTRR's project.rs floor_of: the highest floor whose base is at
 // most half a unit above him; floors are named from the lowest, B2 B1 1F 2F…), or null
 function floorAt(id, y) {
@@ -1018,23 +972,6 @@ function floorAt(id, y) {
   return f < 0 ? `B${-f}` : `${f + 1}F`;
 }
 let pinOpen = null;  // the open pin's key
-function takePins(idx) {
-  if (!idx || !Array.isArray(idx.locations)) return 0;
-  const out = {}, caps = {}, floors = {};
-  for (const m of idx.maps || []) if (m && m.id && Array.isArray(m.cap)) caps[m.id] = m.cap;
-  for (const m of idx.maps || []) if (m && m.id && m.floors && Array.isArray(m.floors.ys) && m.floors.ys.length) floors[m.id] = { min: m.floors.min | 0, ys: m.floors.ys };
-  for (const l of idx.locations) {
-    const hsh = String(l.id || "").split(":").pop();
-    if (!hsh || !Array.isArray(l.pins)) continue;
-    for (const p of l.pins) if (p && p.map) {
-      const pos = Array.isArray(p.pos) ? [+p.pos[0].toFixed(2), +p.pos[2].toFixed(2)] : [null, null];
-      (out[hsh] = out[hsh] || []).push([p.map, p.u, p.v, p.floor_label || null, !!p.tray, ...pos]);
-    }
-  }
-  PINS = out; CAPS = caps; FLOORS = { ...FLOORS, ...floors }; AGES.clear();
-  try { localStorage.setItem(PIN_KEY, JSON.stringify({ pins: out, caps, floors })); } catch (e) {}
-  return Object.keys(out).length;
-}
 // the object hashes behind a check: its save keys and the hashes at the end of its flags
 const HASHES = new Map();
 function hashesOf(n) {
@@ -1736,7 +1673,6 @@ function mapSide(area, key, list) {
     h("div", { class: "hint" }, "Moved or placed pins are kept in this browser. Copy my pin changes and send them to the tracker's author to make them part of the tracker for everyone."));
   return h("div", { class: "mapside" },
     h("div", { class: "chips", style: "padding:10px 12px 4px" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    PINS && Object.keys(CAPS).length ? null : h("p", { class: "hint" }, PINS ? "Some pins need the newer copy of OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps)." : "Pins need OOTRR's map index: load the item pictures from the ootrr folder again (Icons & Maps) and it's read along with them."),
     h("h2", {}, `Not on the map (${off.length})`),
     off.length ? off.map((c) => ckRow(c, renderMap)) : h("div", { class: "hint" }, "Every check shown here has a pin."),
     other,
@@ -2151,7 +2087,7 @@ $("#castBtn").onclick = openBroadcast;
 $("#iconBtn").onclick = () => { iconMsg = ""; openIcons(); };
 $("#iconFile").onchange = (e) => { const files = [...e.target.files]; e.target.value = ""; usePicked(files); };
 // the folder window was closed without picking
-$("#iconFile").addEventListener("cancel", () => { if (iconView === "finding") { iconView = "main"; openIcons(); } });
+$("#iconFile").addEventListener("cancel", () => { if (iconView === "mapfind") { iconView = "main"; openIcons(); } });
 let armed = 0;
 // ---------- about ----------
 $("#aboutBtn").onclick = () => {
@@ -2582,11 +2518,10 @@ document.addEventListener("drop", (e) => {
   // entries must be taken now: the drop's items are gone once anything is awaited
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);
-  if (folder) {  // a dropped folder: saves if it holds any, otherwise item pictures
+  if (folder) {  // a dropped folder: saves if it holds any, otherwise the game's UI folder
     droppedFolderFiles(entries).then((got) => { const f = newestOf(got); if (f) loadFile(f, f.slot || f.name); else usePicked(got); });
     return;
   }
-  if (files.some((f) => /\.png$/i.test(f.name))) { useIconFiles(files); return; }
   if (seed) loadSeedFile(seed); else loadFile(newestOf(files));
 });
 
