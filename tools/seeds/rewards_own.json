@@ -1,0 +1,6 @@
+{"id": "rewards_own", "name": "rewards_own", "tip": "0.7: dungeon rewards at the end of dungeons, Dungeon rewards bridge with 3", "order": 99, "settings": {
+  "shuffle_dungeon_rewards": "dungeons",
+  "bridge": "dungeons",
+  "bridge_rewards": 3,
+  "shuffle_shops": "shuffle"
+}}

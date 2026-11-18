@@ -144,7 +144,7 @@ for t in T:
     if r: det.setdefault(o, []).append(r)
 # Silver rupees: OOTRR's silver rupee slice (crates/core/src/slice/silver.rs) lists every shuffled silver rupee's
 # save key. tracker_targets misses one (BotW Ladders Top), so fill any silver rupee it has no key for from there.
-_sil = os.path.join(D, '..', 'crates', 'core', 'src', 'slice', 'silver.rs')
+_sil = next((x for x in (os.path.join(D, '..', d, 'core', 'src', 'slice', 'silver.rs') for d in ('randomizer', 'crates')) if os.path.exists(x)), '')  # 0.7: crates/ became randomizer/
 if os.path.exists(_sil):
     for n, ks in re.findall(r'\("([^"]+)",\s*&\[([\d,\s]+)\]\)', open(_sil).read()):
         ks = [k.strip() for k in ks.split(',') if k.strip()]

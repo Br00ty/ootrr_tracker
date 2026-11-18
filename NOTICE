@@ -8,7 +8,7 @@ It is built on OOTRR, the Ocarina of Time remake randomizer by REALAZK and contr
   settings/seed.rs) and the settings-to-logic mapping (slice/support.rs, start_items/give.rs).
 - src/autotrack.js ports its save reading and tracker rules (tracker/peek.rs, tracker/rules.rs,
   tracker/grid.rs, tracker/seed.rs, murmur.rs).
-- data/data.json is generated from OOTRR 0.6.2's data files and an export of ootrr-core
+- data/data.json is generated from OOTRR 0.7.2's data files and an export of ootrr-core
   (tools/ootrr-export), so it carries OOTRR's logic, settings schema, locations and tracker targets.
 
 OOTRR's logic engine follows the design of the OoT Randomizer (https://github.com/OoTRandomizer/OoT-Randomizer,

@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from realazk/ootrr 0.6.2:
+// Reading .ootrr seed files, ported from realazk/ootrr 0.7.2:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -133,8 +133,14 @@ const Seed = (() => {
     // and the remake-only freestanding spots with Dungeons, Overworld or All (slice/pickups.rs Free::remake)
     if ((v.shuffle_pots && v.shuffle_pots !== "off") || (v.shuffle_crates && v.shuffle_crates !== "off")) out.push(["remake_pot_spots", "on"]);
     if (["all", "dungeons", "overworld"].includes(v.shuffle_freestanding_items)) out.push(["free_remake_spots", "on"]);
+    // 0.7: shuffled shops open the Bombchu Shop before King Dodongo (shops/door.rs)
+    if (v.shuffle_shops && v.shuffle_shops !== "off") out.push(["bombchu_shop_open", "true"]);
     const rewards = v.shuffle_rewards === "supported";
-    if (rewards && v.shuffle_dungeon_rewards === true) out.push(["medallion_gates", "true"]);
+    // 0.7: Dungeon Rewards became Vanilla / Anywhere / End of dungeons (flow_extra.rs Rewards::read)
+    if (rewards && ["anywhere", "dungeons"].includes(dungeonRewards(v))) out.push(["medallion_gates", "true"]);
+    // 0.7: the LACS key option and a Dungeon rewards bridge count Stones and Medallions (medal_gate.rs, rainbow_bridge.rs)
+    if (v.shuffle_ganon_bosskey === "lacs_dungeons") { out.push(["lacs_condition", "dungeons"]); out.push(["lacs_rewards", String(Math.max(1, Math.min(9, +(v.lacs_rewards ?? 9))))]); }
+    if (v.bridge === "dungeons") { out.push(["bridge", "dungeons"]); out.push(["bridge_rewards", String(Math.max(0, Math.min(9, +(v.bridge_rewards ?? 9))))]); }
     if (rewards && v.shuffle_potion_shop === true) out.push(["potion_shop_checks", "on"]);
     return out;
   }
@@ -163,7 +169,10 @@ const Seed = (() => {
   // slice/support.rs plan(): an open Kakariko gate skips child Zelda's story (unless the forest is closed),
   // and start_state.rs KAKARIKO_LOCATIONS' items are handed out at new game instead of in the world.
   const KAKARIKO_LOCATIONS = ["HC Zeldas Letter", "Song from Impa"];
-  function kakarikoSkip(v) { return v.open_kakariko === "open" && v.open_forest !== "closed"; }
+  // 0.7.2: an open Kakariko gate needs Kokiri Forest fully open (settings/list.rs: Closed Deku locks it to Zelda's Letter)
+  function kakarikoSkip(v) { return v.open_kakariko === "open" && v.open_forest === "open"; }
+  // Dungeon Rewards was a toggle before 0.7 (off = vanilla, on = anywhere), as old manual settings still store it
+  function dungeonRewards(v) { const x = v.shuffle_dungeon_rewards; return x === true ? "anywhere" : x === false || x == null ? "vanilla" : x; }
   function startItems(v, table) {
     const out = {};
     for (const id of v.starting_items || []) for (const [n, c] of table[`starting_items:${id}`] || []) out[n] = Math.max(out[n] || 0, c);
@@ -221,7 +230,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR's logic (still needed in 0.6.2), where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.7.2), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are

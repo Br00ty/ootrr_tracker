@@ -1,0 +1,11 @@
+{"id": "rewards", "name": "rewards", "tip": "0.7 goals: shuffled dungeon rewards, a Dungeon rewards bridge, the LACS key and shops", "order": 99, "settings": {
+  "open_forest": "open",
+  "shuffle_dungeon_rewards": "anywhere",
+  "bridge": "dungeons",
+  "bridge_rewards": 6,
+  "shuffle_ganon_bosskey": "lacs_dungeons",
+  "lacs_rewards": 4,
+  "shuffle_shops": "deals_2",
+  "shuffle_songs": "anywhere",
+  "shuffle_smallkeys": "any_dungeon"
+}}

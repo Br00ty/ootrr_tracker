@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/realazk/ootrr),
-  and its data files are embedded (0.6.2). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.7.2). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -386,6 +386,8 @@ const DEFAULT = {
 let S = load();
 // checks OOTRR renamed: progress, hand-placed pins and notes saved under the old name carry over
 const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint" };  // OOTRR 0.6.2
+// OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
+if (S.settings && typeof S.settings.shuffle_dungeon_rewards === "boolean") S.settings.shuffle_dungeon_rewards = S.settings.shuffle_dungeon_rewards ? "anywhere" : "vanilla";
 for (const m of [S.done, S.auto && S.auto.done, S.ignore, S.pinFix]) if (m) for (const [o, n] of Object.entries(OLD_NAMES)) if (o in m) { if (!(n in m)) m[n] = m[o]; delete m[o]; }
 if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
 function load() {
@@ -1701,7 +1703,7 @@ function counter(name, max, step = 1) {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.6.2 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.7.2 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2053,7 +2055,7 @@ function seedSummary() {
 }
 function openSettings() {
   const body = $("#dlgBody");
-  // where the tracker's logic knowingly differs from OOTRR 0.6.2's (Seed.withFixes)
+  // where the tracker's logic knowingly differs from OOTRR 0.7.2's (Seed.withFixes)
   const fixes = h("details", { style: "margin-top:12px;color:var(--dim);font-size:12px" },
     h("summary", { style: "cursor:pointer" }, "Logic corrections"),
     h("p", { style: "margin:6px 0 4px" }, "The tracker follows OOTRR's logic, except where that logic lets you do something the game doesn't:"),
@@ -2100,7 +2102,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.6.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.7.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
@@ -2248,10 +2250,22 @@ const EXTRA_FLAGS = {
   "Sheik in Ice Cavern": ["HavePlayedEvent.Dm_MelodyGet_Water"],
   "Sheik in Kakariko": ["HavePlayedEvent.Dm_MelodyGet_Shadow"],
 };
+// OOTRR 0.7 itself sets a spare saved flag right after each Great Fairy's gift (data/flow_extra.json), because a
+// shuffled gift never sets the item's own flag and the fairy would offer it again. Added next to OOTRR's rule
+// whether or not that rule is kept, so a gift that's placed more than once still ticks.
+const OOTRR_FLAGS = {
+  "DMT Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0080"],
+  "HC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0096"],
+  "ZF Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0110"],
+  "Colossus Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0120"],
+  "OGC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0056"],
+  "DMC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0100"],
+};
 function detectMap() {
   const out = detectMapBase();
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
+  for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
   return out;
 }
 function detectMapBase() {
