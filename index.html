@@ -4129,7 +4129,7 @@ async function newestSave(dir) {
     for await (const [name, h] of d.entries()) {
       if (h.kind === "file" && name === "progress.sav") {
         try { const f = await h.getFile(); if (!best || f.lastModified > best.f.lastModified) best = { f, label }; } catch (e) {}
-      } else if (h.kind === "directory" && depth < 4) {
+      } else if (h.kind === "directory" && depth < 6) {
         await visit(h, name, depth + 1);
       }
     }
@@ -4138,8 +4138,10 @@ async function newestSave(dir) {
   return best;
 }
 
+let polling = false;
 async function poll() {
-  if (!W.dir) return;
+  if (!W.dir || polling) return;
+  polling = true;
   try {
     const b = await newestSave(W.dir);
     if (!b) { W.err = "No progress.sav in that folder yet. If it's the copy folder, is the copy window running? Otherwise pick the save folder that holds slot_00, slot_01 …"; paintAuto(); return; }
@@ -4147,45 +4149,76 @@ async function poll() {
     if (sig !== lastSig) { lastSig = sig; applyPeek(Auto.peek(await b.f.arrayBuffer()), b.label); }
     else paintAuto();
   } catch (e) { W.err = e.message || String(e); paintAuto(); }
+  finally { polling = false; }
 }
 
+// Chrome slows a page's own timers to about once a minute while it's hidden, and on Windows a tracker window
+// covered by the game counts as hidden. A worker's timer isn't slowed like that, so the save folder (and the
+// Longshot helper) are read on time while you play. Coming back to the tab reads at once too.
+const tickers = new Map();
+let tickWorker = null;
+function every(ms, fn) {
+  try {
+    if (!tickWorker) {
+      tickWorker = new Worker(URL.createObjectURL(new Blob(["const t={};onmessage=(e)=>{const[id,ms]=e.data;clearInterval(t[id]);if(ms)t[id]=setInterval(()=>postMessage(id),ms);};"], { type: "text/javascript" })));
+      tickWorker.onmessage = (e) => { const k = tickers.get(e.data); if (k && !k.iv) k.fn(); };
+      // a page that may not start workers (a strict sandbox): every timer falls back to the page's own
+      tickWorker.onerror = () => { for (const k of tickers.values()) if (!k.iv) k.iv = setInterval(k.fn, k.ms); };
+    }
+    const id = Math.random().toString(36).slice(2), k = { fn, ms, iv: 0 };
+    tickers.set(id, k); tickWorker.postMessage([id, ms]);
+    return { id };
+  } catch (e) { return { iv: setInterval(fn, ms) }; }  // no workers here: the page's own timer
+}
+function stopEvery(h) {
+  if (!h) return;
+  if (h.iv) clearInterval(h.iv);
+  if (h.id) { const k = tickers.get(h.id); if (k && k.iv) clearInterval(k.iv); tickers.delete(h.id); if (tickWorker) tickWorker.postMessage([h.id, 0]); }
+}
+const readNow = () => { if (W.dir && W.mode === "watch") poll(); if (LIVE.on) livePoll(); };
+document.addEventListener("visibilitychange", () => { if (!document.hidden) readNow(); });
+window.addEventListener("focus", readNow);
 function startWatch(dir) {
   if (LIVE.on) liveStop();
   W.dir = dir; W.mode = "watch"; lastSig = "";
-  clearInterval(W.timer); W.timer = setInterval(poll, 2000); poll();
+  stopEvery(W.timer); W.timer = every(2000, poll); poll();
 }
-// Chrome won't let a page watch any folder inside AppData ("contains system files"), and Lichii keeps its
-// saves in %APPDATA%\lichii\nand\user\save. A folder link (junction) doesn't help: Chrome follows it back
+// Chrome won't let a page watch any folder inside AppData ("contains system files"), and that's where the games
+// keep their saves: Longshot and Hookshot in %APPDATA%\Longshot\save (\Hookshot\save), Lichii in %APPDATA%\lichii\nand\user\save. A folder link (junction) doesn't help: Chrome follows it back
 // into AppData. What works: Lichii's own NAND folder setting pointed outside AppData, or a live copy of the
 // save folder outside AppData. Load saves works on the folder itself, but reads it once per click.
-const SAVE_DIR = "%APPDATA%\\lichii\\nand\\user\\save";
-const COPY_DIR = "%USERPROFILE%\\Lichii save copy";
-const COPY_CMD = String.raw`powershell -NoExit -c "while(1){robocopy \"$env:APPDATA\lichii\nand\user\save\" \"$env:USERPROFILE\Lichii save copy\" /MIR /R:1 /W:1 >$null;sleep 2}"`;
+const SAVE_DIR = "%APPDATA%\\Longshot\\save";
+const SAVE_DIR_LICHII = "%APPDATA%\\lichii\\nand\\user\\save";
+// one copy folder for every game: a subfolder each (Longshot, Hookshot, Lichii); the newest save in it wins
+const COPY_DIR = "%USERPROFILE%\\OOTRR save copy";
+// pasted into a PowerShell window (Windows + R is too short for it, and blocked on some PCs). Only reads the
+// save folders and writes into the copy folder.
+const COPY_CMD = String.raw`$d="$env:USERPROFILE\OOTRR save copy"; $s=[ordered]@{Longshot="$env:APPDATA\Longshot\save"; Hookshot="$env:APPDATA\Hookshot\save"; Lichii="$env:APPDATA\lichii\nand\user\save"}; "Copying your saves to $d every 2 seconds. Leave this window open while you play; close it to stop."; while(1){foreach($g in $s.Keys){if(Test-Path $s[$g]){robocopy $s[$g] "$d\$g" /MIR /R:1 /W:1 >$null}}; sleep 2}`;
 function openWatchHelp() {
   const copy = (text) => async (e) => { const b = e.currentTarget; try { await navigator.clipboard.writeText(text); b.textContent = "Copied"; } catch (x) { b.textContent = "Select it and copy"; } };
   const code = (t) => [h("code", { class: "q", style: "word-break:break-all" }, t), " ", h("button", { class: "btn", style: "padding:1px 8px", onclick: copy(t) }, "Copy")];
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Watching your saves"),
     canWatch ? null : h("p", { style: "color:var(--gold)" }, "This browser can't watch folders: that needs Chrome, Edge or another Chromium browser (Brave, Opera). Here, use Load saves, which reads the newest save each time you click it. The steps below are for Chrome or Edge."),
-    h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where Lichii keeps its saves, so picking them says the folder contains system files. A folder link doesn't help either: the browser follows it back into AppData. Two things work:"),
-    h("p", { style: "margin-top:10px" }, h("b", {}, "1. Move Lichii's data folder out of AppData (once, recommended)")),
+    h("p", {}, "Chrome and Edge won't let a web page watch folders inside AppData, and that's where the games keep their saves (Longshot and Hookshot in ", h("code", { class: "q" }, SAVE_DIR), ", Lichii in ", h("code", { class: "q" }, SAVE_DIR_LICHII), "), so picking them says the folder contains system files. A folder link doesn't help either: the browser follows it back into AppData. Two things work:"),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "1. Keep a live copy of the saves while you play (any game)")),
+    h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
+      h("li", {}, "Open ", h("b", {}, "PowerShell"), " (Start menu, type PowerShell, Enter), paste this and press ", h("b", {}, "Enter"), ". It copies the save folders every 2 seconds; leave the window open while you play.", h("br"), code(COPY_CMD)),
+      h("li", {}, "Click ", h("b", {}, "Watch save folder"), ", click the address bar (", h("b", {}, "Alt + D"), "), paste ", code(COPY_DIR), " and press Enter, then ", h("b", {}, "Select Folder"), ".")),
+    h("p", { class: "hint", style: "padding:4px 0 0" }, "The copy only ever writes into the OOTRR save copy folder. Close its window to stop it."),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "2. Lichii only: move its data folder out of AppData (once)")),
     h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
       h("li", {}, "Close Lichii."),
       h("li", {}, "Copy the folder ", h("code", { class: "q" }, "%APPDATA%\\lichii\\nand"), " to a folder outside AppData, for example ", h("code", { class: "q" }, "C:\\Users\\<you>\\Lichii\\nand"), "."),
       h("li", {}, "Open Lichii, go to ", h("b", {}, "Emulation → Configure"), ", find ", h("b", {}, "Filesystem"), " (its own tab, or under System), and set the ", h("b", {}, "NAND"), " folder to the new one."),
       h("li", {}, "Check your saves are there in the game, then click ", h("b", {}, "Watch save folder"), " and pick ", h("code", { class: "q" }, "…\\Lichii\\nand\\user\\save"), ".")),
-    h("p", { style: "margin-top:10px" }, h("b", {}, "2. Or keep a live copy of the saves while you play")),
-    h("ol", { style: "margin:4px 0 0 18px;line-height:1.7" },
-      h("li", {}, "Press ", h("b", {}, "Windows + R"), ", paste this and press ", h("b", {}, "Enter"), ". A window opens that copies the save folder every 2 seconds; leave it open while you play.", h("br"), code(COPY_CMD)),
-      h("li", {}, "Click ", h("b", {}, "Watch save folder"), ", click the address bar (", h("b", {}, "Alt + D"), "), paste ", code(COPY_DIR), " and press Enter, then ", h("b", {}, "Select Folder"), ".")),
-    h("p", { class: "hint", style: "padding:4px 0 0" }, "The copy only ever writes into the Lichii save copy folder. Close its window to stop it."),
-    h("p", { style: "margin-top:10px" }, h("b", {}, "Without watching:"), " click ", h("b", {}, "Load saves"), " and pick ", h("code", { class: "q" }, SAVE_DIR), " (paste it into the folder window's address bar). It reads the newest save of all slots; click it again whenever you want to update."),
+    h("p", { style: "margin-top:10px" }, h("b", {}, "Without watching:"), " click ", h("b", {}, "Load saves"), " and pick ", h("code", { class: "q" }, SAVE_DIR), " or ", h("code", { class: "q" }, SAVE_DIR_LICHII), " (paste it into the folder window's address bar). It reads the newest save of all slots; click it again whenever you want to update."),
     h("div", { style: "display:flex;justify-content:flex-end;margin-top:12px" }, h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")),
   ));
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 // Watch save folder opens this guide: a web page can't run commands on the PC, so the start command is
-// copied for the player to paste into Windows + R, and the folder address is copied before the folder
+// copied for the player to paste into PowerShell, and the folder address is copied before the folder
 // window opens. "My saves aren't in AppData" picks a folder directly (e.g. a moved NAND folder).
 const copyText = async (t) => { try { await navigator.clipboard.writeText(t); return true; } catch (e) { return false; } };
 let watchStep = { cmd: false, dir: false };
@@ -4195,16 +4228,16 @@ function openWatchGuide() {
     h("div", { style: "flex:1" }, h("b", {}, title), ...body));
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Watch your saves"),
-    h("p", { style: "color:var(--dim)" }, "Chrome won't watch folders inside AppData, where Lichii keeps its saves, so a small window keeps a copy of them outside AppData while you play."),
+    h("p", { style: "color:var(--dim)" }, "Chrome won't watch folders inside AppData, where Longshot, Hookshot and Lichii keep their saves, so a PowerShell window keeps a copy of them outside AppData while you play. The tracker then rereads the newest save every 2 seconds by itself."),
     step(1, watchStep.cmd, "Start copying your saves",
-      h("div", { style: "color:var(--dim);margin:2px 0 6px" }, watchStep.cmd ? "Copied. Press Windows + R, then Ctrl + V and Enter. Leave the window that opens running while you play." : "Copies the start command. Then press Windows + R, Ctrl + V and Enter."),
+      h("div", { style: "color:var(--dim);margin:2px 0 6px" }, watchStep.cmd ? "Copied. Open PowerShell (Start menu, type PowerShell, Enter), press Ctrl + V and Enter. Leave that window open while you play." : "Copies the start command. Then open PowerShell (Start menu, type PowerShell, Enter), press Ctrl + V and Enter."),
       h("button", { class: "btn", onclick: async () => { const ok = await copyText(COPY_CMD); watchStep.cmd = true; if (ok) openWatchGuide(); else openWatchHelp(); } }, watchStep.cmd ? "Copy it again" : "Copy start command")),
     step(2, watchStep.dir, "Pick the copy folder",
       h("div", { style: "color:var(--dim);margin:2px 0 6px" }, "Copies the folder's address and opens the folder window: press Alt + D, Ctrl + V and Enter, then Select Folder."),
       h("button", { class: "btn", style: "border-color:var(--gold)", onclick: async () => { await copyText(COPY_DIR); watchStep.dir = true; $("#dlg").close(); pickWatchFolder(); } }, "Pick the copy folder")),
     h("p", { class: "hint", style: "padding:14px 0 0" }, "Next time: run the start command again (it's under the ", h("b", {}, "?"), " button too), then click Reconnect."),
     h("div", { style: "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:8px" },
-      h("button", { class: "btn", title: "For saves outside AppData, e.g. after moving Lichii's NAND folder", onclick: () => { $("#dlg").close(); pickWatchFolder(); } }, "My saves aren't in AppData"),
+      h("button", { class: "btn", title: "For saves outside AppData, e.g. after moving Lichii's NAND folder, or a copy folder of your own", onclick: () => { $("#dlg").close(); pickWatchFolder(); } }, "My saves aren't in AppData"),
       h("button", { class: "btn", onclick: () => { $("#dlg").close(); openWatchHelp(); } }, "More help"),
       h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")),
   ));
@@ -4239,7 +4272,7 @@ async function restoreFolder() {
 // Disconnect: stop watching and forget the folder, so it doesn't reconnect on the next visit.
 // What the save already tracked stays.
 async function disconnect() {
-  clearInterval(W.timer); W.timer = 0;
+  stopEvery(W.timer); W.timer = 0;
   W.dir = null; W.saved = null; W.mode = ""; W.err = ""; W.read = null; W.where = ""; W.name = ""; lastSig = "";
   try { const db = await idb(); db.transaction("h", "readwrite").objectStore("h").delete("dir"); } catch (e) {}
   paintAuto();
@@ -4312,7 +4345,7 @@ function paintAuto() {
   else kids.push(h("span", {}, "Auto-tracking off"));
   if (watching || W.saved) kids.push(h("button", { class: "btn", onclick: disconnect, title: "Stop watching the save folder and forget it. Items and checks already tracked from your save stay." }, "Disconnect"));
   if (W.saved && !W.dir) kids.push(
-    h("button", { class: "btn", title: "Copies the command that starts copying your saves (press Windows + R, Ctrl + V, Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: Win+R, Ctrl+V, Enter" : "See ? for the command"; } }, "Copy start command"),
+    h("button", { class: "btn", title: "Copies the command that starts copying your saves (paste it into a PowerShell window and press Enter)", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(COPY_CMD)) ? "Copied: paste into PowerShell" : "See ? for the command"; } }, "Copy start command"),
     h("button", { class: "btn", onclick: reconnect }, "Reconnect save folder"));
   if (!watching) kids.push(h("button", { class: "btn", style: "border-color:var(--gold)", onclick: openLongshot, title: "Live tracking from the game's memory (Longshot, Hookshot or Lichii on Windows): checks tick the moment you get them" }, "Longshot"));
   if (canWatch && !W.blocked && !watching && !W.saved) kids.push(h("button", { class: "btn", onclick: watchFolder, title: "Pick the game's save folder. The tracker rereads the newest progress.sav every 2 seconds." }, "Watch save folder"));
@@ -4373,12 +4406,12 @@ async function livePoll() {
 }
 function liveStart() {
   // one source at a time: stop watching a save folder
-  clearInterval(W.timer); W.timer = 0; W.dir = null; W.mode = "live";
+  stopEvery(W.timer); W.timer = 0; W.dir = null; W.mode = "live";
   LIVE.on = true; LIVE.saveSig = ""; S.live = true; save();
-  clearInterval(LIVE.timer); LIVE.timer = setInterval(livePoll, 1000); livePoll();
+  stopEvery(LIVE.timer); LIVE.timer = every(1000, livePoll); livePoll();
 }
 function liveStop() {
-  clearInterval(LIVE.timer); LIVE.timer = 0; LIVE.on = false; LIVE.state = null; LIVE.err = ""; LIVE.where = false; LIVE.whereKey = "";
+  stopEvery(LIVE.timer); LIVE.timer = 0; LIVE.on = false; LIVE.state = null; LIVE.err = ""; LIVE.where = false; LIVE.whereKey = "";
   if (W.mode === "live") W.mode = "";
   S.live = false; save(); paintAuto();
 }
