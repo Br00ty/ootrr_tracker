@@ -92,6 +92,12 @@ const Auto = (() => {
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
     const mp = p.int("PlayerStatus.MPMax");
     set("Magic Meter", mp >= 480 || p.on("IsGet.Item_FairyBless_MPDouble") ? 2 : mp >= 240 || p.on("IsGet.Item_FairyBless_MP") ? 1 : 0);
+    // Shuffled silver rupees (OOTRR slice/silver.rs): the 1st to 4th of a room set its spare flags in turn,
+    // the 5th sets the flags that open the room (as finishing a vanilla room does). The rooms come from the page (SILVER), when it has them.
+    for (const [, , it, spare, solved] of (typeof SILVER !== "undefined" ? SILVER : [])) {
+      const n = solved.every((f) => p.on(f)) ? 5 : spare.filter((f) => p.on(f)).length;  // also a vanilla room, solved
+      set(it, n);
+    }
     const ONE = {
       Boomerang: ["Item_Boomerang"], "Lens of Truth": ["Armor_GlassTruth"], "Megaton Hammer": ["Item_Hammer"],
       "Dins Fire": ["Item_DinFire"], "Farores Wind": ["Item_FaroreWind"], "Nayrus Love": ["Item_NayruLove"],

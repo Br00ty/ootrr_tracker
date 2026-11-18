@@ -928,6 +928,12 @@ const Auto = (() => {
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
     const mp = p.int("PlayerStatus.MPMax");
     set("Magic Meter", mp >= 480 || p.on("IsGet.Item_FairyBless_MPDouble") ? 2 : mp >= 240 || p.on("IsGet.Item_FairyBless_MP") ? 1 : 0);
+    // Shuffled silver rupees (OOTRR slice/silver.rs): the 1st to 4th of a room set its spare flags in turn,
+    // the 5th sets the flags that open the room (as finishing a vanilla room does). The rooms come from the page (SILVER), when it has them.
+    for (const [, , it, spare, solved] of (typeof SILVER !== "undefined" ? SILVER : [])) {
+      const n = solved.every((f) => p.on(f)) ? 5 : spare.filter((f) => p.on(f)).length;  // also a vanilla room, solved
+      set(it, n);
+    }
     const ONE = {
       Boomerang: ["Item_Boomerang"], "Lens of Truth": ["Armor_GlassTruth"], "Megaton Hammer": ["Item_Hammer"],
       "Dins Fire": ["Item_DinFire"], "Farores Wind": ["Item_FaroreWind"], "Nayrus Love": ["Item_NayruLove"],
@@ -2103,6 +2109,20 @@ const DUNGEONS = [
   ["Thieves' Hideout","Small Key (Thieves Hideout)",4,null],
   ["Ganon's Castle","Small Key (Ganons Castle)",2,"Boss Key (Ganons Castle)"],
 ];
+// The five silver rupee rooms OOTRR can shuffle (slice/silver.rs): five Silver Rupees each open the room.
+// [dungeon, room, item, the spare flags the 1st to 4th set, the flags the 5th sets]
+const SILVER = [
+  ["Bottom of the Well", "Basement", "Silver Rupee (Bottom of the Well Basement)",
+    ["HavePlayedEvent.Test_HidingHoleCoverDisappearStrom_Disappear", "HavePlayedEvent.CuccoTest", "HavePlayedEvent.EventAddTest", "HavePlayedEvent.EventWarpTest"], ["BottomOfTheWell_Level_Room_09_A_SilverRupee_GetAll", "BottomOfTheWell_Level_Room_09_A_Clear"]],
+  ["Ice Cavern", "Push block room", "Silver Rupee (Ice Cavern Push Block)",
+    ["HavePlayedEvent.Test_Weather", "HavePlayedEvent.Test_PlayOcarinaSequence", "HavePlayedEvent.Test_PhantomGanonEvent", "HavePlayedEvent.Test_Dm_FinalBattle_0000"], ["IceCavern_Room06_SilverRupeeGet", "IceCavern_Room06_Unlocked"]],
+  ["Gerudo Proving Ground", "Slopes room", "Silver Rupee (Gerudo Training Ground Slopes)",
+    ["HavePlayedEvent.FlowchartTest", "HavePlayedEvent.MovieTest", "HavePlayedEvent.WellEventAdd", "HavePlayedEvent.Test_Npc_Hylia_063_D_T"], ["GerudoTrainingGround_Dungeon_Room02_SilverRupee"]],
+  ["Ganon's Castle", "Forest Trial", "Silver Rupee (Ganons Castle Forest Trial)",
+    ["HavePlayedEvent.Dm_StaffCredit_0021", "HavePlayedEvent.Test_Npc_Hylia_063_D_N", "HavePlayedEvent.Test_Npc_Zora_Ruto_Adult_003_D_T", "HavePlayedEvent.Test_Npc_Zora_Ruto_Adult_003_D_N"], ["InsideGanonCastle_Dungeon_Room03_SilverRupee"]],
+  ["Ganon's Castle", "Light Trial", "Silver Rupee (Ganons Castle Light Trial)",
+    ["HavePlayedEvent.Test_Npc_Hylia_049_Adult_D_T", "HavePlayedEvent.Test_DofCheck", "HavePlayedEvent.Test_DofCheck2", "HavePlayedEvent.Test_GhostPicture"], ["InsideGanonCastle_Dungeon_Room14_SilverRupee"]],
+];
 
 // ---------- settings ----------
 // Settings the tracker offers when no seed is loaded: ootrr's own setting ids and choices (settings/list.rs),
@@ -2159,22 +2179,24 @@ function manualVals() {
 const startTable = () => (S.seed ? S.seed.start : manualVals().__start) || {};
 const skippedList = () => (S.seed ? S.seed.skipped : manualVals().__skipped) || [];
 const startOf = (n) => startTable()[n] || 0;
+const silverShuffled = () => (S.seed ? S.seed.vals : manualVals()).shuffle_silver_rupees === true;
 const have = (n) => Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n), keysFound(n));
-// Small keys gotten: every done check that holds a dungeon's small key (the seed's item there, or the
+// Small keys and silver rupees gotten: every done check that holds one (the seed's item there, or the
 // vanilla one where the seed doesn't shuffle that spot) counts one; a key ring counts them all.
 let KEYS_FOUND = null;
 function keysFound(n) {
-  if (!n.startsWith("Small Key (")) return 0;
+  if (!n.startsWith("Small Key (") && !n.startsWith("Silver Rupee (")) return 0;
   if (!KEYS_FOUND) {
     KEYS_FOUND = {};
     const pl = (S.seed && S.seed.placements) || {};
     for (const c of Object.keys(DATA.checks)) {
       const it = pl[c] ?? DATA.vanilla[c];
-      if (!it || !it.startsWith("Small Key") || !isDone(c)) continue;
+      if (!it || !(it.startsWith("Small Key") || it.startsWith("Silver Rupee (")) || !isDone(c)) continue;
       const ring = /^Small Key Ring \((.+)\)$/.exec(it), k = ring ? `Small Key (${ring[1]})` : it;
       KEYS_FOUND[k] = ring ? 99 : (KEYS_FOUND[k] || 0) + 1;
     }
     for (const [, sk, m] of DUNGEONS) if (KEYS_FOUND[sk]) KEYS_FOUND[sk] = Math.min(KEYS_FOUND[sk], m);
+    for (const k of Object.keys(KEYS_FOUND)) if (k.startsWith("Silver Rupee (")) KEYS_FOUND[k] = Math.min(KEYS_FOUND[k], 5);
   }
   return KEYS_FOUND[n] || 0;
 }
@@ -3528,6 +3550,10 @@ function renderItems() {
     h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
       h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""} ${PICS.Item_Dungeon_BossKey ? "pic" : ""}`, title: "Boss key", onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "Boss key" }) : "Boss key") : "")))),
+    // the rooms whose Silver Rupees OOTRR can shuffle; when it doesn't, they're where they always are and count as you find them
+    h("h2", { title: silverShuffled() ? "Silver rupees are shuffled: find five for a room to open it." : "Silver rupees aren't shuffled in these settings: each room's five are where they always are, and the logic counts them as you find them." }, "Silver rupees"),
+    h("table", { class: "dtab" }, SILVER.map(([d, room, it]) => h("tr", { title: `${d}: ${room}` },
+      h("td", {}, d, h("span", { style: "color:var(--faint);font-size:11px;margin-left:5px" }, room)), h("td", { style: "text-align:right" }, counter(it, 5))))),
     h("h2", {}, "Child trade"), h("div", { class: g }, CHILD_TRADE.map(tile)),
     h("h2", {}, "Adult trade"), h("div", { class: g }, ADULT_TRADE.map(tile)),
   ];
@@ -4076,6 +4102,7 @@ const MAX = {};
 for (const L of [INV, ARROWS, GEAR, CHILD_TRADE, ADULT_TRADE, SONGS, REWARDS]) for (const [n, , m] of L) MAX[n] = m;
 for (const [n, , m] of COUNTERS) if (typeof m !== "function") MAX[n] = m;
 for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
+for (const [, , it] of SILVER) MAX[it] = 5;
 
 function applyPeek(p, label) {
   // Items and found checks stay once seen: trade items are swapped, so a later save can show less
