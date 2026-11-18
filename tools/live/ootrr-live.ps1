@@ -54,6 +54,7 @@ public static class OotrrLive
 
     static IntPtr handle = IntPtr.Zero;
     static string game = "";
+    static string gameImage = "";   // the running game's exe, to find a portable install's saves beside it
     static ulong baseAddr = HOST_BASE, slot = GAMEDATA_SLOT;
     static int bool64Offset = -1;
     static DateTime nextScan = DateTime.MinValue;
@@ -198,7 +199,7 @@ public static class OotrrLive
                 }
             }
             catch { ok = false; }
-            if (ok) { game = Path.GetFileNameWithoutExtension(image); Console.WriteLine("Reading " + game + " (process " + pid + ")"); return null; }
+            if (ok) { game = Path.GetFileNameWithoutExtension(image); gameImage = image; nextSaveScan = DateTime.MinValue; Console.WriteLine("Reading " + game + " (process " + pid + ")"); return null; }
             handle = IntPtr.Zero;
             CloseHandle(h);
         }
@@ -348,9 +349,25 @@ public static class OotrrLive
         roots.Add(Path.Combine(home, @"Games\Longshot\user\save"));
         foreach (string emu in new string[] { "lichii", "ryuchii", "eden", "yuzu", "suyu", "citron", "sudachi" })
             roots.Add(Path.Combine(appdata, emu + @"\nand\user\save"));
+        // a portable Longshot keeps its saves beside the game ("user" in the game folder, or the portable
+        // launcher's LongshotLauncher-data): look next to the running exe and a few folders up
+        try
+        {
+            string dir = gameImage.Length > 0 ? Path.GetDirectoryName(gameImage) : null;
+            for (int up = 0; up < 4 && !string.IsNullOrEmpty(dir); up++)
+            {
+                foreach (string sub in new string[] { "user", "save", "LongshotLauncher-data" }) roots.Add(Path.Combine(dir, sub));
+                dir = Path.GetDirectoryName(dir);
+            }
+        }
+        catch { }
+        // any folder the player names: $env:OOTRR_SAVES = 'D:\Longshot\user'; (several with ;) before the start command
+        foreach (string s in (Environment.GetEnvironmentVariable("OOTRR_SAVES") ?? "").Split(';'))
+            if (s.Trim().Length > 0) roots.Add(Environment.ExpandEnvironmentVariables(s.Trim().Trim('"')));
         return roots;
     }
     static FileInfo newest = null;
+    static string saidSave = null;   // the save last named in this window ("" for none)
     static DateTime nextSaveScan = DateTime.MinValue;
     static void FindNewest(DirectoryInfo dir, int depth, ref FileInfo best)
     {
@@ -367,7 +384,11 @@ public static class OotrrLive
         {
             nextSaveScan = DateTime.UtcNow.AddSeconds(1);
             FileInfo best = null;
-            foreach (string root in SaveRoots()) if (Directory.Exists(root)) FindNewest(new DirectoryInfo(root), 0, ref best);
+            HashSet<string> seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string root in SaveRoots()) if (seen.Add(root) && Directory.Exists(root)) FindNewest(new DirectoryInfo(root), 0, ref best);
+            string now = best != null ? best.FullName : "";
+            if (saidSave != now) Console.WriteLine(best != null ? "Save: " + now : "No progress.sav found yet. For a portable Longshot or saves somewhere else, see the tracker's Longshot window.");
+            saidSave = now;
             newest = best;
         }
         if (newest != null) newest.Refresh();
@@ -376,8 +397,15 @@ public static class OotrrLive
     static string Saves()
     {
         FileInfo f = NewestSave();
-        if (f == null) return ",\"save\":null";
-        return ",\"save\":{\"slot\":" + Str(f.Directory.Name) + ",\"sig\":" + Str(f.LastWriteTimeUtc.Ticks + ":" + f.Length) + "}";
+        if (f == null)
+        {
+            // where it looked, for the tracker to show
+            StringBuilder sb = new StringBuilder(",\"save\":null,\"looked\":[");
+            bool first = true;
+            foreach (string r in SaveRoots()) { if (!first) sb.Append(','); first = false; sb.Append(Str(r)); }
+            return sb.Append(']').ToString();
+        }
+        return ",\"save\":{\"slot\":" + Str(f.Directory.Name) + ",\"path\":" + Str(f.FullName) + ",\"sig\":" + Str(f.LastWriteTimeUtc.Ticks + ":" + f.Length) + "}";
     }
 
     static string Str(string s)

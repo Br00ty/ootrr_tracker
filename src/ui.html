@@ -2539,6 +2539,7 @@ function paintAuto() {
     const full = ok ? `Live: ${liveGame(st)} at ${lt}${W.where ? ` · Link in ${W.where}${W.floor ? ` ${W.floor}` : ""} (${W.child ? "child" : "adult"})` : ""}` : why;
     const kidsL = [h("span", { class: `live ${ok ? "on" : why ? "err" : ""}` }),
       h("span", { title: full, style: `max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;${ok ? "" : "color:var(--gold)"}` }, ok ? ["Live: ", h("b", {}, liveGame(st)), ` at ${lt}`, W.where ? [" · Link in ", h("b", {}, W.where + (W.floor ? ` ${W.floor}` : ""))] : ""] : why || "Connecting…"),
+      ok && !st.save ? h("button", { class: "btn", style: "border-color:var(--gold);color:var(--gold)", onclick: openLongshot, title: "The helper reads the game but hasn't found your save, so items aren't tracked. Click for help (portable Longshot or saves somewhere else)." }, "No save found") : null,
       h("button", { class: "btn", onclick: openLongshot, title: "Longshot live tracking: help and status" }, "Longshot"),
       h("button", { class: "btn", onclick: liveStop, title: "Stop live tracking. What was already tracked stays." }, "Disconnect"),
       h("label", { title: "Jump to the area Link is in when the save changes", style: "display:flex;align-items:center;gap:4px;cursor:pointer" },
@@ -2629,10 +2630,17 @@ function liveStop() {
 // the game's name as the helper reports it (its exe: "longshot" → "Longshot")
 const liveGame = (st) => { const g = (st && st.game) || "the game"; return g.charAt(0).toUpperCase() + g.slice(1); };
 function liveStatus() {
-  const st = LIVE.state;
-  return h("p", { id: "liveStatus", style: `color:var(--${!LIVE.on ? "dim" : st && st.ok ? "green" : st ? "gold" : "dim"})` },
-    !LIVE.on ? "Not connected." : st && st.ok ? `Connected: reading ${liveGame(st)} live.` : st ? `The helper is running. ${st.why || ""}` : "Waiting for the helper…");
+  const st = LIVE.state, noSave = LIVE.on && st && st.ok && !st.save;
+  return h("div", { id: "liveStatus" },
+    h("p", { style: `margin-bottom:2px;color:var(--${!LIVE.on ? "dim" : noSave ? "gold" : st && st.ok ? "green" : st ? "gold" : "dim"})` },
+      !LIVE.on ? "Not connected." : noSave ? `Connected: reading ${liveGame(st)} live, but the helper hasn't found your save, so items and equipment aren't tracked. See "Portable Longshot" below.`
+        : st && st.ok ? `Connected: reading ${liveGame(st)} live.` : st ? `The helper is running. ${st.why || ""}` : "Waiting for the helper…"),
+    LIVE.on && st && st.save && st.save.path ? h("p", { style: "color:var(--faint);font-size:11px;margin-top:0;word-break:break-all" }, "Save: ", st.save.path) : null);
 }
+// a portable Longshot (or saves anywhere else): the helper looks beside the running game by itself, and a
+// folder the player names is passed in OOTRR_SAVES with the start command
+let liveSaveDir = "";
+const liveCmdWith = (dir) => (dir.trim() ? `$env:OOTRR_SAVES='${dir.trim().replace(/'/g, "''")}'; ${LIVE_CMD}` : LIVE_CMD);
 function openLongshot() {
   const status = liveStatus();
   $("#dlgBody").replaceChildren(...K(
@@ -2653,6 +2661,23 @@ function openLongshot() {
           LIVE.on ? h("button", { class: "btn", onclick: () => { liveStop(); openLongshot(); } }, "Disconnect")
             : h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => { liveStart(); openLongshot(); } }, "Connect"))),
       status,
+      (() => {
+        const st = LIVE.state, noSave = LIVE.on && st && st.ok && !st.save;
+        const cmd = h("code", { class: "q", style: "display:block;margin-top:6px;word-break:break-all;font-size:11px" }, liveCmdWith(liveSaveDir));
+        const box = h("input", { type: "text", value: liveSaveDir, placeholder: "e.g. D:\\Games\\Longshot\\user", style: "width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px",
+          oninput: (e) => { liveSaveDir = e.target.value; cmd.textContent = liveCmdWith(liveSaveDir); } });
+        return h("details", { open: noSave, style: "margin-top:10px" },
+          h("summary", { style: "cursor:pointer" }, h("b", {}, "Portable Longshot, or saves somewhere else?")),
+          h("div", { style: "color:var(--dim);margin-top:6px" },
+            h("p", { style: "margin:0 0 6px" }, "Items come from your save. The helper looks in ", h("code", { class: "q" }, "%APPDATA%\\Longshot\\save"), " and, for a portable Longshot, beside the running game (its ", h("code", { class: "q" }, "user"), " folder or the launcher's ", h("code", { class: "q" }, "LongshotLauncher-data"), "). If it still says no save was found:"),
+            h("ol", { style: "margin:0 0 6px 18px;line-height:1.7" },
+              h("li", {}, "Find the folder that holds ", h("code", { class: "q" }, "slot_00"), ", ", h("code", { class: "q" }, "slot_01"), " …: search your Longshot folder for ", h("code", { class: "q" }, "progress.sav"), "."),
+              h("li", {}, "Paste that folder (or any folder above it) here:", box),
+              h("li", {}, "Close the helper's PowerShell window, then start it again with this command instead:", cmd,
+                h("button", { class: "btn", style: "margin-top:6px", onclick: async (e) => { const b = e.currentTarget; b.textContent = (await copyText(liveCmdWith(liveSaveDir))) ? "Copied: paste it into PowerShell" : "Copy it from above"; } }, "Copy this start command"))),
+            st && st.looked && st.looked.length ? h("details", {}, h("summary", { style: "cursor:pointer" }, "Where the helper looked"),
+              h("div", { style: "font-size:11px;word-break:break-all;color:var(--faint)" }, st.looked.map((x) => h("div", {}, x)))) : null));
+      })(),
       h("p", { class: "hint", style: "padding:10px 0 0" }, "Next time: run the start command again; the tracker reconnects by itself. The memory layout comes from OotrR (MIT License).")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   if (!$("#dlg").open) $("#dlg").showModal();
