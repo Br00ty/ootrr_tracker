@@ -1035,6 +1035,7 @@ const PIN_FIXES = {
   "KF House of Twins Pot 2": { place: "KokiriForest", u: 0.5551, v: 0.6371 },
   "KF Know it All House Pot 1": { place: "KokiriForest", u: 0.2655, v: 0.4923 },
   "KF Know it All House Pot 2": { place: "KokiriForest", u: 0.2685, v: 0.4923 },
+  "LW Gift from Saria": { place: "KokiriForest", u: 0.15, v: 0.376 },  // on the bridge out of the forest
   "KF Links House Cow": { place: "KokiriForest", u: 0.3756, v: 0.6394 },
   "KF Midos Bottom Left Chest": { place: "KokiriForest", u: 0.3469, v: 0.3814 },
   "KF Midos Bottom Right Chest": { place: "KokiriForest", u: 0.3469, v: 0.3792 },
@@ -1535,6 +1536,10 @@ function renderMode() {
 const MAP_MERGE = { "Hyrule Field": ["Lon Lon Ranch"], "Market": ["Temple of Time"] };
 const mapAreaOf = (a) => Object.keys(MAP_MERGE).find((k) => MAP_MERGE[k].includes(a)) || a;
 const inMapArea = (area, a) => a === area || (MAP_MERGE[area] || []).includes(a);
+// Single checks the Map Tracker shows on a neighbour's map, where they happen in the game. The Location Tracker
+// keeps them in their own area. Saria's gift is in Lost Woods for OOTRR, but she gives it on the bridge out of Kokiri Forest.
+const MAP_CHECK_AREA = { "LW Gift from Saria": "Kokiri Forest" };
+const mapAreaOfCheck = (c) => MAP_CHECK_AREA[c.n] || c.a;
 const MAP_OVERWORLD = OVERWORLD.filter((a) => mapAreaOf(a) === a);
 function renderMap() {
   const el = $("#mapview");
@@ -1546,7 +1551,7 @@ function renderMap() {
   const area = sel.value, m = mapFor(area), dungeon = !!MAP_DUNGEONS[area];
   const noMap = nMaps() && !m.key && !(MAP_ZONES[area] || MAP_DUNGEONS[area]);  // the game has none for it
   const seg = (opts, cur, set) => h("span", { class: "seg" }, opts.map(([v, l]) => h("button", { class: v === cur ? "on" : "", onclick: () => { set(v); render(); } }, l)));
-  const list = [...R.values()].filter((c) => inMapArea(area, c.a)), t = tally(list);
+  const list = [...R.values()].filter((c) => inMapArea(area, mapAreaOfCheck(c))), t = tally(list);
   // copies of other areas' checks that show on this map too (not counted in this area's tally)
   const copies = (MAP_ALSO[area] || []).filter((n) => R.has(n)).map((n) => ({ ...R.get(n), pk: `${n} @${area}` }));
   const songs = [...VSONGS.values()].filter((c) => inMapArea(area, c.a));
@@ -1770,8 +1775,8 @@ function renderItems() {
   else { el.replaceChildren(...K(main, more)); el2.replaceChildren(); }
   el.scrollTop = top; el2.scrollTop = top2;
 }
-function areaRow(name, also = []) {
-  const list = [...R.values()].filter((c) => c.a === name || also.includes(c.a));
+function areaRow(name, also = [], onMap = false) {
+  const list = [...R.values()].filter((c) => { const a = onMap ? mapAreaOfCheck(c) : c.a; return a === name || also.includes(a); });
   if (!list.length) return null;
   const t = tally(list);
   // with dungeon entrances shuffled, where the dungeon's door is (hidden until the player uncovers it)
@@ -1793,7 +1798,7 @@ function areaRow(name, also = []) {
 function mapAreas() {
   const others = [...new Set([...R.values()].map((c) => c.a))].filter((a) => !OVERWORLD.includes(a) && !DUNGEON_AREAS.includes(a));
   const old = $("#mapview .mapareas"), top = old ? old.scrollTop : 0;
-  const el = h("div", { class: "mapareas" }, ...K(h("h2", {}, "Overworld"), MAP_OVERWORLD.concat(others).map((a) => areaRow(a, MAP_MERGE[a])), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map((a) => areaRow(a))));
+  const el = h("div", { class: "mapareas" }, ...K(h("h2", {}, "Overworld"), MAP_OVERWORLD.concat(others).map((a) => areaRow(a, MAP_MERGE[a], true)), h("h2", {}, "Dungeons"), DUNGEON_AREAS.map((a) => areaRow(a))));
   requestAnimationFrame(() => { el.scrollTop = top; });
   return el;
 }
