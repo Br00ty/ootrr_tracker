@@ -150,11 +150,14 @@ const Auto = (() => {
   // Lake Hylia and Lon Lon Ranch are part of the Hyrule Field map in the remake. OOTRR's tracker
   // (tracker/index.rs pin()) moves a Hyrule Field position into one of them when it falls inside that
   // area's map capture rectangle (MapCaptureInfo: centre x, z and height; project.rs uv(), ASPECT 2000/1440).
-  const SUB_AREAS = [["Lake Hylia", -200, 490, 422], ["Lon Lon Ranch", -86, 239, 276]];
+  // The lake's rectangle reaches up into the field, so the tracker also wants Link south of z 383: where the
+  // path down to the lake starts (measured live in Longshot, child Link at x -79, z 384).
+  const SUB_AREAS = [["Lake Hylia", -200, 490, 422, 383], ["Lon Lon Ranch", -86, 239, 276]];
   const ASPECT = 2000 / 1440;
   function subArea(pos) {
     if (!pos) return null;
-    for (const [name, cx, cz, h] of SUB_AREAS) {
+    for (const [name, cx, cz, h, minZ] of SUB_AREAS) {
+      if (minZ != null && pos[2] < minZ) continue;
       const u = 0.5 + (pos[0] - cx) / h, v = 0.5 + ((pos[2] - cz) / h) * ASPECT;
       if (u >= 0 && u <= 1 && v >= 0 && v <= 1) return name;
     }
