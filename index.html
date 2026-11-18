@@ -2350,10 +2350,9 @@ const TIERS = {
   "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
 };
 // ---------- item pictures ----------
-// The pictures are the game's own art, so they aren't shipped with the tracker. OOTRR's tracker decodes
-// them from your game files and caches them as PNGs (%LOCALAPPDATA%\\ootrr\\tracker-cache\\<game>\\icons-v1);
-// picking that folder (or any folder above it) copies small versions into this browser.
-// item name -> OOTRR icon id, or one id per tier for items whose picture changes as they upgrade
+// The pictures are the game's own art, so they aren't shipped with the tracker: they're decoded from the game's
+// UI folder when the player picks it (Icons & Maps), and small versions are kept in this browser.
+// item name -> the game's icon id, or one id per tier for items whose picture changes as they upgrade
 const ICON = {
   "Deku Stick Drop": "Item_DekuStick", "Deku Nut Drop": "Item_DekuNut",
   "Slingshot": "Weapon_Range_SlingShot", "Ocarina": ["Item_Ocarina_Fairy", "Item_Ocarina_Time"], "Bomb Bag": "Item_Bomb",
@@ -2705,7 +2704,7 @@ const floorRank = (f) => (f[0] === "B" ? -+f[1] : +f[0]);  // 5F … 1F, B1 … 
 let MAPS = new Map();      // texture key → Blob
 const MAP_URL = new Map(); // texture key → object URL
 let mapMsg = "", mapBusy = false;
-// Pins: OOTRR's own map index (tracker-cache\<game>\index.json, made by OOTRR's tracker from the game files)
+// Pins: OOTRR's map index (tracker-cache\<game>\index.json, made by OOTRR's tracker from the game files)
 // gives each location object its spot on the game's maps as fractions of the map picture (u across, v down).
 // The tracker finds a check's objects through the hashes in its save detection. The spots come with the tracker
 // (tools/build_data.py takes them from the index into data.json), so players don't need OOTRR's folder.
@@ -3938,6 +3937,10 @@ const OWN_FLAGS = {
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
   "Kak Anju as Child": ["MiniGame_CatchCucco_IsCompleted"],
+  // confirmed in a real save: the Deku Theater elders' scene the first time each mask is shown, which hands over
+  // the prize (OOTRR's rule, the get event of the placed item, misses an item placed more than once, e.g. a wallet)
+  "Deku Theater Skull Mask": ["HavePlayedEvent.LostWood_ScrubForestStageElder_SkullMaskFirst"],
+  "Deku Theater Mask of Truth": ["HavePlayedEvent.LostWood_ScrubForestStageElder_TrueMaskFirst"],
   // Saria's gift on the bridge: Dm_Kokiri_0155 is the short scene that hands over the item (OOTRR's story_skip.rs);
   // confirmed set in a real save where the get event of the placed item never fired
   "LW Gift from Saria": ["HavePlayedEvent.Dm_Kokiri_0155"],

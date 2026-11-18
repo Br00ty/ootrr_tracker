@@ -2170,6 +2170,10 @@ const OWN_FLAGS = {
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
   "Kak Anju as Child": ["MiniGame_CatchCucco_IsCompleted"],
+  // confirmed in a real save: the Deku Theater elders' scene the first time each mask is shown, which hands over
+  // the prize (OOTRR's rule, the get event of the placed item, misses an item placed more than once, e.g. a wallet)
+  "Deku Theater Skull Mask": ["HavePlayedEvent.LostWood_ScrubForestStageElder_SkullMaskFirst"],
+  "Deku Theater Mask of Truth": ["HavePlayedEvent.LostWood_ScrubForestStageElder_TrueMaskFirst"],
   // Saria's gift on the bridge: Dm_Kokiri_0155 is the short scene that hands over the item (OOTRR's story_skip.rs);
   // confirmed set in a real save where the get event of the placed item never fired
   "LW Gift from Saria": ["HavePlayedEvent.Dm_Kokiri_0155"],
