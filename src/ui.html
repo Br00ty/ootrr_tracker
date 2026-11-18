@@ -127,6 +127,12 @@ dialog.wide{width:min(860px,94vw)}
 .stabs{display:flex;gap:4px;align-items:center;flex-wrap:wrap;margin-top:12px;border-bottom:1px solid var(--line);padding-bottom:6px}
 .stabs button{background:var(--panel2);border:1px solid var(--line);border-radius:6px;padding:4px 10px;cursor:pointer;color:var(--dim)}
 .stabs button.on{border-color:var(--gold);color:var(--gold);background:#33301f}
+.stabs{flex-direction:column;align-items:stretch}
+.stabrow{display:grid;grid-template-columns:78px 1fr;gap:6px;align-items:start}
+.stabbtns{display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+.stabs .shead{color:var(--faint);font-size:10px;text-transform:uppercase;letter-spacing:.06em;padding-top:7px}
+.ssec{margin:12px 0 0;font-size:12px;color:var(--gold);font-weight:600;border-bottom:1px solid var(--line);padding-bottom:4px}
+.ssec:first-child{margin-top:4px}
 .slist{max-height:min(52vh,560px);overflow:auto;margin-top:4px;padding-right:4px}
 .srow{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}
 .srow.off{opacity:.5}
@@ -1951,7 +1957,7 @@ function checksPanel(area, again) {
 }
 
 // ---------- settings dialog ----------
-// The manual settings page follows OOTRR's own: its groups as tabs, its presets, its labels and help text,
+// The manual settings page follows OOTRR's own: its menu pages and sections, its presets, its labels and help text,
 // settings that only count when another one is set (greyed out until then), and values OOTRR can't build yet.
 let setTab = "", setQuery = "", setStrMsg = "";
 const tipOf = (id, v) => ((DATA.tips || {})[id] || {})[v === undefined ? "_" : v] || "";
@@ -1965,23 +1971,42 @@ function depText(s) {
     return `${label(d.on, "_")} ${"is" in d ? `is ${vl(d.is)}` : "in" in d ? `is ${d.in.map(vl).join(" or ")}` : `is not ${vl(d.not)}`}`;
   }).join(", ");
 }
-function settingRow(s, vals) {
+// one row of the settings page. `view` is OOTRR's own menu entry for the setting: its label, help text and the choices
+// its menu offers (the ones it can't build yet are greyed out, like on OOTRR's page)
+function settingRow(s, vals, view, note) {
   const id = s.id, v = S.settings[id] ?? s.default, on = Seed.enabled(s, vals), no = notYet(id);
-  let input;
-  if (s.kind === "toggle") {
+  const name = view ? view.label : label(id, "_"), tip = view ? view.tip : tipOf(id);
+  const ours = (o) => (s.kind === "toggle" ? o === "true" : s.kind === "number" ? +o : o);
+  const live = (o) => o.live && !!o.ours && !no.has(ours(o.ours)) && (!o.needs || vals[o.needs] === true);
+  let input, words = [];
+  if (view && view.kind === "check") {
+    const [off, yes] = view.opts, isOn = String(v) === yes.ours;
+    input = h("input", { type: "checkbox", onchange: (e) => setValue(id, ours(e.target.checked ? yes.ours : off.ours)) });
+    input.checked = isOn;
+    if (!live(isOn ? off : yes)) input.disabled = true;
+  } else if (view && (view.kind === "pick" || view.kind === "steps")) {
+    words = view.opts.map((o) => o.label);
+    input = h("select", { onchange: (e) => setValue(id, ours(e.target.value)) },
+      view.opts.map((o, i) => h("option", { value: o.ours || `__none${i}`, disabled: !live(o) && o.ours !== String(v) }, o.label)));
+    input.value = String(v);
+  } else if (s.kind === "toggle") {
     input = h("input", { type: "checkbox", onchange: (e) => setValue(id, e.target.checked) });
     input.checked = !!v;
     if (no.has(!s.default)) input.disabled = true;
   } else if (s.kind === "choice") {
+    words = s.choices.map((c) => label(id, c));
     input = h("select", { onchange: (e) => setValue(id, e.target.value) },
       s.choices.map((c) => h("option", { value: c, disabled: no.has(c) && c !== v, title: tipOf(id, c) }, label(id, c) + (no.has(c) ? " (not in OOTRR yet)" : ""))));
     input.value = v;
   } else if (s.kind === "number") {
-    const max = s.max_by ? Math.min(s.max, +(vals[s.max_by] ?? s.max)) : s.max;
-    input = h("input", { type: "number", min: s.min, max, value: v, style: "width:80px",
-      onchange: (e) => { const n = Math.max(s.min, Math.min(max, Math.round(+e.target.value || 0))); setValue(id, n); } });
+    const lo = view && view.min != null ? view.min : s.min, hi0 = view && view.max != null ? view.max : s.max;
+    const max = s.max_by ? Math.min(hi0, +(vals[s.max_by] ?? hi0)) : hi0;
+    input = h("input", { type: "number", min: lo, max, value: v, style: "width:80px",
+      onchange: (e) => { const n = Math.max(lo, Math.min(max, Math.round(+e.target.value || 0))); setValue(id, n); } });
+    if (view && view.live === false) input.disabled = true;
   } else if (s.kind === "multi") {
     const cur = new Set(Array.isArray(v) ? v : []);
+    words = s.choices.map((c) => label(id, c));
     input = h("div", { class: "cats", style: "padding:4px 0 0;justify-content:flex-end" }, s.choices.map((c) => h("span", {
       class: `chip ${cur.has(c) ? "on" : ""}`, title: tipOf(id, c),
       onclick: () => { if (!on) return; const n = new Set(cur); n.has(c) ? n.delete(c) : n.add(c); setValue(id, s.choices.filter((x) => n.has(x))); } }, label(id, c))));
@@ -1989,19 +2014,36 @@ function settingRow(s, vals) {
     input = h("span", { style: "color:var(--faint);font-size:11px" }, "Doesn't change what the tracker lists");
   }
   if (!on && input.tagName !== "DIV" && input.tagName !== "SPAN") input.disabled = true;
-  const tip = tipOf(id);
-  return h("div", { class: `srow ${on ? "" : "off"}`, "data-search": `${label(id, "_")} ${tip} ${(s.choices || []).map((c) => label(id, c)).join(" ")}`.toLowerCase() },
-    h("div", { class: "stext" }, h("div", {}, label(id, "_")),
+  return h("div", { class: `srow ${on ? "" : "off"}`, "data-id": id, "data-search": `${name} ${label(id, "_")} ${tip} ${words.join(" ")}`.toLowerCase() },
+    h("div", { class: "stext" }, h("div", {}, name),
       tip ? h("div", { class: "stip", title: tip }, tip) : null,
-      on ? null : h("div", { class: "stip", style: "color:var(--gold)" }, `Only counts when ${depText(s)}.`)),
+      on ? null : h("div", { class: "stip", style: "color:var(--gold)" }, `Only counts when ${depText(s)}.`),
+      note ? h("div", { class: "stip", style: "color:var(--gold)" }, note) : null),
     h("div", { class: "sctl" }, input));
 }
+// OOTRR's settings menu as pages of sections. Settings OOTRR keeps off its menu only show up when they're not at their
+// default (a settings string or an older seed can still set them)
+function menuPages(vals) {
+  const pages = DATA.setting_menu || [{ id: "all", label: "Settings", heading: "", sections: [{ label: "", items: DATA.schema.map((s) => ({ id: s.id })) }] }];
+  return pages.map((p) => ({ ...p, sections: p.sections.map((sec) => ({ label: sec.label,
+    rows: [...sec.items.filter((it) => SCHEMA.has(it.id)).map((it) => settingRow(SCHEMA.get(it.id), vals, it.view)),
+      ...(sec.hidden || []).filter((id) => SCHEMA.has(id) && JSON.stringify(S.settings[id] ?? SCHEMA.get(id).default) !== JSON.stringify(SCHEMA.get(id).default))
+        .map((id) => settingRow(SCHEMA.get(id), vals, null, "Not on OOTRR's settings menu any more; set by a settings string."))] })).filter((sec) => sec.rows.length) }));
+}
 function manualSettings() {
-  const vals = manualVals(), groups = DATA.setting_groups || [{ id: "all", label: "Settings", tip: "" }];
-  if (!groups.some((g) => g.id === setTab)) setTab = groups[0].id;
+  const vals = manualVals(), pages = menuPages(vals);
+  if (!pages.some((p) => p.id === setTab)) setTab = pages[0].id;
   const q = setQuery.trim().toLowerCase();
-  const rows = DATA.schema.filter((s) => (q ? true : (s.group || "all") === setTab) && s.tag !== "niche").map((s) => settingRow(s, vals))
-    .filter((r) => !q || r.dataset.search.includes(q));
+  const sec = (title, rows) => [title ? h("h4", { class: "ssec" }, title) : null, ...rows];
+  let found = 0;
+  const body = q
+    ? pages.flatMap((p) => p.sections.flatMap((s) => { const rows = s.rows.filter((r) => r.dataset.search.includes(q)); found += rows.length; return rows.length ? sec(`${p.label} › ${s.label}`, rows) : []; }))
+    : pages.find((p) => p.id === setTab).sections.flatMap((s) => sec(s.label, s.rows));
+  // one row of tabs per heading of OOTRR's menu (Randomizer, Gameplay)
+  const heads = [...new Set(pages.map((p) => p.heading))];
+  const tabs = () => heads.map((hd, i) => h("div", { class: "stabrow" }, h("span", { class: "shead" }, hd || ""),
+    h("div", { class: "stabbtns" }, pages.filter((p) => p.heading === hd).map((p) => h("button", { class: !q && p.id === setTab ? "on" : "", onclick: () => { setTab = p.id; setQuery = ""; openSettings(); } }, p.label)),
+      i === heads.length - 1 ? [h("span", { class: "spacer" }), search] : null)));
   const defs = Object.fromEntries(DATA.schema.map((s) => [s.id, s.default]));
   const changed = DATA.schema.filter((s) => JSON.stringify(S.settings[s.id] ?? s.default) !== JSON.stringify(s.default)).length;
   const str = h("input", { type: "text", placeholder: "Paste an OOTRR settings string (OOTRR1-…)", style: "flex:1;min-width:200px;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px" });
@@ -2009,7 +2051,7 @@ function manualSettings() {
     oninput: (e) => { setQuery = e.target.value; openSettings(); const el = $("#dlgBody input[type=search]"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } } });
   return [
     h("h3", {}, "Seed settings"),
-    h("div", { style: "color:var(--dim);font-size:12px;margin-bottom:8px" }, "Set these like the settings your seed was made with: the same settings, groups and presets as OOTRR. The tracker lists exactly the locations OOTRR would shuffle with them. Or load your .ootrr seed file and every setting is taken from it."),
+    h("div", { style: "color:var(--dim);font-size:12px;margin-bottom:8px" }, "Set these like the settings your seed was made with: laid out like OOTRR's own settings menu, with its presets. The tracker lists exactly the locations OOTRR would shuffle with them. Or load your .ootrr seed file and every setting is taken from it."),
     DATA.presets ? h("div", { class: "presets" }, [...DATA.presets].sort((a, b) => a.order - b.order).map((p) => h("button", {
       class: `preset ${sameVals(manualVals(), (() => { const pv = presetVals(p); for (const x of DATA.schema) if (!Seed.enabled(x, pv)) pv[x.id] = "disabled" in x ? x.disabled : x.default; return pv; })()) ? "on" : ""}`,
       title: p.tip, onclick: () => { S.settings = presetVals(p); setStrMsg = ""; render(); openSettings(); } }, h("b", {}, p.name), h("span", {}, p.tip.split(". ")[0])))) : null,
@@ -2019,9 +2061,9 @@ function manualSettings() {
         catch (e) { setStrMsg = `That string didn't work: ${e.message}.`; }
         render(); openSettings(); } }, "Use")),
     setStrMsg ? h("div", { style: "font-size:12px;color:var(--gold)" }, setStrMsg) : null,
-    h("div", { class: "stabs" }, groups.map((g) => h("button", { class: !q && g.id === setTab ? "on" : "", onclick: () => { setTab = g.id; setQuery = ""; openSettings(); } }, g.label)), h("span", { class: "spacer" }), search),
-    h("div", { style: "color:var(--dim);font-size:12px;margin:6px 0 2px" }, q ? `${rows.length} matching settings` : (groups.find((g) => g.id === setTab) || {}).tip),
-    h("div", { class: "slist" }, rows.length ? rows : h("div", { class: "empty" }, "No settings match that search.")),
+    h("div", { class: "stabs" }, tabs()),
+    q ? h("div", { style: "color:var(--dim);font-size:12px;margin:6px 0 2px" }, `${found} matching setting${found === 1 ? "" : "s"}`) : null,
+    h("div", { class: "slist" }, body.length ? body : h("div", { class: "empty" }, q ? "No settings match that search." : "Nothing here yet.")),
     h("div", { class: "foot" },
       h("span", { style: "color:var(--faint);font-size:11px;align-self:center" }, changed ? `${changed} setting${changed > 1 ? "s" : ""} changed from OOTRR's defaults · saved in this browser` : "All settings are at OOTRR's defaults · saved in this browser"),
       h("span", { style: "display:flex;gap:8px" },

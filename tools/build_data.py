@@ -240,6 +240,9 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
        # OOTRR's settings page: its groups (tabs), presets and the help text of each setting and choice
        # the remake calls it the Gerudo Proving Ground
        'tips': json.loads(json.dumps({s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']}).replace('Gerudo Training Ground', 'Gerudo Proving Ground')),
-       'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS}
+       'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS,
+       # OOTRR's settings menu (pages, sections, its own labels and choices), minus the "not supported yet" stubs
+       'setting_menu': json.loads(json.dumps([{**pg, 'sections': [{**sc, 'items': [it for it in sc.get('items') or [{'id': i} for i in sc['ids']] if not it.get('stub')]}
+                                                                 for sc in pg['sections']]} for pg in SCH['menu']]).replace('Gerudo Training Ground', 'Gerudo Proving Ground'))}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)
