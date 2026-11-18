@@ -26,9 +26,8 @@ for s in S:
     if s['id'] in ('shuffle_shops',): continue
     if s['kind'] == 'choice': vals = [c['id'] for c in s['choices'] if c['id'] != s['default']]
     elif s['kind'] == 'toggle': vals = [not s['default']]
-    elif s['kind'] == 'multi' and s['id'] == 'shop_deal_items': vals = [[c['id']] for c in s['choices']]
     else: vals = []
-    d = deps(s, dict(BASE))
+    d = {**deps(s, dict(BASE)), **BASE}  # a setting that depends on shop deals keeps the 4-deal baseline
     for v in vals: jobs.append((f"{s['id']}={json.dumps(v)}", {**d, s['id']: v}))
 def run(i):
     name, st = jobs[i]

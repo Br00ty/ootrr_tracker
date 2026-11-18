@@ -29,7 +29,7 @@ jobs = [('base', {})]
 for s in S:
     if s['kind'] == 'choice': vals = [c['id'] for c in s['choices'] if c['id'] != s['default']]
     elif s['kind'] == 'toggle': vals = [not s['default']]
-    elif s['kind'] == 'multi' and s['id'] in ('misc_hints', 'shop_deal_items'): vals = [[c['id']] for c in s['choices']]
+    elif s['kind'] == 'multi' and s['id'] in ('misc_hints',): vals = [[c['id']] for c in s['choices']]
     else: vals = []
     d = deps(s, {})
     if d: jobs.append((f"{s['id']}=DEPS", dict(d)))

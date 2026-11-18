@@ -289,6 +289,9 @@ const Seed = (() => {
       }
       for (const [k, n] of P.deals.order) if (k < +lv[1] && room > 0) { set.add(n); room--; }
     }
+    // slice/support.rs plan(): the Bean Merchant sells a shuffled item only with Shuffle Merchants on Bean
+    // Merchant Only or All and Skip Planting Beans on (a pair of settings, which the one-setting deltas can't see)
+    if (["beans", "all"].includes(v.shuffle_merchants) && v.plant_beans === true && data.checks["ZR Magic Bean Salesman"]) set.add("ZR Magic Bean Salesman");
     // junk_spots.rs: in "matched" skulltula shuffle the unsure skulltulas take only junk, so they join only when
     // enough other shuffled locations hold junk a skulltula can drop (the measured "matched" delta has them out)
     if (P.unsure_skulls && v.shuffle_skulltulas === "matched") {
