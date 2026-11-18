@@ -2284,8 +2284,8 @@ function compute() {
     const counts = [];
     // The remake has no separate ocarina notes, so every note button counts as owned.
     for (const b of ["A", "C up", "C down", "C left", "C right"]) { const i = w.items.find(`Ocarina ${b} Button`); if (i !== undefined) counts.push([i, 1]); }
-    // Treasure Chest Game keys stay in their vanilla rooms.
-    { const i = w.items.find("Small Key (Treasure Chest Game)"); if (i !== undefined) counts.push([i, 6]); }
+    // Treasure Chest Game keys aren't given: they're in their vanilla rooms (the seller and each room's top chest),
+    // which the logic collects as it reaches them, so the reward needs Lens of Truth like in OOTRR.
     const names = new Set([...Object.keys(S.items), ...Object.keys(S.auto.items), ...Object.keys(startTable())]);
     for (const n of names) { const i = w.items.find(n), c = have(n); if (i !== undefined && c > 0) counts.push([i, c]); }
     return { w, s: new Engine.Search(w, counts).run(place) };

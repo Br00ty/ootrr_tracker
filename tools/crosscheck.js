@@ -2,7 +2,7 @@
 // Usage: node tools/crosscheck.js <folder with default, keysanity, wild, dungeons, dungeons_plain .ootrr> <path to tracker_check>
 const [SEEDS, CHECK] = process.argv.slice(2);
 const E=require('../src/engine.js'),Seed=require('../src/seed.js'),data=require('../data/data.json'),fs=require('fs'),cp=require('child_process');
-const always={'Ocarina A Button':1,'Ocarina C up Button':1,'Ocarina C down Button':1,'Ocarina C left Button':1,'Ocarina C right Button':1,'Small Key (Treasure Chest Game)':6};
+const always={'Ocarina A Button':1,'Ocarina C up Button':1,'Ocarina C down Button':1,'Ocarina C left Button':1,'Ocarina C right Button':1};
 const kits={none:{},early:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':1,'Zeldas Lullaby':1,'Sarias Song':1,'Bomb Bag':1,'Kokiri Emerald':1},
   mid:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':2,'Zeldas Lullaby':1,'Sarias Song':1,'Eponas Song':1,'Song of Time':1,'Bomb Bag':2,'Bow':1,'Progressive Hookshot':1,'Progressive Strength Upgrade':1,'Kokiri Emerald':1,'Goron Ruby':1,'Zora Sapphire':1,'Bottle':1,'Rutos Letter':1,'Magic Meter':1,'Dins Fire':1,'Small Key (Forest Temple)':3}};
 let bad=0;
