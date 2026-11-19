@@ -2312,6 +2312,15 @@ const EXTRA_FLAGS = {
 // shuffled gift never sets the item's own flag and the fairy would offer it again. Added next to OOTRR's rule
 // whether or not that rule is kept, so a gift that's placed more than once still ticks.
 const OOTRR_FLAGS = {
+  // Deku Scrub sales: the sold flag OOTRR's scrub shuffle writes on the one-time sale (scrubs_a/sim.rs for Shuffle
+  // Scrubs A, data/scrubs_b.json for Scrubs B). Kept for good, unlike the scrub's object key and ScrubBusiness
+  // flags, which the game wipes when the area reloads (DMC Deku Scrub lost its tick that way, 2026-11-19).
+  "DMC Deku Scrub": ["DeathMountain_Enemy_Scrub_Business_HeartPiece_01"],
+  "LW Deku Scrub Near Bridge": ["LostWood_Enemy_Scrub_Business_DekuStickPouch_01"],
+  "LW Deku Scrub Grotto Front": ["Lostwood_Enemy_Scrub_Business_DekuNutsPouch_01"],
+  "HF Deku Scrub Grotto": ["HyruleField_Enemy_Scrub_Business_HeartPiece_01"],
+  "LW Deku Scrub Grotto Rear": ["HavePlayedEvent.Enemy_Scrub_Business_DekuStick_01"],
+  "Jabu Jabus Belly Deku Scrub": ["HavePlayedEvent.Enemy_Scrub_Business_RedPotion_01"],
   "DMT Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0080"],
   "HC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0096"],
   "ZF Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0110"],
@@ -2330,9 +2339,6 @@ const POOL_KEYS = {
     "3236392495739397075", "4184471392680640567", "8404733154085657768", "8987278980043647768"],
 };
 const OWN_KEYS = {
-  // the scrub outside on the crater's ladder ledge (DeathMountainCrater_Child_Static); OOTRR lists it as the
-  // only remake candidate for this scrub and the three grotto ones. Set when he sold his item, 2026-11-18.
-  "DMC Deku Scrub": ["2518138296199711695"],
 };
 function detectMap() {
   const out = detectMapBase();
