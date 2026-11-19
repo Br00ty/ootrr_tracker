@@ -1,0 +1,45 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- OOTRR Tracker desktop app: the tracker page (index.html, the same file as the website) in its own
+       window, with the Longshot live helper built in. .NET Framework 4.8 is part of Windows 10/11, and so is
+       the WebView2 runtime that shows the page, so players install nothing.
+       Before building, run `python tools/app_sync.py` from the repo root: it copies the helper's C# out of
+       tools/live/ootrr-live.ps1 into app/obj/gen/OotrrLive.cs, so the script stays the one copy. -->
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net48</TargetFramework>
+    <PlatformTarget>x64</PlatformTarget>
+    <LangVersion>latest</LangVersion>
+    <AssemblyName>OOTRR Tracker</AssemblyName>
+    <RootNamespace>OotrrTracker</RootNamespace>
+    <Product>OOTRR Tracker</Product>
+    <Description>Map and item tracker for OOTRR, the Ocarina of Time remake randomizer by REALAZK</Description>
+    <Version>0.1.0</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.*" />
+    <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.3" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- the live helper, copied out of tools/live/ootrr-live.ps1 by tools/app_sync.py -->
+    <Compile Include="obj\gen\OotrrLive.cs" />
+    <!-- the tracker page, the same file the website serves -->
+    <None Include="..\index.html" Link="web\index.html" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <Target Name="NeedHelperSource" BeforeTargets="BeforeBuild" Condition="!Exists('obj\gen\OotrrLive.cs')">
+    <Error Text="obj\gen\OotrrLive.cs is missing: run `python tools/app_sync.py` from the repo root first." />
+  </Target>
+
+</Project>

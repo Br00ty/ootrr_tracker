@@ -1,0 +1,60 @@
+# Builds the OOTRR Tracker desktop app (app/) on Windows.
+# Every push that touches the app, the page or the helper uploads "OOTRR-Tracker-app" as a build artifact
+# (Actions tab → the run → Artifacts); a published release also gets the zip attached.
+name: Desktop app
+
+on:
+  push:
+    paths:
+      - 'app/**'
+      - 'index.html'
+      - 'tools/live/ootrr-live.ps1'
+      - 'tools/app_sync.py'
+      - '.github/workflows/app.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy the helper's C# out of the script
+        run: python tools/app_sync.py
+
+      - name: Build
+        run: dotnet build app/OotrrTracker.csproj -c Release -o out
+
+      - name: Package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory pkg | Out-Null
+          Copy-Item out\* pkg -Recurse -Exclude *.pdb,*.xml
+          Copy-Item LICENSE, NOTICE pkg -ErrorAction SilentlyContinue
+          @"
+          OOTRR Tracker (desktop app)
+
+          Unzip this folder anywhere and run "OOTRR Tracker.exe". Keep the files together.
+          Windows may warn that the app is from an unknown publisher (it isn't code-signed yet):
+          choose "More info", then "Run anyway".
+
+          The app reads Longshot/Hookshot and emulator memory and your saves; it never changes them.
+          Your progress is kept in %LOCALAPPDATA%\OOTRR Tracker.
+          "@ | Set-Content pkg\README.txt
+          Compress-Archive pkg\* OOTRR-Tracker.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OOTRR-Tracker-app
+          path: pkg/
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" OOTRR-Tracker.zip --clobber

@@ -1,2 +1,4 @@
 tools/out/
 node_modules/
+app/bin/
+app/obj/
