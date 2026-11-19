@@ -2102,6 +2102,11 @@ const RENAMES = {
   "Lake Hylia Remake Rupee 3": { name: "HF East Rupee Grotto Rupee 1", area: "Hyrule Field" },  // key 15135356131305809944, northeast
   "Lake Hylia Remake Rupee 2": { name: "HF East Rupee Grotto Rupee 2", area: "Hyrule Field" },  // key 14398093248612909712, southeast
   "Lake Hylia Remake Rupee 1": { name: "HF East Rupee Grotto Rupee 3", area: "Hyrule Field" },  // key 7268667473541116466, middle
+  // two child rupees in Hyrule Field where the path drops to Lake Hylia (objects in HyruleField_Child_Static;
+  // confirmed in game 2026-11-18, Link in HyruleField_Child at -149, 457). OOTRR files them under Lake Hylia and only
+  // pins them on the Lake Hylia map; the three "Hyrule Field Pickup" objects beside them aren't shuffled.
+  "Lake Hylia Child Remake Rupee 7": { name: "HF Near Lake Hylia Rupee 1", area: "Hyrule Field" },
+  "Lake Hylia Child Remake Rupee 8": { name: "HF Near Lake Hylia Rupee 2", area: "Hyrule Field" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
@@ -2917,6 +2922,9 @@ const PIN_FIXES = {
   "Graveyard Dampe Race High Rupee Chest": { place: "Graveyard", u: 0.356, v: 0.3203 },
   "Graveyard Dampe Race Hookshot Chest": { place: "Graveyard", u: 0.3544, v: 0.3181 },
   "Graveyard Dampe Race Low Rupee Chest": { place: "Graveyard", u: 0.3544, v: 0.3249 },
+  // on the Hyrule Field map where the path drops to Lake Hylia (the game's spot, projected from the Lake Hylia map)
+  "Lake Hylia Child Remake Rupee 7": { place: "HyruleField", u: 0.3308, v: 0.9889 },
+  "Lake Hylia Child Remake Rupee 8": { place: "HyruleField", u: 0.329, v: 0.9904 },
   // the race rupees, beside the race's chests (the race is down Dampe's grave, off the map)
   "Graveyard Dampe Race Rupee 1": { place: "Graveyard", u: 0.3605, v: 0.3181 },
   "Graveyard Dampe Race Rupee 2": { place: "Graveyard", u: 0.362, v: 0.3181 },
@@ -4006,6 +4014,9 @@ function paintSeed() {
 // the child fishing prize while the get event didn't). EXTRA_FLAGS are added next to OOTRR's rule: their
 // names say what they are and they are stored in the save, but they haven't been seen changing yet.
 const OWN_FLAGS = {
+  // the bottle in Lake Hylia: its pickup tag sets this (OOTRR pickup_packs.json), whatever item it holds; OOTRR has
+  // no tracker target for it. Confirmed in a real save 2026-11-18 (set with Ruto's Letter there)
+  "LH Underwater Item": ["Get_StoneOfWater_GetRutoLetter"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
