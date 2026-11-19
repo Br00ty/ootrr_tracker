@@ -2172,6 +2172,8 @@ const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Po
 // Saria's gift used to be detected by a flag OOTRR sets on every new game, so it could be ticked from the save
 // without the gift. Clear that tick (and any untick made because of it) once; the save ticks it again for real.
 if (!S.fixes) S.fixes = {};
+// KF West Ledge Chest had a pin moved to the wrong spot (by the pond); back to the game's own position
+if (!S.fixes.kfWestLedgePin) { if (S.pinFix) delete S.pinFix["KF West Ledge Chest"]; S.fixes.kfWestLedgePin = 1; }
 if (!S.fixes.saria0150) { if (S.auto) delete S.auto.done["LW Gift from Saria"]; if (S.ignore) delete S.ignore["LW Gift from Saria"]; S.fixes.saria0150 = 1; }
 // OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
 if (S.settings && typeof S.settings.shuffle_dungeon_rewards === "boolean") S.settings.shuffle_dungeon_rewards = S.settings.shuffle_dungeon_rewards ? "anywhere" : "vanilla";
@@ -2797,7 +2799,6 @@ const PIN_FIXES = {
   "KF Top of Sarias Recovery Heart 1": { place: "KokiriForest", u: 0.4842, v: 0.6484 },
   "KF Top of Sarias Recovery Heart 2": { place: "KokiriForest", u: 0.4902, v: 0.6439 },
   "KF Top of Sarias Recovery Heart 3": { place: "KokiriForest", u: 0.4842, v: 0.6507 },
-  "KF West Ledge Chest": { place: "KokiriForest", u: 0.5867, v: 0.4832 },
   // Lost Woods, placed in game by the player (2026-11-16)
   "Deku Theater Mask of Truth": { place: "LostWood", u: 0.5038, v: 0.3769 },
   "Deku Theater Skull Mask": { place: "LostWood", u: 0.5053, v: 0.3792 },
