@@ -2162,6 +2162,10 @@ const DEFAULT = {
 let S = load();
 // checks OOTRR renamed: progress, hand-placed pins and notes saved under the old name carry over
 const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint" };  // OOTRR 0.6.2
+// Saria's gift used to be detected by a flag OOTRR sets on every new game, so it could be ticked from the save
+// without the gift. Clear that tick (and any untick made because of it) once; the save ticks it again for real.
+if (!S.fixes) S.fixes = {};
+if (!S.fixes.saria0150) { if (S.auto) delete S.auto.done["LW Gift from Saria"]; if (S.ignore) delete S.ignore["LW Gift from Saria"]; S.fixes.saria0150 = 1; }
 // OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
 if (S.settings && typeof S.settings.shuffle_dungeon_rewards === "boolean") S.settings.shuffle_dungeon_rewards = S.settings.shuffle_dungeon_rewards ? "anywhere" : "vanilla";
 for (const m of [S.done, S.auto && S.auto.done, S.ignore, S.pinFix]) if (m) for (const [o, n] of Object.entries(OLD_NAMES)) if (o in m) { if (!(n in m)) m[n] = m[o]; delete m[o]; }
