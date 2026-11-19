@@ -67,11 +67,20 @@ const Auto = (() => {
   }
 
   // tracker/rules.rs: a check is found when any of its flags is set, or any of its keys is in the key list
+  // a flag "Name=Value" holds when the save's value equals Value: a number, or the murmur3 hash of an enum
+  // name (OOTRR's tracker/cond.rs); a plain flag holds when it's set
+  function holds(p, f) {
+    const i = f.indexOf("=");
+    if (i < 0) return p.on(f);
+    const v = f.slice(i + 1), want = /^\d+$/.test(v) ? Number(v) : murmur3(v);
+    const got = p.val(f.slice(0, i));
+    return got !== undefined && got >>> 0 === want;
+  }
   // a rule {k, n} is a pool: ticked once at least n of its keys are set (spots whose keys can't be told apart)
   function checks(p, detect) {
     const out = new Set();
     for (const [name, rules] of Object.entries(detect)) {
-      if (rules.some((r) => (r.f && r.f.some((f) => p.on(f))) || (r.k && (r.n ? r.k.filter((k) => p.keys.has(k)).length >= r.n : r.k.some((k) => p.keys.has(k)))))) out.add(name);
+      if (rules.some((r) => (r.f && r.f.some((f) => holds(p, f))) || (r.k && (r.n ? r.k.filter((k) => p.keys.has(k)).length >= r.n : r.k.some((k) => p.keys.has(k)))))) out.add(name);
     }
     return out;
   }

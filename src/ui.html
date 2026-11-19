@@ -2320,6 +2320,8 @@ function detectMap() {
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
+  // OOTRR's web tracker's NPC and reward flags (its confirmed ones and its guesses), added to each check's rule
+  for (const [n, e] of Object.entries(DATA.npc_flags || {})) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f: e.f }];
   // flags OOTRR's data gives the wrong check: taken off it (a rule left with nothing is dropped)
   for (const [n, f] of Object.entries(DROP_FLAGS)) if (out[n]) {
     out[n] = out[n].map((r) => (r.f ? { ...r, f: r.f.filter((x) => !f.includes(x)) } : r)).filter((r) => !r.f || r.f.length || r.k || r.g);

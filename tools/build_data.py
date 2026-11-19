@@ -285,6 +285,22 @@ def map_index(path):
             pins.setdefault(h, []).append([p['map'], None if p.get('u') is None else round(p['u'], 4), None if p.get('v') is None else round(p['v'], 4), p.get('floor_label') or None, bool(p.get('tray')),
                                            round(pos[0], 2) if pos else None, round(pos[2], 2) if pos else None])
     return {'game': j.get('game'), 'pins': pins, 'caps': caps, 'floors': floors}
+# OOTRR's web tracker's own NPC and reward flags (web/src/tracker/npc_flags.rs): OWN are confirmed in game,
+# GUESS are its best guesses. A flag "Name=Value" holds when the save's value equals Value (a number, or the
+# murmur3 hash of an enum name). The tracker adds these to each check's save rule.
+def npc_flags(root):
+    p = os.path.join(root, 'web', 'src', 'tracker', 'npc_flags.rs')
+    if not os.path.exists(p): return None
+    src = open(p, encoding='utf-8').read().split('pub fn ')[0]
+    out = {}
+    for part, conf in ((src.split('pub const GUESS')[0], 'own'), (src.split('pub const GUESS')[1] if 'pub const GUESS' in src else '', 'guess')):
+        for name, body in re.findall(r'\(\s*"([^"]+)"\s*,\s*&\[([^\]]*)\]\s*\)', part):
+            out[name] = {'f': re.findall(r'"([^"]+)"', body), 'conf': conf}
+    return out
+NPC_FLAGS = npc_flags(os.path.dirname(os.path.abspath(D)))
+if NPC_FLAGS is None:
+    try: NPC_FLAGS = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('npc_flags')
+    except Exception: NPC_FLAGS = None
 if len(sys.argv) > 2: MAP_INDEX = map_index(sys.argv[2])
 else:
     try: MAP_INDEX = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('map_index')
@@ -297,7 +313,7 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
        'tips': json.loads(json.dumps({s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']}).replace('Gerudo Training Ground', 'Gerudo Proving Ground')),
        'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS,
        # OOTRR's settings menu (pages, sections, its own labels and choices), minus the "not supported yet" stubs
-       'map_index': MAP_INDEX,
+       'map_index': MAP_INDEX, 'npc_flags': NPC_FLAGS,
        'setting_menu': json.loads(json.dumps([{**pg, 'sections': [{**sc, 'items': [it for it in sc.get('items') or [{'id': i} for i in sc['ids']] if not it.get('stub')]}
                                                                  for sc in pg['sections']]} for pg in SCH['menu']]).replace('Gerudo Training Ground', 'Gerudo Proving Ground'))}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
