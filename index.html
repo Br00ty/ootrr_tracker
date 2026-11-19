@@ -2071,6 +2071,9 @@ const RENAMES = {
   // up the vines on the Lon Lon Ranch tower, adult with the Hookshot (confirmed in game 2026-11-18; the rule
   // is in Seed.withFixes). OOTRR has it in Hyrule Field, child only.
   "HF Tunnel Ledge Chest": { name: "LLR Tower Vines Chest", area: "Lon Lon Ranch" },
+  // a green rupee in the middle of Lake Hylia's Adult Remake Rupees 1-4 (key 4525337806931267688, pinned on the
+  // Lake Hylia map in the game's own data; confirmed in game 2026-11-18). OOTRR files it under Hyrule Field.
+  "Hyrule Field Adult Remake Rupee 1": { name: "Lake Hylia Adult Remake Rupee 5", area: "Lake Hylia" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name

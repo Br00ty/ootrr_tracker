@@ -59,6 +59,7 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | Kak GS Near Gate Guard | Kak GS Tree | (part of the same rotation) |
 | Kak GS House Under Construction | Kak GS Near Gate Guard | (part of the same rotation) |
 | LLR Tower Vines Chest (Lon Lon Ranch) | HF Tunnel Ledge Chest | Up the vines on the Lon Lon Ranch tower; adult with the Hookshot (the tracker's logic says so too; OOTRR has it child only) |
+| Lake Hylia Adult Remake Rupee 5 (Lake Hylia) | Hyrule Field Adult Remake Rupee 1 | A green rupee among Lake Hylia's Adult Remake Rupees 1–4; OOTRR files it under Hyrule Field |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet
