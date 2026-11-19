@@ -2271,8 +2271,16 @@ const OOTRR_FLAGS = {
   "OGC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0056"],
   "DMC Great Fairy Reward": ["HavePlayedEvent.Dm_Title_0100"],
 };
+// Object keys confirmed in real saves for checks OOTRR's data couldn't match to an object (its locations.json
+// "unmatched_oot"). The save keeps the object's key once it's done.
+const OWN_KEYS = {
+  // the scrub outside on the crater's ladder ledge (DeathMountainCrater_Child_Static); OOTRR lists it as the
+  // only remake candidate for this scrub and the three grotto ones. Set when he sold his item, 2026-11-18.
+  "DMC Deku Scrub": ["2518138296199711695"],
+};
 function detectMap() {
   const out = detectMapBase();
+  for (const [n, k] of Object.entries(OWN_KEYS)) out[n] = [{ k }];
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
