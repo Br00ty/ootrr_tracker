@@ -149,6 +149,30 @@ if os.path.exists(_sil):
     for n, ks in re.findall(r'\("([^"]+)",\s*&\[([\d,\s]+)\]\)', open(_sil).read()):
         ks = [k.strip() for k in ks.split(',') if k.strip()]
         if n in checks and not any(r.get('k') for r in det.get(n, [])): det.setdefault(n, []).append({'k': ks})
+# The remake's own spots (OOTRR's free_remake.json and pots_remake.json: rupees, hearts, pots, crates the N64
+# game doesn't have) aren't in the tracker targets, which file their objects under the N64 names instead. Their
+# catalog entries carry the object's hash, which is the key the save sets on pickup (confirmed in a real save:
+# Kokiri Forest Child Remake Rupee 5). Give each its key, and take the key away from any other check, so picking
+# up one spot doesn't tick another.
+_remake = {}
+for _f in ('free_remake.json', 'pots_remake.json'):
+    try: _j = json.load(open(os.path.join(D, _f)))
+    except Exception: continue
+    for _x in (_j.get('locations') if isinstance(_j, dict) else _j) or []:
+        if isinstance(_x, dict) and _x.get('name') and _x.get('refs'): _remake.setdefault(_x['name'], _x)
+_given = 0
+for n, x in _remake.items():
+    if n not in checks or any(r.get('k') for r in det.get(n, [])): continue
+    ks = [str(r['hash']) for r in x['refs'] if r.get('hash')]
+    if not ks: continue
+    for o in list(det):
+        if o == n: continue
+        if not any(k in ks for r in det[o] for k in r.get('k') or []): continue
+        rules = [{**r, 'k': [k for k in r['k'] if k not in ks]} if r.get('k') else r for r in det[o]]
+        rules = [r for r in rules if r.get('k') or {kk: v for kk, v in r.items() if kk != 'k'}]  # drop only rules left empty
+        if rules: det[o] = rules
+        else: del det[o]
+    det.setdefault(n, []).append({'k': ks}); _given += 1
 # The generator writes each location's item into the game objects its catalog (locations.json "refs")
 # names, so that catalog decides which object belongs to which check. tracker_targets only guesses some
 # (57 differ, e.g. Mido's chests, DMT Chest vs DMT Storms Grotto Chest: in a real save the chest on
