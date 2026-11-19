@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from realazk/ootrr 0.7.2:
+// Reading .ootrr seed files, ported from realazk/ootrr 0.7.3:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -230,7 +230,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR's logic (still needed in 0.7.2), where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.7.3), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
