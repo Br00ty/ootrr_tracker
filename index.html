@@ -700,8 +700,9 @@ const Engine = (() => {
     regionList.forEach((r, rid) => {
       for (const [n, base] of Object.entries(r.l || {})) {
         // data.loc_fixes: extra requirements the tracker adds to single locations (see Seed.withFixes)
-        const more = data.loc_fixes && data.loc_fixes[n];
-        const text = more ? `(${base}) and ${more}` : base;
+        // data.loc_rules: a rule the tracker uses instead of OOTRR's, where OOTRR's is wrong for the remake
+        const more = data.loc_fixes && data.loc_fixes[n], own = data.loc_rules && data.loc_rules[n];
+        const text = more ? `(${own || base}) and ${more}` : own || base;
         const rule = cmp.rule(text, { region: r.n, name: n });
         lix.set(n, locs.length); regions[rid].locations.push(locs.length);
         locs.push({ name: n, region: rid, rule, event: null });
@@ -1261,7 +1262,10 @@ const Seed = (() => {
     "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them on every shelf that keeps its normal item (OOTRR only adds these to shuffled shelves), so Bugs from a Potion Shop need a bottle.",
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
+    "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
   ];
+  // rules the tracker uses instead of OOTRR's (confirmed in game)
+  const OWN_RULES = { "HF Tunnel Ledge Chest": "can_use(Hookshot)" };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
@@ -1278,7 +1282,7 @@ const Seed = (() => {
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
     for (const [loc, age] of Object.entries(AGE_ONLY)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${age}` : age;
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
-    return { ...data, helpers, loc_fixes };
+    return { ...data, helpers, loc_fixes, loc_rules: { ...OWN_RULES } };
   }
 
   // a seed stored by an older tracker: recompute what newer versions derive from it
@@ -2059,6 +2063,9 @@ const RENAMES = {
   "Kak GS House Under Construction": { name: "Kak GS Tree" },        // key 7677963516305772491, on the tree
   "Kak GS Tree": { name: "Kak GS Near Gate Guard" },                 // key 11629189455828560791, by the gate guard
   "Kak GS Near Gate Guard": { name: "Kak GS House Under Construction" },  // key 14107117960174262321, at the house
+  // up the vines on the Lon Lon Ranch tower, adult with the Hookshot (confirmed in game 2026-11-18; the rule
+  // is in Seed.withFixes). OOTRR has it in Hyrule Field, child only.
+  "HF Tunnel Ledge Chest": { name: "LLR Tower Vines Chest", area: "Lon Lon Ranch" },
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
@@ -3051,8 +3058,6 @@ const realName = (k) => k.replace(/ @[^@]*$/, "");
 const AGE_FIXES = {
   // the two Know-it-All Brothers' house pots share an object in OOTRR's data; both ages until checked in game
   "KF Know it All House Pot 1": null, "KF Know it All House Pot 2": null,
-  // reachable as adult too in game, though OOTRR's logic and data have it child only; both until OOTRR fixes it
-  "HF Tunnel Ledge Chest": null,
   // Saria only gives her gift to child Link, on the bridge out of the forest
   "LW Gift from Saria": "child",
 };

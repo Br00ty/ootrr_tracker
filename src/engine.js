@@ -453,8 +453,9 @@ const Engine = (() => {
     regionList.forEach((r, rid) => {
       for (const [n, base] of Object.entries(r.l || {})) {
         // data.loc_fixes: extra requirements the tracker adds to single locations (see Seed.withFixes)
-        const more = data.loc_fixes && data.loc_fixes[n];
-        const text = more ? `(${base}) and ${more}` : base;
+        // data.loc_rules: a rule the tracker uses instead of OOTRR's, where OOTRR's is wrong for the remake
+        const more = data.loc_fixes && data.loc_fixes[n], own = data.loc_rules && data.loc_rules[n];
+        const text = more ? `(${own || base}) and ${more}` : own || base;
         const rule = cmp.rule(text, { region: r.n, name: n });
         lix.set(n, locs.length); regions[rid].locations.push(locs.length);
         locs.push({ name: n, region: rid, rule, event: null });

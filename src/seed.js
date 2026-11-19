@@ -242,7 +242,10 @@ const Seed = (() => {
     "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them on every shelf that keeps its normal item (OOTRR only adds these to shuffled shelves), so Bugs from a Potion Shop need a bottle.",
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
+    "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
   ];
+  // rules the tracker uses instead of OOTRR's (confirmed in game)
+  const OWN_RULES = { "HF Tunnel Ledge Chest": "can_use(Hookshot)" };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
@@ -259,7 +262,7 @@ const Seed = (() => {
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
     for (const [loc, age] of Object.entries(AGE_ONLY)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${age}` : age;
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
-    return { ...data, helpers, loc_fixes };
+    return { ...data, helpers, loc_fixes, loc_rules: { ...OWN_RULES } };
   }
 
   // a seed stored by an older tracker: recompute what newer versions derive from it
