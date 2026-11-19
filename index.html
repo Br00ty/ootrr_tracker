@@ -3965,6 +3965,11 @@ const OWN_FLAGS = {
   // confirmed in a real save 2026-11-18: set when the rolling Goron (Goron006) gives child Link his prize,
   // whatever the seed placed there (the get event of the placed item misses a reward placed more than once)
   "GC Rolling Goron as Child": ["GoronCity_GetBombBag_fromGoron006"],
+  // Rauru's reward: OOTRR skips his scene and gives his item at the first Master Sword pull, which "writes
+  // what the Rauru and Sheik scenes write" (story_skip.rs), so his scene Dm_SageRoom_0005 shows as played.
+  // Confirmed in a real save 2026-11-18 (a Gerudo Proving Ground key); OOTRR's rule waits for the Light
+  // Medallion's get event, the vanilla reward.
+  "ToT Reward from Rauru": ["HavePlayedEvent.Dm_SageRoom_0005"],
   // Saria's gift on the bridge: OOTRR's give step (story_skip.rs patch_saria_give) marks the long bridge scene
   // Dm_Kokiri_0150 as played right before her item get. Not Dm_Kokiri_0155, the gift scene: OOTRR sets that one on
   // every new game with the rest of the skipped story (start_state.rs), so the gift looked collected from the start.
