@@ -1274,12 +1274,16 @@ const Seed = (() => {
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
+    "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
   const OWN_RULES = {
     "HF Tunnel Ledge Chest": "can_use(Hookshot)",
     // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
     "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
+    // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
+    "DMC Central Local Remake Rupee 1": "can_use(Hookshot)",
+    "DMC Central Local Remake Rupee 4": "can_use(Hookshot)",
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
