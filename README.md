@@ -69,6 +69,9 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | HF Fairy Pond Rupee 7 (Hyrule Field) | Lake Hylia Child Remake Rupee 4 | (same ring) |
 | HF Fairy Pond Rupee 8 (Hyrule Field) | Lake Hylia Child Remake Rupee 1 | (same ring) |
 | HF Fairy Pond Rupee 9 (Hyrule Field) | Lake Hylia Child Remake Rupee 2 | (same ring) |
+| HF East Rupee Grotto Rupee 1 (Hyrule Field) | Lake Hylia Remake Rupee 3 | Three of a cluster of seven rupees by Hyrule Field's east rupee grotto (the other four aren't randomized); OOTRR files them under Lake Hylia |
+| HF East Rupee Grotto Rupee 2 (Hyrule Field) | Lake Hylia Remake Rupee 2 | (same cluster) |
+| HF East Rupee Grotto Rupee 3 (Hyrule Field) | Lake Hylia Remake Rupee 1 | (same cluster) |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet

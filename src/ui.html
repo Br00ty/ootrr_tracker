@@ -301,6 +301,12 @@ const RENAMES = {
   "Lake Hylia Child Remake Rupee 4": { name: "HF Fairy Pond Rupee 7", area: "Hyrule Field" },  // west
   "Lake Hylia Child Remake Rupee 1": { name: "HF Fairy Pond Rupee 8", area: "Hyrule Field" },  // northwest
   "Lake Hylia Child Remake Rupee 2": { name: "HF Fairy Pond Rupee 9", area: "Hyrule Field" },  // middle
+  // three of a cluster of seven rupees in Hyrule Field, by the east rupee grotto (objects and pins are in Hyrule
+  // Field; confirmed in game 2026-11-18). OOTRR files them under Lake Hylia; the other four (keys 16437715071442568790,
+  // 2314514470754031061, 13785854691967032815, 5620885265123329978) are in its unmatched_remake list, so never shuffled.
+  "Lake Hylia Remake Rupee 3": { name: "HF East Rupee Grotto Rupee 1", area: "Hyrule Field" },  // key 15135356131305809944, northeast
+  "Lake Hylia Remake Rupee 2": { name: "HF East Rupee Grotto Rupee 2", area: "Hyrule Field" },  // key 14398093248612909712, southeast
+  "Lake Hylia Remake Rupee 1": { name: "HF East Rupee Grotto Rupee 3", area: "Hyrule Field" },  // key 7268667473541116466, middle
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
