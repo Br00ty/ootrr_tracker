@@ -1104,6 +1104,15 @@ const PIN_FIXES = {
   "Graveyard Dampe Race High Rupee Chest": { place: "Graveyard", u: 0.356, v: 0.3203 },
   "Graveyard Dampe Race Hookshot Chest": { place: "Graveyard", u: 0.3544, v: 0.3181 },
   "Graveyard Dampe Race Low Rupee Chest": { place: "Graveyard", u: 0.3544, v: 0.3249 },
+  // the race rupees, beside the race's chests (the race is down Dampe's grave, off the map)
+  "Graveyard Dampe Race Rupee 1": { place: "Graveyard", u: 0.3605, v: 0.3181 },
+  "Graveyard Dampe Race Rupee 2": { place: "Graveyard", u: 0.362, v: 0.3181 },
+  "Graveyard Dampe Race Rupee 3": { place: "Graveyard", u: 0.3635, v: 0.3181 },
+  "Graveyard Dampe Race Rupee 4": { place: "Graveyard", u: 0.365, v: 0.3181 },
+  "Graveyard Dampe Race Rupee 5": { place: "Graveyard", u: 0.3605, v: 0.3215 },
+  "Graveyard Dampe Race Rupee 6": { place: "Graveyard", u: 0.362, v: 0.3215 },
+  "Graveyard Dampe Race Rupee 7": { place: "Graveyard", u: 0.3635, v: 0.3215 },
+  "Graveyard Dampe Race Rupee 8": { place: "Graveyard", u: 0.365, v: 0.3215 },
   "Graveyard Freestanding PoH": { place: "Graveyard", u: 0.2594, v: 0.3317 },
   "Graveyard Heart Piece Grave Chest": { place: "Graveyard", u: 0.4061, v: 0.4746 },
   "Graveyard Shield Grave Chest": { place: "Graveyard", u: 0.5239, v: 0.5284 },
@@ -2293,6 +2302,12 @@ const OOTRR_FLAGS = {
 // "unmatched_oot"). The save keeps the object's key once it's done.
 // the Lost Woods ledge chest's flag belongs to KF West Ledge Chest (confirmed in game), not the grotto's chest
 const DROP_FLAGS = { "LW Near Shortcuts Grotto Chest": ["IsTreasureBoxOpen.17479747339356189279"] };
+// Pools: checks whose save keys OOTRR knows only as a group (locations.json "pool"), so they tick by count:
+// Rupee i is ticked once any i of the keys are set. Confirmed in game 2026-11-18 (all 8 race rupees, one race).
+const POOL_KEYS = {
+  "Graveyard Dampe Race Rupee": ["12976212884789503099", "17177665557365847615", "1718356088455579946", "2669035957658688527",
+    "3236392495739397075", "4184471392680640567", "8404733154085657768", "8987278980043647768"],
+};
 const OWN_KEYS = {
   // the scrub outside on the crater's ladder ledge (DeathMountainCrater_Child_Static); OOTRR lists it as the
   // only remake candidate for this scrub and the three grotto ones. Set when he sold his item, 2026-11-18.
@@ -2301,6 +2316,7 @@ const OWN_KEYS = {
 function detectMap() {
   const out = detectMapBase();
   for (const [n, k] of Object.entries(OWN_KEYS)) out[n] = [{ k }];
+  for (const [base, k] of Object.entries(POOL_KEYS)) for (let i = 1; i <= k.length; i++) if (DATA.checks[`${base} ${i}`]) out[`${base} ${i}`] = [{ k, n: i }];
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];

@@ -67,10 +67,11 @@ const Auto = (() => {
   }
 
   // tracker/rules.rs: a check is found when any of its flags is set, or any of its keys is in the key list
+  // a rule {k, n} is a pool: ticked once at least n of its keys are set (spots whose keys can't be told apart)
   function checks(p, detect) {
     const out = new Set();
     for (const [name, rules] of Object.entries(detect)) {
-      if (rules.some((r) => (r.f && r.f.some((f) => p.on(f))) || (r.k && r.k.some((k) => p.keys.has(k))))) out.add(name);
+      if (rules.some((r) => (r.f && r.f.some((f) => p.on(f))) || (r.k && (r.n ? r.k.filter((k) => p.keys.has(k)).length >= r.n : r.k.some((k) => p.keys.has(k)))))) out.add(name);
     }
     return out;
   }
