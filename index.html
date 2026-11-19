@@ -1263,9 +1263,14 @@ const Seed = (() => {
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
+    "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
-  const OWN_RULES = { "HF Tunnel Ledge Chest": "can_use(Hookshot)" };
+  const OWN_RULES = {
+    "HF Tunnel Ledge Chest": "can_use(Hookshot)",
+    // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
+    "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
+  };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
@@ -2174,6 +2179,8 @@ const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Po
 if (!S.fixes) S.fixes = {};
 // KF West Ledge Chest had a pin moved to the wrong spot (by the pond); back to the game's own position
 if (!S.fixes.kfWestLedgePin) { if (S.pinFix) delete S.pinFix["KF West Ledge Chest"]; S.fixes.kfWestLedgePin = 1; }
+// the grotto chest was ticked by the KF West Ledge Chest's flag; undo that once (only an auto tick)
+if (!S.fixes.lwGrottoChest) { if (S.auto) delete S.auto.done["LW Near Shortcuts Grotto Chest"]; S.fixes.lwGrottoChest = 1; }
 if (!S.fixes.saria0150) { if (S.auto) delete S.auto.done["LW Gift from Saria"]; if (S.ignore) delete S.ignore["LW Gift from Saria"]; S.fixes.saria0150 = 1; }
 // OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
 if (S.settings && typeof S.settings.shuffle_dungeon_rewards === "boolean") S.settings.shuffle_dungeon_rewards = S.settings.shuffle_dungeon_rewards ? "anywhere" : "vanilla";
@@ -2786,6 +2793,8 @@ const PIN_FIXES = {
   "KF Know it All House Pot 1": { place: "KokiriForest", u: 0.2655, v: 0.4923 },
   "KF Know it All House Pot 2": { place: "KokiriForest", u: 0.2685, v: 0.4923 },
   "LW Gift from Saria": { place: "KokiriForest", u: 0.15, v: 0.376 },  // on the bridge out of the forest
+  // where the chest really is: the Lost Woods ledge object opened in game (2026-11-18)
+  "KF West Ledge Chest @Lost Woods": { place: "LostWood", u: 0.3615, v: 0.753 },
   "KF Links House Cow": { place: "KokiriForest", u: 0.3756, v: 0.6394 },
   "KF Midos Bottom Left Chest": { place: "KokiriForest", u: 0.3469, v: 0.3814 },
   "KF Midos Bottom Right Chest": { place: "KokiriForest", u: 0.3469, v: 0.3792 },
@@ -3046,6 +3055,8 @@ const AGES = new Map();
 // under "<check> @<area>"). The Spirit Temple's two hand chests sit outside, on the Colossus.
 const MAP_ALSO = {
   "Desert Colossus": ["Spirit Temple Silver Gauntlets Chest", "Spirit Temple Mirror Shield Chest"],
+  // the chest is on a Lost Woods ledge at the forest's west edge; the Kokiri Forest pin stays too
+  "Lost Woods": ["KF West Ledge Chest"],
 };
 const pinKey = (c) => c.pk || c.n;
 // Dungeon checks that also show on another floor's map, at the same spot (a dungeon's floors share one frame):
@@ -4018,6 +4029,9 @@ const OWN_FLAGS = {
   "Market Bombchu Bowling Second Prize": ["MiniGame_BombchuBowling_ClearThirdTime"],
 };
 const EXTRA_FLAGS = {
+  // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
+  // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
+  "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
   // boss Heart Containers: the save keeps no mark of the pickup itself (its key isn't stored), so the
   // boss being beaten stands in for it; the heart appears when the boss falls
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss", "InsideTheDekuTree_Heart_Container_Obtained"],
@@ -4059,6 +4073,8 @@ const OOTRR_FLAGS = {
 };
 // Object keys confirmed in real saves for checks OOTRR's data couldn't match to an object (its locations.json
 // "unmatched_oot"). The save keeps the object's key once it's done.
+// the Lost Woods ledge chest's flag belongs to KF West Ledge Chest (confirmed in game), not the grotto's chest
+const DROP_FLAGS = { "LW Near Shortcuts Grotto Chest": ["IsTreasureBoxOpen.17479747339356189279"] };
 const OWN_KEYS = {
   // the scrub outside on the crater's ladder ledge (DeathMountainCrater_Child_Static); OOTRR lists it as the
   // only remake candidate for this scrub and the three grotto ones. Set when he sold his item, 2026-11-18.
@@ -4070,6 +4086,11 @@ function detectMap() {
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
+  // flags OOTRR's data gives the wrong check: taken off it (a rule left with nothing is dropped)
+  for (const [n, f] of Object.entries(DROP_FLAGS)) if (out[n]) {
+    out[n] = out[n].map((r) => (r.f ? { ...r, f: r.f.filter((x) => !f.includes(x)) } : r)).filter((r) => !r.f || r.f.length || r.k || r.g);
+    if (!out[n].length) delete out[n];
+  }
   return out;
 }
 function detectMapBase() {

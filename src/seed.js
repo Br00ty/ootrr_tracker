@@ -243,9 +243,14 @@ const Seed = (() => {
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
+    "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
-  const OWN_RULES = { "HF Tunnel Ledge Chest": "can_use(Hookshot)" };
+  const OWN_RULES = {
+    "HF Tunnel Ledge Chest": "can_use(Hookshot)",
+    // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
+    "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
+  };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
