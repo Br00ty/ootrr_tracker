@@ -60,6 +60,15 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | Kak GS House Under Construction | Kak GS Near Gate Guard | (part of the same rotation) |
 | LLR Tower Vines Chest (Lon Lon Ranch) | HF Tunnel Ledge Chest | Up the vines on the Lon Lon Ranch tower; adult with the Hookshot (the tracker's logic says so too; OOTRR has it child only) |
 | Lake Hylia Adult Remake Rupee 5 (Lake Hylia) | Hyrule Field Adult Remake Rupee 1 | A green rupee among Lake Hylia's Adult Remake Rupees 1–4; OOTRR files it under Hyrule Field |
+| HF Fairy Pond Rupee 1 (Hyrule Field) | LH Lab Child Remake Rupee 3 | A ring of eight child rupees round one in the middle by a Hyrule Field fairy pond; OOTRR files them under Lake Hylia and the Lake Hylia Lab |
+| HF Fairy Pond Rupee 2 (Hyrule Field) | Lake Hylia Child Remake Rupee 5 | (same ring) |
+| HF Fairy Pond Rupee 3 (Hyrule Field) | LH Lab Child Remake Rupee 2 | (same ring) |
+| HF Fairy Pond Rupee 4 (Hyrule Field) | LH Lab Child Remake Rupee 1 | (same ring) |
+| HF Fairy Pond Rupee 5 (Hyrule Field) | Lake Hylia Child Remake Rupee 3 | (same ring) |
+| HF Fairy Pond Rupee 6 (Hyrule Field) | Lake Hylia Child Remake Rupee 6 | (same ring) |
+| HF Fairy Pond Rupee 7 (Hyrule Field) | Lake Hylia Child Remake Rupee 4 | (same ring) |
+| HF Fairy Pond Rupee 8 (Hyrule Field) | Lake Hylia Child Remake Rupee 1 | (same ring) |
+| HF Fairy Pond Rupee 9 (Hyrule Field) | Lake Hylia Child Remake Rupee 2 | (same ring) |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet

@@ -289,6 +289,18 @@ const RENAMES = {
   // a green rupee in the middle of Lake Hylia's Adult Remake Rupees 1-4 (key 4525337806931267688, pinned on the
   // Lake Hylia map in the game's own data; confirmed in game 2026-11-18). OOTRR files it under Hyrule Field.
   "Hyrule Field Adult Remake Rupee 1": { name: "Lake Hylia Adult Remake Rupee 5", area: "Lake Hylia" },
+  // a ring of eight child rupees round one in the middle by a Hyrule Field fairy pond (all 9 objects are in
+  // HyruleField_Child_Dynamic; confirmed in game 2026-11-18, 7 picked up). OOTRR files them under Lake Hylia and
+  // the LH Lab with guessed names. Numbered clockwise from the north, the middle one last.
+  "LH Lab Child Remake Rupee 3": { name: "HF Fairy Pond Rupee 1", area: "Hyrule Field" },  // north
+  "Lake Hylia Child Remake Rupee 5": { name: "HF Fairy Pond Rupee 2", area: "Hyrule Field" },  // northeast
+  "LH Lab Child Remake Rupee 2": { name: "HF Fairy Pond Rupee 3", area: "Hyrule Field" },  // east
+  "LH Lab Child Remake Rupee 1": { name: "HF Fairy Pond Rupee 4", area: "Hyrule Field" },  // southeast
+  "Lake Hylia Child Remake Rupee 3": { name: "HF Fairy Pond Rupee 5", area: "Hyrule Field" },  // south
+  "Lake Hylia Child Remake Rupee 6": { name: "HF Fairy Pond Rupee 6", area: "Hyrule Field" },  // southwest
+  "Lake Hylia Child Remake Rupee 4": { name: "HF Fairy Pond Rupee 7", area: "Hyrule Field" },  // west
+  "Lake Hylia Child Remake Rupee 1": { name: "HF Fairy Pond Rupee 8", area: "Hyrule Field" },  // northwest
+  "Lake Hylia Child Remake Rupee 2": { name: "HF Fairy Pond Rupee 9", area: "Hyrule Field" },  // middle
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
