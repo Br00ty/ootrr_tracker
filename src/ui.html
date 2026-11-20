@@ -526,14 +526,22 @@ function doorOf(dungeon) {
   return null;
 }
 const entrancesShuffled = () => Object.entries(LAYOUT).some(([a, b]) => a !== b);
+// Checks the tracker leaves out for now, even when a seed lists them: OOTRR's data names them but nobody has found
+// the thing in the game. Take a name out of here once it's found (and give it its save key if it lacks one).
+const HIDDEN_CHECKS = new Set([
+  // 2026-11-19: the remake's Jabu Jabu has no crates (the user's research). OOTRR's two "crates" are objects in
+  // Jabu's room 17 with no item named and region graded "guess" (keys 16293430382336788523, 621843243819307036).
+  "Jabu Jabus Belly Main Remake Crate 1",
+  "Jabu Jabus Belly Before Boss Remake Crate 1",
+]);
 // With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
 function trackedNames() {
   // checks the seed hands out at new game (skipped child Zelda story) aren't in the world
-  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !(S.seed.skipped || []).includes(n));
+  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !(S.seed.skipped || []).includes(n));
   // without a seed: the locations OOTRR would shuffle with the manual settings
   const pool = Seed.poolOf(manualVals(), DATA), skip = skippedList();
-  if (pool) return [...pool].filter((n) => DATA.checks[n] && !skip.includes(n));
-  return DATA.classic.filter((n) => S.cats[catOf(DATA.checks[n][1])]);
+  if (pool) return [...pool].filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !skip.includes(n));
+  return DATA.classic.filter((n) => !HIDDEN_CHECKS.has(n) && S.cats[catOf(DATA.checks[n][1])]);
 }
 function compute() {
   ensureWorlds();
