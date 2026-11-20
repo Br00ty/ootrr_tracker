@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from realazk/ootrr 0.7.3:
+// Reading .ootrr seed files, ported from ootrando/ootrr 0.8.0:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -65,7 +65,10 @@ const Seed = (() => {
   const enabled = (s, vals) => (s.deps || []).every((d) => d.on in vals && holds(d, vals[d.on]));
 
   // Schema::decode
-  function decodeSettings(text, schema) {
+  // Choice lists a setting had before 0.8, which a settings string's choice numbers point into
+  // (0.8 dropped Kokiri Forest's Closed Deku and Kakariko's old Closed, and renamed Zelda's Letter to Closed)
+  const OLD_CHOICES = { open_forest: ["open", "closed_deku", "closed"], open_kakariko: ["open", "closed", "closed"] };
+  function decodeSettings(text, schema, legacy) {
     const m = /^OOTRR(\d+)-(.*)$/i.exec(text.trim());
     if (!m) throw new Error("the settings string must start with OOTRR and a version");
     if (m[1] !== "1") throw new Error(`settings string version ${m[1]} is newer than this tracker understands`);
@@ -86,7 +89,7 @@ const Seed = (() => {
       let v;
       switch (s.kind) {
         case "toggle": v = p.take(1)[0] === 1; break;
-        case "choice": { const i = Number(p.varint()); v = s.choices[i]; if (v === undefined) { warn.push(`${s.id}: unknown choice ${i}`); continue; } break; }
+        case "choice": { const i = Number(p.varint()); v = (legacy && OLD_CHOICES[s.id] || s.choices)[i]; if (v === undefined) { warn.push(`${s.id}: unknown choice ${i}`); continue; } break; }
         case "number": v = unzig(p.varint()); break;
         case "multi": { const c = Number(p.varint()); v = []; for (let i = 0; i < c; i++) { const x = s.choices[Number(p.varint())]; if (x !== undefined) v.push(x); } break; }
         case "list": { const c = Number(p.varint()); v = []; for (let i = 0; i < c; i++) { const l = Number(p.varint()); v.push(new TextDecoder().decode(p.take(l))); } break; }
@@ -94,13 +97,15 @@ const Seed = (() => {
       }
       vals[s.id] = v;
     }
+    // door_gate.rs legacy(): the old Open Door of Time toggle becomes Door of Time = Open
+    if (vals.open_door_of_time === true) { vals.open_door_of_time = false; vals.door_of_time_condition = "open"; }
     // Schema::normalize: a setting whose dependency does not hold takes its off value
     for (const s of schema) if (!enabled(s, vals)) vals[s.id] = "disabled" in s ? s.disabled : s.default;
     return { vals, warn };
   }
 
   // settings/list.rs RETIRED: settings OOTRR has removed, which older seeds still carry (0.6.2)
-  const RETIRED = { 55: "Remake chests", 59: "Shop prices", 60: "Shop price max", 61: "Shop price min", 62: "Shop deal items", 63: "Shop deal gear", 92: "Remake only pots" };
+  const RETIRED = { 106: "Short item get text", 130: "Special encounters", 55: "Remake chests", 59: "Shop prices", 60: "Shop price max", 61: "Shop price min", 62: "Shop deal items", 63: "Shop deal gear", 92: "Remake only pots" };
   // one plain note for the retired settings a seed carries, in place of a line each
   function retiredNote(warn, generator) {
     const old = warn.filter((w) => w.startsWith("retired:")).map((w) => w.slice(8));
@@ -110,11 +115,12 @@ const Seed = (() => {
   }
 
   // slice/support.rs Plan::logic, with the pieces it reads (open_world.rs, qol.rs, pot_slice/plan.rs …)
-  function logicSwitches(v) {
+  // legacy: a seed made before 0.8 (see isLegacy), whose logic had none of 0.8's new switches
+  function logicSwitches(v, legacy) {
     const out = [];
     if (v.open_forest === "closed_deku") out.push(["open_forest", "closed_deku"]);
     if (v.open_forest === "open") out.push(["open_forest", "open"]);
-    if (v.open_door_of_time === true) out.push(["open_door_of_time", "open"]);
+    if (doorOpen(v)) out.push(["open_door_of_time", "open"]);
     if (["any_dungeon", "keysanity", "overworld", "regional"].includes(v.shuffle_smallkeys))
       for (const k of ["fire_key_layout", "water_key_layout", "spirit_key_layout"]) out.push([k, "shuffled"]);
     if (v.bombchus_in_logic === true) out.push(["free_bombchu_drops", "true"]);
@@ -142,7 +148,29 @@ const Seed = (() => {
     if (v.shuffle_ganon_bosskey === "lacs_dungeons") { out.push(["lacs_condition", "dungeons"]); out.push(["lacs_rewards", String(Math.max(1, Math.min(9, +(v.lacs_rewards ?? 9))))]); }
     if (v.bridge === "dungeons") { out.push(["bridge", "dungeons"]); out.push(["bridge_rewards", String(Math.max(0, Math.min(9, +(v.bridge_rewards ?? 9))))]); }
     if (rewards && v.shuffle_potion_shop === true) out.push(["potion_shop_checks", "on"]);
+    if (legacy) return out;
+    // 0.8 open_world.rs Opts::logic: Skip Epona's race (on by default) and the Gerudo Fortress choice
+    if (v.skip_epona_race !== false) out.push(["skip_epona_race", "1"]);
+    if (v.gerudo_fortress === "fast" || v.gerudo_fortress === "open") out.push(["gerudo_fortress", v.gerudo_fortress]);
+    // 0.8 ganon_trials.rs Trials::logic: any n of the six trials (Skip = 0)
+    const trials = v.skip_ganon_trials === true ? 0 : Math.max(0, Math.min(6, +(v.trials ?? 6)));
+    if (trials !== 6) out.push(["trials", String(trials)]);
+    // 0.8 door_gate.rs Opts::logic (read with the door's open flag from open_world.rs Gates::read)
+    const open = doorOpen(v), cond = v.door_of_time_condition || "vanilla";
+    const only = !open && cond === "song", own = open || only;
+    const need = own ? (v.door_of_time_escape ?? "moat") : cond;
+    if (need === "stones") out.push(["door_of_time_condition", "stones"]);
+    if (own && (v.door_of_time_escape ?? "moat") === "moat") out.push(["door_of_time_escape", "moat"]);
+    if (only) out.push(["open_door_of_time", "sot"]);
+    else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", "stones"]);
     return out;
+  }
+  // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
+  function doorOpen(v) { return v.open_door_of_time === true || v.door_of_time_condition === "open"; }
+  // seeds from before 0.8 keep the switches their own version used (the generator line reads "ootrr-core 0.7.3")
+  function isLegacy(generator) {
+    const m = /(\d+)\.(\d+)\.(\d+)/.exec(String(generator || ""));
+    return !!m && (+m[1] === 0 && +m[2] < 8);
   }
 
   // logic_val: spec() sets each switch as an integer when it parses as one, otherwise as text
@@ -160,7 +188,9 @@ const Seed = (() => {
     for (const key of PATCHED) {
       if (have.has(key)) continue;
       const p = (data.patches || {})[key] || {};
-      if (Object.values(p).some((d) => Object.keys(d.l || {}).some((l) => l in placements))) { const i = key.indexOf("="); out.push([key.slice(0, i), key.slice(i + 1)]); }
+      // only locations the patch adds count: 0.8 shop deals can fill Potion Shop shelves the base logic already has
+      const base = new Set((data.regions || []).flatMap((r) => Object.keys(r.l || {})));
+      if (Object.values(p).some((d) => Object.keys(d.l || {}).some((l) => l in placements && !base.has(l)))) { const i = key.indexOf("="); out.push([key.slice(0, i), key.slice(i + 1)]); }
     }
     return out;
   }
@@ -178,6 +208,8 @@ const Seed = (() => {
     for (const id of v.starting_items || []) for (const [n, c] of table[`starting_items:${id}`] || []) out[n] = Math.max(out[n] || 0, c);
     for (const id of v.starting_songs || []) for (const [n, c] of table[`starting_songs:${id}`] || []) out[n] = (out[n] || 0) + c;
     if (typeof v.starting_hearts === "number" && v.starting_hearts > 3) out["Piece of Heart"] = (v.starting_hearts - 3) * 4;
+    // 0.8 slice/support.rs plan(): an open Gerudo Fortress starts with the Membership Card
+    if (v.gerudo_fortress === "open") for (const [n, c] of table["starting_items:gerudo_card"] || []) out[n] = Math.max(out[n] || 0, c);
     return out;
   }
 
@@ -196,8 +228,9 @@ const Seed = (() => {
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
-    const { vals, warn } = decodeSettings(j.settings, data.schema);
-    const sw = withPlacedPatches(logicSwitches(vals), j.placements, data);
+    const legacy = isLegacy(j.generator);
+    const { vals, warn } = decodeSettings(j.settings, data.schema, legacy);
+    const sw = withPlacedPatches(logicSwitches(vals, legacy), j.placements, data);
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
@@ -230,7 +263,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR's logic (still needed in 0.7.3), where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.8.0), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
@@ -283,7 +316,11 @@ const Seed = (() => {
   // a seed stored by an older tracker: recompute what newer versions derive from it
   function refresh(sd, data) {
     if (!sd || !sd.vals || !sd.placements) return sd;
-    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+    // read the settings string again with this version's schema (a stored seed keeps the values its
+    // tracker version read, which can use choices OOTRR has since renamed)
+    const legacy = isLegacy(sd.generator);
+    if (sd.settingsString) try { sd = { ...sd, vals: decodeSettings(sd.settingsString, data.schema, legacy).vals }; } catch (e) { /* keep the stored values */ }
+    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals, legacy), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
   // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what
@@ -330,6 +367,6 @@ const Seed = (() => {
     }
     return set;
   }
-  return { enabled, poolOf, kakarikoSkip, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

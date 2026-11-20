@@ -1,4 +1,4 @@
-// Save reading for the OOTRR tracker, ported from realazk/ootrr:
+// Save reading for the OOTRR tracker, ported from OOTRR (ootrando/ootrr):
 // crates/core/src/murmur.rs, tracker/peek.rs, tracker/rules.rs and tracker/grid.rs.
 const Auto = (() => {
   "use strict";

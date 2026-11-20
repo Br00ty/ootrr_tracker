@@ -266,7 +266,7 @@ if POOLS:
     _order = sorted((k, si, _at[(sh['shop'], sl)]) for si, sh in enumerate(_sh['shops']) if sh.get('deals') for k, sl in enumerate(sh['deal_order']))
     POOLS['deals'] = {'order': [[k, n] for k, si, n in _order]}
     if os.path.exists('tools/out/deal_room.json'): POOLS['deals'] |= json.load(open('tools/out/deal_room.json'))
-schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
+schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'step', 'times', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
 # Map pins: OOTRR's map index, cut down to what the Map Tracker uses ({pins: hash -> [[map, u, v, floor, tray,
 # x, z]], caps: map -> [x, z, size], floors: map -> {min, ys}}), so players don't need OOTRR's folder for them.

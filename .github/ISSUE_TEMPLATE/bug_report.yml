@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         Thanks for reporting! The more of this you fill in, the faster it can be fixed.
-        If the bug is about the randomizer itself (the seed or the game, not this tracker), please report it to [OOTRR](https://github.com/realazk/ootrr/issues) instead.
+        If the bug is about the randomizer itself (the seed or the game, not this tracker), please report it to [OOTRR](https://github.com/ootrando/ootrr/issues) instead.
 
   - type: dropdown
     id: kind
