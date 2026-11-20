@@ -344,18 +344,39 @@ const Seed = (() => {
     // spots, which other settings change (measured per setting with "4 special deals", tools/deal_room.py)
     const lv = /^deals_(\d)$/.exec(v.shuffle_shops || "") || (v.shuffle_shops === "random" ? [0, "4"] : null);
     if (lv && P.deals && P.deals.delta) {
-      let room = P.deals.base;
+      // 0.8 shops/rules.rs room: the data holds what the room is made of, [any_n, once_n, left, dear, stacks]
+      // (deal_room.py), added up over the settings; the room is worked out from them as OOTRR does.
+      // Data from before 0.8 holds the room itself as one number.
+      let room;
+      const add = (acc, x) => { if (Array.isArray(acc)) x.forEach((y, i) => (acc[i] += y)); else acc += x || 0; return acc; };
+      let raw = Array.isArray(P.deals.base) ? P.deals.base.slice() : P.deals.base;
       for (const s of data.schema) {
         const d = P.deals.delta[s.id], x = v[s.id];
         if (!d || x === undefined || !enabled(s, v)) continue;
         const ks = Array.isArray(x) ? x.map((i) => JSON.stringify([i])) : JSON.stringify(x) === JSON.stringify(s.default) ? [] : [JSON.stringify(x)];
-        for (const k of ks) room += d[k] || 0;
+        for (const k of ks) if (d[k] !== undefined) raw = add(raw, d[k]);
       }
-      for (const [k, n] of P.deals.order) if (k < +lv[1] && room > 0) { set.add(n); room--; }
+      if (Array.isArray(raw)) {
+        const [anyN, onceN, left, dear, stacks] = raw.map((x) => Math.max(0, x));
+        const spare = (n) => Math.max(0, n - Math.max(3, Math.floor(n / (dear ? 2 : 3))));
+        const any = Math.min(spare(anyN), left);
+        room = [any, stacks ? spare(onceN) : Math.min(spare(onceN), Math.max(0, left - any))];
+      } else room = [raw, 0];
+      // shops/layout.rs: a one-keeper shop (shops.json "once") takes a deal from "once" first, then from "any";
+      // the other shops only from "any"
+      const once = new Set(P.deals.once || []);
+      for (const [k, n] of P.deals.order) {
+        if (k >= +lv[1]) continue;
+        if (once.has(n) && room[1] > 0) { set.add(n); room[1]--; } else if (room[0] > 0) { set.add(n); room[0]--; }
+      }
     }
     // slice/support.rs plan(): the Bean Merchant sells a shuffled item only with Shuffle Merchants on Bean
     // Merchant Only or All and Skip Planting Beans on (a pair of settings, which the one-setting deltas can't see)
     if (["beans", "all"].includes(v.shuffle_merchants) && v.plant_beans === true && data.checks["ZR Magic Bean Salesman"]) set.add("ZR Magic Bean Salesman");
+    // 0.8 slice/pick.rs: the Kokiri Sword chest joins only while overworld chests are shuffled, and the two
+    // Ocarinas only while NPC rewards are (pairs again: each delta was measured with the other setting at its default)
+    if (!["all", "overworld"].includes(v.shuffle_chests)) set.delete("KF Kokiri Sword Chest");
+    if (v.shuffle_rewards !== "supported") for (const n of ["LW Gift from Saria", "HF Ocarina of Time Item"]) set.delete(n);
     // junk_spots.rs: in "matched" skulltula shuffle the unsure skulltulas take only junk, so they join only when
     // enough other shuffled locations hold junk a skulltula can drop (the measured "matched" delta has them out)
     if (P.unsure_skulls && v.shuffle_skulltulas === "matched") {

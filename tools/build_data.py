@@ -264,7 +264,8 @@ if POOLS:
     _sh = json.load(open(os.path.join(D, 'shops.json')))
     _at = {(x['shop'], x['slot']): x['name'] for x in _sh['slots']}
     _order = sorted((k, si, _at[(sh['shop'], sl)]) for si, sh in enumerate(_sh['shops']) if sh.get('deals') for k, sl in enumerate(sh['deal_order']))
-    POOLS['deals'] = {'order': [[k, n] for k, si, n in _order]}
+    # 0.8: shops with one keeper (the potion shops, "once") take deals from their own room first (shops/layout.rs)
+    POOLS['deals'] = {'order': [[k, n] for k, si, n in _order], 'once': sorted({n for k, si, n in _order if _sh['shops'][si].get('once')})}
     if os.path.exists('tools/out/deal_room.json'): POOLS['deals'] |= json.load(open('tools/out/deal_room.json'))
 schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'step', 'times', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
@@ -301,6 +302,12 @@ NPC_FLAGS = npc_flags(os.path.dirname(os.path.abspath(D)))
 if NPC_FLAGS is None:
     try: NPC_FLAGS = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('npc_flags')
     except Exception: NPC_FLAGS = None
+# data/start_presets.json: save flags a setting turns on at new game (0.8: an open Gerudo Fortress plays the
+# carpenters' clear event). The tracker doesn't take those as a check found: [setting, value, [flags]]
+try:
+    START_FLAGS = [[e['setting'], e['value'], [x['name'] for x in e.get('edits', []) if x.get('kind') == 'bool' and x.get('value') is True]]
+                   for e in json.load(open(os.path.join(D, 'start_presets.json')))['presets']]
+except FileNotFoundError: START_FLAGS = []
 if len(sys.argv) > 2: MAP_INDEX = map_index(sys.argv[2])
 else:
     try: MAP_INDEX = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('map_index')
@@ -313,7 +320,7 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
        'tips': json.loads(json.dumps({s['id']: {c['id']: c['tip'] for c in s.get('choices', []) if c.get('tip')} | {'_': s.get('tip', '')} for s in SCH['settings']}).replace('Gerudo Training Ground', 'Gerudo Proving Ground')),
        'setting_groups': SCH['groups'], 'presets': SCH['presets'], 'pools': POOLS,
        # OOTRR's settings menu (pages, sections, its own labels and choices), minus the "not supported yet" stubs
-       'map_index': MAP_INDEX, 'npc_flags': NPC_FLAGS,
+       'map_index': MAP_INDEX, 'npc_flags': NPC_FLAGS, 'start_flags': START_FLAGS,
        'setting_menu': json.loads(json.dumps([{**pg, 'sections': [{**sc, 'items': [it for it in sc.get('items') or [{'id': i} for i in sc['ids']] if not it.get('stub')]}
                                                                  for sc in pg['sections']]} for pg in SCH['menu']]).replace('Gerudo Training Ground', 'Gerudo Proving Ground'))}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))

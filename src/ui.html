@@ -2403,6 +2403,14 @@ function detectMap() {
     out[n] = out[n].map((r) => (r.f ? { ...r, f: r.f.filter((x) => !f.includes(x)) } : r)).filter((r) => !r.f || r.f.length || r.k || r.g);
     if (!out[n].length) delete out[n];
   }
+  // flags a setting sets at new game (data/start_presets.json) say nothing about a check: with an open Gerudo
+  // Fortress the carpenters' clear event has played before you meet the card's guard
+  const vals = S.seed ? S.seed.vals : manualVals(), pre = new Set();
+  for (const [id, val, fl] of DATA.start_flags || []) if (String(vals[id]) === val) fl.forEach((f) => pre.add(f));
+  if (pre.size) for (const n of Object.keys(out)) {
+    out[n] = out[n].map((r) => (r.f && r.f.some((x) => pre.has(x)) ? { ...r, f: r.f.filter((x) => !pre.has(x)) } : r)).filter((r) => !r.f || r.f.length || r.k || r.g);
+    if (!out[n].length) delete out[n];
+  }
   return out;
 }
 function detectMapBase() {
