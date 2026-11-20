@@ -115,6 +115,27 @@ namespace OotrrTracker
                 if (IsOutside(e.Uri)) { e.Cancel = true; OpenOutside(e.Uri); }
             };
 
+            // the tracker page asking to reach the built-in helper on this PC (Chromium's local network
+            // prompt) is allowed without asking; anything personal (camera, mic, location, notifications) isn't
+            core.PermissionRequested += (s, e) =>
+            {
+                Uri u;
+                bool ours = Uri.TryCreate(e.Uri, UriKind.Absolute, out u) && string.Equals(u.Host, Program.Host, StringComparison.OrdinalIgnoreCase);
+                if (!ours) return;
+                switch (e.PermissionKind)
+                {
+                    case CoreWebView2PermissionKind.Camera:
+                    case CoreWebView2PermissionKind.Microphone:
+                    case CoreWebView2PermissionKind.Geolocation:
+                    case CoreWebView2PermissionKind.Notifications:
+                        e.State = CoreWebView2PermissionState.Deny;
+                        break;
+                    default:
+                        e.State = CoreWebView2PermissionState.Allow;
+                        break;
+                }
+            };
+
             // messages from the page: "saves:<folders>" names extra save folders for the helper (a portable
             // Longshot, or saves somewhere else); the helper reads OOTRR_SAVES each time it looks for saves
             core.WebMessageReceived += (s, e) =>
