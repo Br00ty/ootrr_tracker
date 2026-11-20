@@ -1,7 +1,8 @@
 """How many special deals fit, per setting value: OOTRR caps the deal shelves at the number of items that can
 stand on a shelf and still be spared (shops/rules.rs room), which other settings change. Generates a seed with
-"4 special deals" plus each setting value (as pool_matrix.py does) and records the change in the number of deal
-shelves. Writes tools/out/deal_room.json; then run build_data.py.
+"4 special deals" plus each setting value (as pool_matrix.py does) and reads OOTRR's own room for it with the
+deal_room export (0.8: the parts of the room, see below). Writes
+tools/out/deal_room.json; then run build_data.py.
 
     python tools/deal_room.py <path to the ootrr CLI> [work folder]"""
 import json, os, subprocess, sys
@@ -10,6 +11,13 @@ here = os.path.dirname(os.path.abspath(__file__))
 cli = sys.argv[1]
 work = sys.argv[2] if len(sys.argv) > 2 else '/tmp/ootrr_room'
 os.makedirs(work, exist_ok=True)
+# Results are kept between runs to resume an interrupted one, but only for the same CLI build: a work
+# folder left by another OOTRR version (or other jobs) would hand back that version's seeds.
+_st = os.stat(cli); stamp = f"{os.path.abspath(cli)} {_st.st_size} {_st.st_mtime_ns}"
+_sf = os.path.join(work, 'cli.stamp')
+if not os.path.exists(_sf) or open(_sf).read() != stamp:
+    for x in os.listdir(work): os.remove(os.path.join(work, x))
+    open(_sf, 'w').write(stamp)
 S = json.load(open(os.path.join(here, 'out', 'schema.json')))['settings']
 by = {s['id']: s for s in S}
 def deps(s, vals):
@@ -17,7 +25,7 @@ def deps(s, vals):
         o = by[d['on']]
         if 'is' in d: vals[d['on']] = d['is']
         elif 'in' in d: vals[d['on']] = d['in'][0]
-        elif 'not' in d: vals[d['on']] = [c['id'] for c in o['choices'] if c['id'] != d['not']][0]
+        elif 'not' in d: vals[d['on']] = o['default'] if o['default'] != d['not'] else [c['id'] for c in o['choices'] if c['id'] != d['not']][0]
         deps(o, vals)
     return vals
 BASE = {'shuffle_shops': 'deals_4'}
@@ -28,28 +36,37 @@ for s in S:
     elif s['kind'] == 'toggle': vals = [not s['default']]
     else: vals = []
     d = {**deps(s, dict(BASE)), **BASE}  # a setting that depends on shop deals keeps the 4-deal baseline
+    # a setting that needs another one changed is measured against that change alone (as pool_matrix.py does)
+    if d != BASE: jobs.append((f"{s['id']}=DEPS", dict(d)))
     for v in vals: jobs.append((f"{s['id']}={json.dumps(v)}", {**d, s['id']: v}))
 def run(i):
     name, st = jobs[i]
     f = os.path.join(work, str(i))
-    if not os.path.exists(f + '.out'):
-        json.dump({'id': 'v', 'name': 'v', 'tip': 'v', 'order': 99, 'settings': st}, open(f + '.json', 'w'))
+    body = json.dumps({'id': 'v', 'name': 'v', 'tip': 'v', 'order': 99, 'settings': st})
+    if not (os.path.exists(f + '.json') and open(f + '.json').read() == body) or not (os.path.exists(f + '.out')):
+        for x in ('.ootrr', '.err', '.out'):
+            if os.path.exists(f + x): os.remove(f + x)
+        open(f + '.json', 'w').write(body)
         r = subprocess.run([cli, 'generate', f + '.json', '7', f + '.ootrr'], capture_output=True, text=True)
         open(f + '.out', 'w').write(('OK\n' if r.returncode == 0 else 'ERR\n') + r.stdout + r.stderr)
     return f
 with ThreadPoolExecutor(os.cpu_count() or 2) as ex: files = list(ex.map(run, range(len(jobs))))
-r = subprocess.run(['node', '-e', '''
-const Seed = require(process.argv[1]), fs = require("fs"), DATA = JSON.parse(fs.readFileSync(process.argv[2]));
-const out = {};
-for (const f of JSON.parse(process.argv[3])) out[f] = fs.existsSync(f + ".ootrr") && fs.readFileSync(f + ".out", "utf8").startsWith("OK") ? Object.keys(Seed.parseFile(fs.readFileSync(f + ".ootrr"), DATA).placements).filter((n) => DATA.checks[n] && DATA.checks[n][1] === "shop").length : null;
-process.stdout.write(JSON.stringify(out));''', os.path.join(here, '..', 'src', 'seed.js'), os.path.join(here, '..', 'data', 'data.json'), json.dumps(files)], capture_output=True, text=True, check=True)
-got = json.loads(r.stdout)
-n = {jobs[i][0]: got[f] for i, f in enumerate(files)}
+# What OOTRR's room is made of for each seed's settings (tools/ootrr-export/deal_room.rs, built next to the
+# CLI): [any_n, once_n, left, dear, stacks]. These add up across settings much better than the room itself,
+# which Seed.poolOf works out from them as shops/rules.rs room does.
+room = os.path.join(os.path.dirname(os.path.abspath(cli)), 'examples', 'deal_room')
+def measure(f):
+    if not os.path.exists(f + '.ootrr') or not open(f + '.out').read().startswith('OK'): return None
+    r = subprocess.run([room, f + '.ootrr'], capture_output=True, text=True)
+    return [int(x) for x in r.stdout.split()] if r.returncode == 0 else None
+n = {jobs[i][0]: measure(f) for i, f in enumerate(files)}
 base = n['base']
 delta = {}
 for name, c in n.items():
-    if name == 'base' or c is None or c == base: continue
+    if name == 'base' or name.endswith('=DEPS') or c is None: continue
     sid, val = name.split('=', 1)
-    delta.setdefault(sid, {})[val] = c - base
+    ref = n.get(f"{sid}=DEPS") or base
+    if c == ref: continue
+    delta.setdefault(sid, {})[val] = [x - y for x, y in zip(c, ref)]
 json.dump({'base': base, 'delta': delta}, open(os.path.join(here, 'out', 'deal_room.json'), 'w'), indent=0)
 print('base', base, delta)

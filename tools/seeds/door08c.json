@@ -1,0 +1,13 @@
+{
+ "id": "door08c",
+ "name": "0.8 test C",
+ "tip": "test",
+ "order": 99,
+ "settings": {
+  "door_of_time_condition": "open",
+  "door_of_time_escape": "vanilla",
+  "trials": 1,
+  "open_forest": "open",
+  "open_kakariko": "open"
+ }
+}
