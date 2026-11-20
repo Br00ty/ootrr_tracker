@@ -46,6 +46,10 @@ jobs:
           The app reads Longshot/Hookshot and emulator memory and your saves; it never changes them.
           Your progress is kept in %LOCALAPPDATA%\OOTRR Tracker.
           "@ | Set-Content pkg\README.txt
+          foreach ($need in 'OOTRR Tracker.exe', 'web\index.html', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll') {
+            if (-not (Test-Path (Join-Path pkg $need))) { throw "the package is missing $need" }
+          }
+          Get-ChildItem pkg -Recurse -File | ForEach-Object { "{0,10}  {1}" -f $_.Length, $_.FullName.Substring((Resolve-Path pkg).Path.Length + 1) }
           Compress-Archive pkg\* OOTRR-Tracker.zip
 
       - uses: actions/upload-artifact@v4
