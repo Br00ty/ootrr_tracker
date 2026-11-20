@@ -245,6 +245,7 @@ const Seed = (() => {
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
+    "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
   const OWN_RULES = {
@@ -254,6 +255,11 @@ const Seed = (() => {
     // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
     "DMC Central Local Remake Rupee 1": "can_use(Hookshot)",
     "DMC Central Local Remake Rupee 4": "can_use(Hookshot)",
+    // HF East Rupee Grotto Rupee 1-3: in a grotto blown open with an explosive (confirmed in game 2026-11-19);
+    // same rule as OOTRR's other bombable field grottos (HF Southeast / Near Market / Fairy Grotto). OOTRR: True
+    "Lake Hylia Remake Rupee 1": "can_blast_or_smash",
+    "Lake Hylia Remake Rupee 2": "can_blast_or_smash",
+    "Lake Hylia Remake Rupee 3": "can_blast_or_smash",
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
