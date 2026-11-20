@@ -1,5 +1,5 @@
 // Game texture reading for the map tracker: zstd frames, BNTX texture files, Tegra block-linear
-// swizzling and ASTC blocks. The BNTX, swizzle and ASTC parts are ported from realazk/ootrr
+// swizzling and ASTC blocks. The BNTX, swizzle and ASTC parts are ported from OOTRR (ootrando/ootrr)
 // (crates/core/src/tex: bntx.rs, swizzle.rs, surface.rs, astc.rs; GPL-3.0). The zstd part follows the
 // format specification (RFC 8878) and handles frames without a dictionary, which is what the game uses
 // for its map textures.

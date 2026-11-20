@@ -13,6 +13,13 @@ here = os.path.dirname(os.path.abspath(__file__))
 cli = sys.argv[1]
 work = sys.argv[2] if len(sys.argv) > 2 else '/tmp/ootrr_pools'
 os.makedirs(work, exist_ok=True)
+# Results are kept between runs to resume an interrupted one, but only for the same CLI build: a work
+# folder left by another OOTRR version (or other jobs) would hand back that version's seeds.
+_st = os.stat(cli); stamp = f"{os.path.abspath(cli)} {_st.st_size} {_st.st_mtime_ns}"
+_sf = os.path.join(work, 'cli.stamp')
+if not os.path.exists(_sf) or open(_sf).read() != stamp:
+    for x in os.listdir(work): os.remove(os.path.join(work, x))
+    open(_sf, 'w').write(stamp)
 S = json.load(open(os.path.join(here, 'out', 'schema.json')))['settings']
 by = {s['id']: s for s in S}
 
@@ -38,8 +45,11 @@ for s in S:
 def run(i):
     name, st = jobs[i]
     f = os.path.join(work, str(i))
-    if not os.path.exists(f + '.ootrr') and not os.path.exists(f + '.err'):
-        json.dump({'id': 'v', 'name': 'v', 'tip': 'v', 'order': 99, 'settings': st}, open(f + '.json', 'w'))
+    body = json.dumps({'id': 'v', 'name': 'v', 'tip': 'v', 'order': 99, 'settings': st})
+    if not (os.path.exists(f + '.json') and open(f + '.json').read() == body) or not (os.path.exists(f + '.ootrr') or os.path.exists(f + '.err')):
+        for x in ('.ootrr', '.err', '.out'):
+            if os.path.exists(f + x): os.remove(f + x)
+        open(f + '.json', 'w').write(body)
         r = subprocess.run([cli, 'generate', f + '.json', '7', f + '.ootrr'], capture_output=True, text=True)
         if r.returncode: open(f + '.err', 'w').write((r.stdout + r.stderr).strip().splitlines()[-1])
     return f

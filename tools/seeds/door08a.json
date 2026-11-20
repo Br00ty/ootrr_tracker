@@ -1,0 +1,17 @@
+{
+ "id": "door08a",
+ "name": "0.8 test A",
+ "tip": "test",
+ "order": 99,
+ "settings": {
+  "door_of_time_condition": "song",
+  "door_of_time_escape": "stones",
+  "trials": 3,
+  "gerudo_fortress": "fast",
+  "skip_epona_race": false,
+  "shuffle_kokiri_sword": true,
+  "shuffle_ocarinas": true,
+  "fairy_prices": "cheap",
+  "shuffle_potion_shop": true
+ }
+}

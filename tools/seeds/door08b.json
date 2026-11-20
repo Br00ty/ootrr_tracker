@@ -1,0 +1,15 @@
+{
+ "id": "door08b",
+ "name": "0.8 test B",
+ "tip": "test",
+ "order": 99,
+ "settings": {
+  "door_of_time_condition": "stones",
+  "door_of_time_song": false,
+  "skip_ganon_trials": true,
+  "gerudo_fortress": "open",
+  "open_forest": "open",
+  "shuffle_kokiri_sword": false,
+  "shuffle_ocarinas": false
+ }
+}
