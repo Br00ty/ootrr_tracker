@@ -294,6 +294,7 @@ const Seed = (() => {
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
+    "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -321,6 +322,11 @@ const Seed = (() => {
     // Zora River itself (OOTRR: ZR Front, before the boulders, which is open from Hyrule Field)
     "ZR GS Tree": "Zora River",
   };
+  // checks that need something more for one age (added to OOTRR's rule)
+  const AGE_EXTRA = {
+    // 2026-11-21, the user: as child this Skulltula (shown as Spirit Temple GS Statue Room) needs explosives
+    "Spirit Temple GS Sun on Floor Room": "(is_adult or has_explosives)",
+  };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = {
     "GC Rolling Goron as Adult": "is_adult",
@@ -344,6 +350,7 @@ const Seed = (() => {
     const loc_fixes = {};
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
     for (const [loc, age] of Object.entries(AGE_ONLY)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${age}` : age;
+    for (const [loc, r] of Object.entries(AGE_EXTRA)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${r}` : r;
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
     // locations the tracker moves to another region, keeping their rule
     let regions = data.regions;
