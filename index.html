@@ -1323,6 +1323,7 @@ const Seed = (() => {
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
     "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
     "LW Trade Cojiro and LW Trade Odd Potion are adult only: OOTRR's rules are trade events ('Odd Mushroom Access', 'Poachers Saw Access') either age can use once they have happened.",
+    "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
@@ -1364,6 +1365,18 @@ const Seed = (() => {
   };
   // checks that need something more for one age (added to OOTRR's rule)
   const AGE_EXTRA = {
+    // 2026-11-21, the user: an adult trade check is only in logic once you have (or had) the trade item you hand in
+    // there. OOTRR's rules are 'X Access' events the logic gets from the vanilla chain, so a later trade showed as
+    // reachable before its item was found. The Pocket Cucco hatches from the Pocket Egg (one tracker item).
+    "Kak Anju Trade Pocket Cucco": "Pocket_Egg",
+    "LW Trade Cojiro": "Cojiro",
+    "Kak Granny Trade Odd Mushroom": "Odd_Mushroom",
+    "LW Trade Odd Potion": "Odd_Potion",
+    "GV Trade Poachers Saw": "Poachers_Saw",
+    "DMT Trade Broken Sword": "Broken_Sword",
+    "ZD Trade Prescription": "Prescription",
+    "LH Trade Eyeball Frog": "Eyeball_Frog",
+    "DMT Trade Eyedrops": "Eyedrops",
     // 2026-11-21, the user: as child this Skulltula (shown as Spirit Temple GS Statue Room) needs explosives
     "Spirit Temple GS Sun on Floor Room": "(is_adult or has_explosives)",
   };
