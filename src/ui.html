@@ -2450,6 +2450,12 @@ function detectMap() {
   }
   return out;
 }
+// The adult trade quest with "shuffle_trade_checks" (OOTRR flow_extra/trade.rs): the chain items can't move, so each
+// hand in still gives its vanilla trade item and then the shuffled item once. The vanilla item's get event is the
+// tracker target and still fires (seen 2026-11-21: Anju as Adult gave the Pocket Egg and the seed's Rupees (5)),
+// so these keep OOTRR's rule instead of looking for the placed item.
+const TRADE_KEEP = new Set(["Kak Anju as Adult", "Kak Anju Trade Pocket Cucco", "LW Trade Cojiro", "Kak Granny Trade Odd Mushroom",
+  "LW Trade Odd Potion", "GV Trade Poachers Saw", "DMT Trade Broken Sword", "ZD Trade Prescription", "LH Trade Eyeball Frog", "DMT Trade Eyedrops"]);
 function detectMapBase() {
   if (!S.seed) return { ...DATA.detect };
   const placed = S.seed.placements, copies = {};
@@ -2458,7 +2464,7 @@ function detectMapBase() {
   for (const [n, rules] of Object.entries(DATA.detect)) {
     out[n] = rules.map((r) => {
       const item = placed[n];
-      if (!item || !(r.g || r.c)) return r;
+      if (!item || !(r.g || r.c) || TRADE_KEEP.has(n)) return r;
       // a shuffled cow: its own one-time event, unless it still gives Milk (tracker/seed.rs cow_rule)
       if (DATA.cow_flags[n]) return item === "Milk" ? r : { f: [DATA.cow_flags[n]] };
       if (!r.g) return r;
