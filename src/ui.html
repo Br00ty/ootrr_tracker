@@ -548,24 +548,32 @@ const HIDDEN_CHECKS = new Set([
   "Jabu Jabus Belly Before Boss Remake Crate 1",
 ]);
 // With a seed, the checks are exactly its shuffled locations. Without one, the kinds ticked in Settings.
+// Excluded locations (OOTRR's disabled_locations setting) only ever hold junk, so the tracker leaves them out
+function excludedSet() {
+  const v = S.seed ? S.seed.vals : manualVals();
+  return new Set((v && Array.isArray(v.disabled_locations)) ? v.disabled_locations : []);
+}
 function trackedNames() {
+  const ex = excludedSet();
   // checks the seed hands out at new game (skipped child Zelda story) aren't in the world
-  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !(S.seed.skipped || []).includes(n));
+  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !(S.seed.skipped || []).includes(n));
   // without a seed: the locations OOTRR would shuffle with the manual settings
   const pool = Seed.poolOf(manualVals(), DATA), skip = skippedList();
-  if (pool) return [...pool].filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !skip.includes(n));
-  return DATA.classic.filter((n) => !HIDDEN_CHECKS.has(n) && S.cats[catOf(DATA.checks[n][1])]);
+  if (pool) return [...pool].filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !skip.includes(n));
+  return DATA.classic.filter((n) => !HIDDEN_CHECKS.has(n) && !ex.has(n) && S.cats[catOf(DATA.checks[n][1])]);
 }
 function compute() {
   ensureWorlds();
   const names = trackedNames();
   // skipped checks hold nothing in the world: their items are starting items
   const tracked = new Set([...names, ...skippedList()]);
+  // excluded locations are shuffled (with junk): they must not get their vanilla item in the logic either
+  const excluded = excludedSet();
   const res = worlds.map((w) => {
     // Locations the seed does not shuffle keep their vanilla item, which the logic collects once reachable.
     const place = new Array(w.locs.length).fill(null);
     w.locs.forEach((l, k) => {
-      if (l.event !== null || tracked.has(l.name)) return;
+      if (l.event !== null || tracked.has(l.name) || excluded.has(l.name)) return;
       const v = DATA.vanilla[l.name];
       if (v !== undefined) { const i = w.items.find(v); if (i !== undefined) place[k] = i; }
     });
@@ -581,7 +589,7 @@ function compute() {
   const out = new Map();
   // song spots the seed doesn't shuffle: not checks, but the map still shows them (with their vanilla song)
   VSONGS = new Map();
-  const vsongs = Object.keys(DATA.checks).filter((n) => DATA.checks[n][1] === "song" && !tracked.has(n));
+  const vsongs = Object.keys(DATA.checks).filter((n) => DATA.checks[n][1] === "song" && !tracked.has(n) && !excluded.has(n));
   for (const n of [...names, ...vsongs]) {
     const [a, k] = DATA.checks[n];
     const c = { n, a, k };

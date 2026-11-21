@@ -287,6 +287,7 @@ const Seed = (() => {
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
     "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
+    "LW Trade Cojiro and LW Trade Odd Potion are adult only: OOTRR's rules are trade events ('Odd Mushroom Access', 'Poachers Saw Access') either age can use once they have happened.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
@@ -325,6 +326,10 @@ const Seed = (() => {
     "GC Rolling Goron as Adult": "is_adult",
     // confirmed by the user 2026-11-21: Anju hands over the Pocket Cucco to adult Link only (OOTRR: 'Cojiro Access')
     "Kak Anju Trade Pocket Cucco": "is_adult",
+    // confirmed by the user 2026-11-21: both Lost Woods trades are adult only (OOTRR: 'Odd Mushroom Access' and
+    // 'Poachers Saw Access', events either age can use once they happened)
+    "LW Trade Cojiro": "is_adult",
+    "LW Trade Odd Potion": "is_adult",
   };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
   // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
