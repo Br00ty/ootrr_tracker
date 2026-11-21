@@ -308,6 +308,14 @@ try:
     START_FLAGS = [[e['setting'], e['value'], [x['name'] for x in e.get('edits', []) if x.get('kind') == 'bool' and x.get('value') is True]]
                    for e in json.load(open(os.path.join(D, 'start_presets.json')))['presets']]
 except FileNotFoundError: START_FLAGS = []
+# 0.8.1 first_pickups.rs: Skip first pickup text marks each listed pickup's get event as shown at new game
+_fp = [os.path.join(D, '..', 'randomizer', 'core', 'src', 'first_pickups.rs')]
+for _p in _fp:
+    if os.path.exists(_p):
+        _t = open(_p).read()
+        _set = re.search(r'pub const SETTING: &str = "([^"]+)"', _t).group(1)
+        _list = re.search(r'pub const PICKUPS: \[&str; \d+\] = \[(.*?)\];', _t, re.S).group(1)
+        START_FLAGS.append([_set, 'true', ['HavePlayedGetEvent.' + x for x in re.findall(r'"([^"]+)"', _list)]])
 if len(sys.argv) > 2: MAP_INDEX = map_index(sys.argv[2])
 else:
     try: MAP_INDEX = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('map_index')

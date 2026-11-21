@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from ootrando/ootrr 0.8.0:
+// Reading .ootrr seed files, ported from ootrando/ootrr 0.8.1:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -68,7 +68,7 @@ const Seed = (() => {
   // Choice lists a setting had before 0.8, which a settings string's choice numbers point into
   // (0.8 dropped Kokiri Forest's Closed Deku and Kakariko's old Closed, and renamed Zelda's Letter to Closed)
   const OLD_CHOICES = { open_forest: ["open", "closed_deku", "closed"], open_kakariko: ["open", "closed", "closed"] };
-  function decodeSettings(text, schema, legacy) {
+  function decodeSettings(text, schema, legacy, gen) {
     const m = /^OOTRR(\d+)-(.*)$/i.exec(text.trim());
     if (!m) throw new Error("the settings string must start with OOTRR and a version");
     if (m[1] !== "1") throw new Error(`settings string version ${m[1]} is newer than this tracker understands`);
@@ -78,7 +78,7 @@ const Seed = (() => {
     const h = murmur(body, 0x4f4f5452), tag = ((h ^ (h >>> 16)) & 0xffff);
     if (((all[all.length - 2] << 8) | all[all.length - 1]) !== tag) throw new Error("the settings string checksum does not match");
     const byNum = new Map(schema.map((s) => [s.num, s]));
-    const vals = {}, warn = [];
+    const vals = {}, warn = [], given = {};
     for (const s of schema) vals[s.id] = s.wire;
     const r = new Rd(body);
     while (!r.done()) {
@@ -95,10 +95,12 @@ const Seed = (() => {
         case "list": { const c = Number(p.varint()); v = []; for (let i = 0; i < c; i++) { const l = Number(p.varint()); v.push(new TextDecoder().decode(p.take(l))); } break; }
         default: warn.push(`${s.id}: unknown kind ${s.kind}`); continue;
       }
-      vals[s.id] = v;
+      vals[s.id] = v; given[s.id] = true;
     }
     // door_gate.rs legacy(): the old Open Door of Time toggle becomes Door of Time = Open
-    if (vals.open_door_of_time === true) { vals.open_door_of_time = false; vals.door_of_time_condition = "open"; }
+    // (0.8.1: only when the string doesn't also choose a Door of Time; older generators always moved it)
+    const chosen = !before(gen, [0, 8, 1]) && Object.prototype.hasOwnProperty.call(given, "door_of_time_condition");
+    if (vals.open_door_of_time === true) { vals.open_door_of_time = false; if (!chosen) vals.door_of_time_condition = "open"; }
     // Schema::normalize: a setting whose dependency does not hold takes its off value
     for (const s of schema) if (!enabled(s, vals)) vals[s.id] = "disabled" in s ? s.disabled : s.default;
     return { vals, warn };
@@ -116,7 +118,8 @@ const Seed = (() => {
 
   // slice/support.rs Plan::logic, with the pieces it reads (open_world.rs, qol.rs, pot_slice/plan.rs …)
   // legacy: a seed made before 0.8 (see isLegacy), whose logic had none of 0.8's new switches
-  function logicSwitches(v, legacy) {
+  // gen: the seed's generator line, for the few switches that changed meaning between 0.8 versions
+  function logicSwitches(v, legacy, gen) {
     const out = [];
     if (v.open_forest === "closed_deku") out.push(["open_forest", "closed_deku"]);
     if (v.open_forest === "open") out.push(["open_forest", "open"]);
@@ -162,15 +165,21 @@ const Seed = (() => {
     if (need === "stones") out.push(["door_of_time_condition", "stones"]);
     if (own && (v.door_of_time_escape ?? "moat") === "moat") out.push(["door_of_time_escape", "moat"]);
     if (only) out.push(["open_door_of_time", "sot"]);
-    else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", "stones"]);
+    // Song of Time not required: 0.8.1 opens the door as soon as the requirement is met ("req"); 0.8.0 opened it
+    // after Zelda's escape ("stones", the requirement plus the castle garden)
+    else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", before(gen, [0, 8, 1]) ? "stones" : "req"]);
     return out;
   }
   // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
   function doorOpen(v) { return v.open_door_of_time === true || v.door_of_time_condition === "open"; }
   // seeds from before 0.8 keep the switches their own version used (the generator line reads "ootrr-core 0.7.3")
-  function isLegacy(generator) {
+  function isLegacy(generator) { return before(generator, [0, 8, 0]); }
+  // whether a seed's generator ("ootrr-core 0.8.0") is older than version v; no version reads as current
+  function before(generator, v) {
     const m = /(\d+)\.(\d+)\.(\d+)/.exec(String(generator || ""));
-    return !!m && (+m[1] === 0 && +m[2] < 8);
+    if (!m) return false;
+    for (let i = 0; i < 3; i++) if (+m[i + 1] !== v[i]) return +m[i + 1] < v[i];
+    return false;
   }
 
   // logic_val: spec() sets each switch as an integer when it parses as one, otherwise as text
@@ -229,8 +238,8 @@ const Seed = (() => {
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
     const legacy = isLegacy(j.generator);
-    const { vals, warn } = decodeSettings(j.settings, data.schema, legacy);
-    const sw = withPlacedPatches(logicSwitches(vals, legacy), j.placements, data);
+    const { vals, warn } = decodeSettings(j.settings, data.schema, legacy, j.generator);
+    const sw = withPlacedPatches(logicSwitches(vals, legacy, j.generator), j.placements, data);
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
@@ -263,7 +272,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR's logic (still needed in 0.8.0), where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.8.1), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
@@ -319,8 +328,8 @@ const Seed = (() => {
     // read the settings string again with this version's schema (a stored seed keeps the values its
     // tracker version read, which can use choices OOTRR has since renamed)
     const legacy = isLegacy(sd.generator);
-    if (sd.settingsString) try { sd = { ...sd, vals: decodeSettings(sd.settingsString, data.schema, legacy).vals }; } catch (e) { /* keep the stored values */ }
-    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals, legacy), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+    if (sd.settingsString) try { sd = { ...sd, vals: decodeSettings(sd.settingsString, data.schema, legacy, sd.generator).vals }; } catch (e) { /* keep the stored values */ }
+    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals, legacy, sd.generator), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
   // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what
@@ -388,6 +397,6 @@ const Seed = (() => {
     }
     return set;
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;
