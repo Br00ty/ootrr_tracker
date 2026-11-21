@@ -292,6 +292,7 @@ const Seed = (() => {
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
+    "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -310,6 +311,8 @@ const Seed = (() => {
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
+    // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
+    "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
   };
   // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
   const MOVE_REGION = {
