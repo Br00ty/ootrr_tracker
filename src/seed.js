@@ -1,4 +1,4 @@
-// Reading .ootrr seed files, ported from ootrando/ootrr 0.8.1:
+// Reading .ootrr seed files, ported from ootrando/ootrr 0.8.2:
 // settings/seed.rs (file), settings/codec.rs + settings/string.rs (settings string), settings/state.rs
 // (dependencies), slice/support.rs Plan::logic (which logic switches a seed turns on), start_items/give.rs.
 const Seed = (() => {
@@ -107,7 +107,7 @@ const Seed = (() => {
   }
 
   // settings/list.rs RETIRED: settings OOTRR has removed, which older seeds still carry (0.6.2)
-  const RETIRED = { 106: "Short item get text", 130: "Special encounters", 55: "Remake chests", 59: "Shop prices", 60: "Shop price max", 61: "Shop price min", 62: "Shop deal items", 63: "Shop deal gear", 92: "Remake only pots" };
+  const RETIRED = { 127: "Zora's Domain ambush", 128: "Bean Seller's sales pitch", 106: "Short item get text", 130: "Special encounters", 55: "Remake chests", 59: "Shop prices", 60: "Shop price max", 61: "Shop price min", 62: "Shop deal items", 63: "Shop deal gear", 92: "Remake only pots" };
   // one plain note for the retired settings a seed carries, in place of a line each
   function retiredNote(warn, generator) {
     const old = warn.filter((w) => w.startsWith("retired:")).map((w) => w.slice(8));
@@ -168,6 +168,8 @@ const Seed = (() => {
     // Song of Time not required: 0.8.1 opens the door as soon as the requirement is met ("req"); 0.8.0 opened it
     // after Zelda's escape ("stones", the requirement plus the castle garden)
     else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", before(gen, [0, 8, 1]) ? "stones" : "req"]);
+    // 0.8.2 prelude_gate.rs: Prelude Trigger = Classic, Sheik teaches the Prelude once you hold the Forest Medallion
+    if (v.prelude_trigger === "classic") out.push(["prelude_medallion", "true"]);
     return out;
   }
   // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
@@ -272,7 +274,7 @@ const Seed = (() => {
     return lay;
   }
 
-  // Corrections the tracker makes to OOTRR's logic (still needed in 0.8.1), where it lets you do something the game doesn't.
+  // Corrections the tracker makes to OOTRR's logic (still needed in 0.8.2), where it lets you do something the game doesn't.
   // vals: the seed's (or manual) setting values. Returns a copy of data for Engine.buildWorld.
   //  1. Shops left vanilla: OOTRR adds a shop item's own requirements (a bottle for potions, fish, bugs,
   //     Poes, fairies and Blue Fire; a wallet for the price; its bomb rule for Bombchus) only when shops are
