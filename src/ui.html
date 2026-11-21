@@ -2519,7 +2519,11 @@ function applyPeek(p, label) {
   // than you collected. Small keys: the save holds the keys you have now, so each rise from one read
   // to the next is a key picked up and adds to the count; a drop is a key spent and is ignored.
   const held = (S.auto.held ||= {});
-  for (let [n, v] of Object.entries(Auto.items(p))) {
+  const silverItems = new Set(SILVER.map(([, , it]) => it));
+  for (let [n, v] of Object.entries(Auto.items(p, { silverShuffled: silverShuffled() }))) {
+    // silver rupees: the save's flags are permanent, so its count stands as read (an older read may have
+    // counted the room's own flags, which the rupees on the old spots set when they're shuffled)
+    if (silverItems.has(n)) { S.auto.items[n] = Math.min(v, 5); continue; }
     if (n === "Big Poes Sold") v = Math.min(v, bigPoes());
     const cur = S.auto.items[n] || 0;
     let got = Math.max(cur, v);
