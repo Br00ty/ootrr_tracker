@@ -4148,6 +4148,9 @@ const OWN_FLAGS = {
   // the bottle in Lake Hylia: its pickup tag sets this (OOTRR pickup_packs.json), whatever item it holds; OOTRR has
   // no tracker target for it. Confirmed in a real save 2026-11-18 (set with Ruto's Letter there)
   "LH Underwater Item": ["Get_StoneOfWater_GetRutoLetter"],
+  // the Ocarina of Time in the castle moat: OOTRR's own pickup flag (door_gate.rs PICKED), set however the item
+  // was shuffled. Confirmed in a real save 2026-11-21 (OOTRR's target only looks for the vanilla Ocarina's get event)
+  "HF Ocarina of Time Item": ["HavePlayedEvent.HyruleField_DoorOfTime_GetOcarinaOfTime"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
