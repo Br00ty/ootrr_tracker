@@ -295,6 +295,7 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
+    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens; it needs both ages and nothing else (OOTRR: in the Tektite grotto, Golden Scale or Iron Boots).",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -315,12 +316,16 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus": "True",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
+    // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving)
+    "HF Tektite Grotto Freestanding PoH": "is_child and at('Hyrule Field', is_adult)",
   };
   // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
   const MOVE_REGION = {
     // 2026-11-21, the user: the tree is in Zora's River past the boulders at its entrance, so it needs a way into
     // Zora River itself (OOTRR: ZR Front, before the boulders, which is open from Hyrule Field)
     "ZR GS Tree": "Zora River",
+    // 2026-11-21, the user: shown as HF Present/Past Chest, a chest out in Hyrule Field (not in the Tektite grotto)
+    "HF Tektite Grotto Freestanding PoH": "Hyrule Field",
   };
   // checks that need something more for one age (added to OOTRR's rule)
   const AGE_EXTRA = {
