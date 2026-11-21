@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/ootrando/ootrr),
-  and its data files are embedded (0.8.1). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.8.2). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -364,17 +364,18 @@ const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Hea
 // the Big Poe target for the Market 5 Big Poes check: the logic's big_poe_count (5 in the remake), 1 with big_poe_one
 function bigPoes() { const v = S.seed ? S.seed.vals : manualVals(); return v && v.big_poe_one === true ? 1 : Math.max(1, +DATA.settings.big_poe_count || 5); }
 const maxOf = (m) => (typeof m === "function" ? m() : m);
-// dungeon, small key item, max keys, boss key item
+// dungeon, small key item, max keys, boss key item (keys the remake has: 0.8.2 slice/logic.rs REAL_KEYS gives
+// Water 4, Bottom of the Well 2, Ganon's Castle 1; Shadow has 5 doors in a line)
 const DUNGEONS = [
   ["Forest Temple","Small Key (Forest Temple)",5,"Boss Key (Forest Temple)"],
   ["Fire Temple","Small Key (Fire Temple)",8,"Boss Key (Fire Temple)"],
-  ["Water Temple","Small Key (Water Temple)",6,"Boss Key (Water Temple)"],
+  ["Water Temple","Small Key (Water Temple)",4,"Boss Key (Water Temple)"],
   ["Shadow Temple","Small Key (Shadow Temple)",5,"Boss Key (Shadow Temple)"],
   ["Spirit Temple","Small Key (Spirit Temple)",5,"Boss Key (Spirit Temple)"],
-  ["Bottom of the Well","Small Key (Bottom of the Well)",3,null],
+  ["Bottom of the Well","Small Key (Bottom of the Well)",2,null],
   ["Gerudo Proving Ground","Small Key (Gerudo Training Ground)",9,null],
   ["Thieves' Hideout","Small Key (Thieves Hideout)",4,null],
-  ["Ganon's Castle","Small Key (Ganons Castle)",2,"Boss Key (Ganons Castle)"],
+  ["Ganon's Castle","Small Key (Ganons Castle)",1,"Boss Key (Ganons Castle)"],
 ];
 // The five silver rupee rooms OOTRR can shuffle (slice/silver.rs): five Silver Rupees each open the room.
 // [dungeon, room, item, the spare flags the 1st to 4th set, the flags the 5th sets]
@@ -1798,7 +1799,7 @@ function counter(name, max, step = 1) {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.1 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2154,7 +2155,7 @@ function seedSummary() {
 }
 function openSettings() {
   const body = $("#dlgBody");
-  // where the tracker's logic knowingly differs from OOTRR 0.8.1's (Seed.withFixes)
+  // where the tracker's logic knowingly differs from OOTRR 0.8.2's (Seed.withFixes)
   const fixes = h("details", { style: "margin-top:12px;color:var(--dim);font-size:12px" },
     h("summary", { style: "cursor:pointer" }, "Logic corrections"),
     h("p", { style: "margin:6px 0 4px" }, "The tracker follows OOTRR's logic, except where that logic lets you do something the game doesn't:"),
@@ -2201,7 +2202,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.1 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
@@ -2249,7 +2250,7 @@ function paintSeed() {
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
-    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.1's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
+    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.2's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
   // the X closes the notes for this seed; another seed (or other notes) brings them back
   const b = $("#banner");
