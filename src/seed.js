@@ -284,6 +284,7 @@ const Seed = (() => {
     "Shop items that need a bottle, a bigger wallet or OOTRR's Bombchu rule require them on every shelf that keeps its normal item (OOTRR only adds these to shuffled shelves), so Bugs from a Potion Shop need a bottle.",
     "Bombchus need a Bomb Bag, even with Bombchus in logic (experimental) on.",
     "GC Rolling Goron as Adult is adult only: OOTRR's rule only asks that he was stopped, so it let child collect the prize too.",
+    "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
@@ -308,7 +309,11 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus": "True",
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
-  const AGE_ONLY = { "GC Rolling Goron as Adult": "is_adult" };
+  const AGE_ONLY = {
+    "GC Rolling Goron as Adult": "is_adult",
+    // confirmed by the user 2026-11-21: Anju hands over the Pocket Cucco to adult Link only (OOTRR: 'Cojiro Access')
+    "Kak Anju Trade Pocket Cucco": "is_adult",
+  };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
   // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
   // whether or not shops are shuffled (with shop deals on, most shelves stay vanilla).
