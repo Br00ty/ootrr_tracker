@@ -86,7 +86,8 @@ const Auto = (() => {
   }
 
   // tracker/grid.rs, mapped onto the OoTR logic item names
-  function items(p) {
+  // opt.silverShuffled: the seed shuffles silver rupees, so only OOTRR's spare flags count Silver Rupee items
+  function items(p, opt = {}) {
     const held = (a) => p.on(`IsGet.${a}`) || p.int(`PouchData.${a}.StockNum`) > 0;
     const tier = (list) => { for (let i = list.length - 1; i >= 0; i--) if (held(list[i])) return i + 1; return 0; };
     const one = (...a) => (a.some(held) ? 1 : 0);
@@ -104,9 +105,12 @@ const Auto = (() => {
     set("Magic Meter", mp >= 480 || p.on("IsGet.Item_FairyBless_MPDouble") ? 2 : mp >= 240 || p.on("IsGet.Item_FairyBless_MP") ? 1 : 0);
     // Shuffled silver rupees (OOTRR slice/silver.rs): the 1st to 4th of a room set its spare flags in turn,
     // the 5th sets the flags that open the room (as finishing a vanilla room does). The rooms come from the page (SILVER), when it has them.
+    // With silver rupees shuffled, the room's own flags aren't enough: picking up the rupees that now hang on the
+    // five old spots still sets them (seen 2026-11-21: Bottom of the Well's GetAll/Clear set with none of its four
+    // spare flags), so the 5th Silver Rupee item counts only after the four spare flags. Unshuffled, a solved room is 5.
     for (const [, , it, spare, solved] of (typeof SILVER !== "undefined" ? SILVER : [])) {
-      const n = solved.every((f) => p.on(f)) ? 5 : spare.filter((f) => p.on(f)).length;  // also a vanilla room, solved
-      set(it, n);
+      const k = spare.filter((f) => p.on(f)).length, done = solved.every((f) => p.on(f));
+      out[it] = opt.silverShuffled ? k + (k === spare.length && done ? 1 : 0) : done ? 5 : k;
     }
     const ONE = {
       Boomerang: ["Item_Boomerang"], "Lens of Truth": ["Armor_GlassTruth"], "Megaton Hammer": ["Item_Hammer"],
