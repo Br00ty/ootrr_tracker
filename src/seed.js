@@ -290,6 +290,7 @@ const Seed = (() => {
     "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
+    "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
   const OWN_RULES = {
@@ -307,6 +308,12 @@ const Seed = (() => {
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
+  };
+  // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
+  const MOVE_REGION = {
+    // 2026-11-21, the user: the tree is in Zora's River past the boulders at its entrance, so it needs a way into
+    // Zora River itself (OOTRR: ZR Front, before the boulders, which is open from Hyrule Field)
+    "ZR GS Tree": "Zora River",
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = {
@@ -328,7 +335,18 @@ const Seed = (() => {
     for (const [loc, rule] of Object.entries(data.shop_rules || {})) if (!(placed && loc in placed)) loc_fixes[loc] = rule;
     for (const [loc, age] of Object.entries(AGE_ONLY)) loc_fixes[loc] = loc_fixes[loc] ? `${loc_fixes[loc]} and ${age}` : age;
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
-    return { ...data, helpers, loc_fixes, loc_rules: { ...OWN_RULES } };
+    // locations the tracker moves to another region, keeping their rule
+    let regions = data.regions;
+    if (regions && Object.keys(MOVE_REGION).length) regions = regions.map((r) => {
+      const out = Object.entries(MOVE_REGION).filter(([loc]) => r.l && loc in r.l);
+      const into = Object.entries(MOVE_REGION).filter(([loc, to]) => to === r.n && !(r.l && loc in r.l));
+      if (!out.length && !into.length) return r;
+      const l = { ...(r.l || {}) };
+      for (const [loc] of out) delete l[loc];
+      for (const [loc] of into) { const from = data.regions.find((x) => x.l && loc in x.l); if (from) l[loc] = from.l[loc]; }
+      return { ...r, l };
+    });
+    return { ...data, regions, helpers, loc_fixes, loc_rules: { ...OWN_RULES } };
   }
 
   // a seed stored by an older tracker: recompute what newer versions derive from it
