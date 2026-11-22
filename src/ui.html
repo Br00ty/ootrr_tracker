@@ -8,7 +8,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OOTRR Tracker</title>
+<title>OOTRR Tracker (Nightly)</title>
 <style>
 :root{
   --bg:#14130f; --panel:#1d1b16; --panel2:#262319; --line:#3a3528; --ink:#ece4cf; --dim:#9a917b; --faint:#6b6452;
@@ -219,7 +219,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 </head>
 <body>
 <header>
-  <h1>OOTRR TRACKER<small>OoT Remake randomizer</small></h1>
+  <h1>OOTRR TRACKER<small>OoT Remake randomizer · <b style="color:var(--gold)">NIGHTLY</b> (OOTRR 0.8.3-nightly.20261122.3)</small></h1>
   <div class="stats" id="stats"></div>
   <div class="mode" id="modeBox" title="Switch between the list of locations and the game's maps"></div>
   <div class="spacer"></div>
@@ -253,7 +253,9 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 <script>const DATA = /*DATA*/;</script>
 <script>
 "use strict";
-const KEY = "ootrr-tracker-v1";
+// The nightly page (the nightly branch, served at /nightly/) keeps its own progress, settings and seed, so it never
+// touches the main tracker's (same website, same browser storage).
+const KEY = "ootrr-tracker-nightly-v1";
 // ---------- tracker-only renames ----------
 // Checks the tracker shows under another name or area than OOTRR/OoTR give them, because in the
 // remake they are somewhere else. Only the label and the list they sit in change: the logic, the seed's
@@ -909,10 +911,10 @@ const CAST_SHORT = { "Forest Temple": "Forest", "Fire Temple": "Fire", "Water Te
   "Bottom of the Well": "Well", "Gerudo Proving Ground": "GPG", "Thieves' Hideout": "Hideout", "Ganon's Castle": "Ganon" };
 function openBroadcast() {
   if (BW && !BW.closed) { BW.focus(); return; }
-  BW = window.open("", "ootrr-broadcast", "popup=yes,width=430,height=760");
+  BW = window.open("", "ootrr-broadcast-nightly", "popup=yes,width=430,height=760");
   if (!BW) { $("#dlgBody").replaceChildren(h("h3", {}, "Broadcast view"), h("p", {}, "The browser blocked the new window. Allow pop-ups for this page (the icon at the right end of the address bar), then click Broadcast view again."), h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "OK"))); $("#dlg").showModal(); return; }
   const d = BW.document;
-  d.title = "OOTRR Tracker · Broadcast";
+  d.title = "OOTRR Tracker (Nightly) · Broadcast";
   d.head.replaceChildren(Object.assign(d.createElement("style"), { textContent: CAST_CSS }));
   d.body.replaceChildren();
   BW.addEventListener("beforeunload", () => { BW = null; });
