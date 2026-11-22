@@ -2367,6 +2367,9 @@ const OWN_FLAGS = {
 // Boss rewards: flags set when the reward is taken, added to the placed item's get event (never the boss beaten
 // counters, which count up at the kill: seen 2026-11-22 with King Dodongo and Queen Gohma)
 const BOSS_FLAGS = {
+  // confirmed 2026-11-22 (a Gold Skulltula Token there): Queen Gohma's reward scene, set when the reward is taken
+  // with the blue warp (the Deku Tree's farewell, Dm_Kokiri_0080 on, comes after it)
+  "Queen Gohma": ["HavePlayedEvent.Dm_Deku_0010"],
   // confirmed 2026-11-22 (Prelude of Light there): set when the reward is taken
   "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
   // the same story event for Jabu Jabu, not seen yet
@@ -2378,7 +2381,7 @@ const EXTRA_FLAGS = {
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
   // boss Heart Containers: the save keeps no mark of the pickup itself (its key isn't stored), so the
   // boss being beaten stands in for it; the heart appears when the boss falls
-  // (Queen Gohma's Heart has its own pickup flag, InsideTheDekuTree_Heart_Container_Obtained: see DROP_FLAGS)
+  // Queen Gohma's Heart: its own pickup flag (confirmed 2026-11-22); the kill counter is dropped (DROP_FLAGS)
   "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained"],
   "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
@@ -2434,8 +2437,8 @@ const DROP_FLAGS = {
   // reward is taken (seen 2026-11-22 with King Dodongo). The reward is found by its own flag or by the placed
   // item's get event instead. (The Heart Containers keep the counter: picking one up sets nothing else.)
   "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
-  // Queen Gohma's Heart: the only boss heart with a pickup flag of its own (to confirm in game), so the kill
-  // counter OOTRR gives it is dropped
+  // Queen Gohma's Heart has a pickup flag of its own (confirmed 2026-11-22: InsideTheDekuTree_Heart_Container_Obtained
+  // and the heart's key were set when it was picked up), so the kill counter OOTRR gives it is dropped
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
