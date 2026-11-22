@@ -323,7 +323,7 @@ const Seed = (() => {
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
-    // 2026-11-22, the user: Volvagia showed out of logic with the Boss Key, Hammer, Goron Tunic and Hover Boots
+    // 2026-11-22, confirmed by the user: Volvagia showed out of logic with the Boss Key, Hammer, Goron Tunic and Hover Boots
     // in hand. OOTRR 0.8.2's rebuilt Fire Temple reaches the boss door only from the top floor (all 8 keys, then
     // the Hammer pillar); the original randomizer also lets Hover Boots cross from the first room to the boss door.
     "Fire Temple Near Boss": { "Fire Temple Before Boss": "can_use(Hover_Boots)" },
