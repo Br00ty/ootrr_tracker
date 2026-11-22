@@ -170,11 +170,12 @@ const Seed = (() => {
     else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", before(gen, [0, 8, 1]) ? "stones" : "req"]);
     // 0.8.2 prelude_gate.rs: Prelude Trigger = Classic, Sheik teaches the Prelude once you hold the Forest Medallion
     if (v.prelude_trigger === "classic") out.push(["prelude_medallion", "true"]);
-    if (before(gen, [0, 8, 3])) return out;
-    // 0.8.3 nightly open_world/trade.rs LOGIC: the adult trade items never spoil or revert, always
-    out.push(["disable_trade_revert", "true"]);
-    // 0.8.3 nightly slice/skull_day.rs: Skulltulas by day, the logic no longer waits for night
+    // 0.8.3 nightly slice/skull_day.rs: Skulltulas by day, the logic no longer waits for night (the first nightly,
+    // 20261122.1, has it but still calls itself "ootrr-core 0.8.2", so this isn't gated on the version)
     if (v.skulls_by_day === true) out.push(["gold_skulls_ignore_daytime", "true"]);
+    if (before(gen, [0, 8, 3])) return out;
+    // 0.8.3 nightly (20261122.3) open_world/trade.rs LOGIC: the adult trade items never spoil or revert, always
+    out.push(["disable_trade_revert", "true"]);
     return out;
   }
   // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
@@ -238,6 +239,19 @@ const Seed = (() => {
   }
 
   // settings/seed.rs SeedFile::from_json (the parts the tracker uses)
+  // Seeds from OOTRR 0.8.2 data (0.8.2 itself and the first nightly, 0.8.3-nightly.20261122.1, which still says
+  // "ootrr-core 0.8.2") on a tracker built from the 0.8.3 nightly's data: OOTRR renamed two checks and moved three
+  // pairs of names to each other's objects there. The seed wrote each item to the object its own data named, so
+  // the placements follow the objects: renamed, and swapped where the names swapped.
+  const OLD_DATA_RENAMES = { "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest" };
+  const OLD_DATA_SWAPS = [["Dodongos Cavern GS Alcove Above Stairs", "Dodongos Cavern GS Back Room"], ["Kak GS Tree", "Kak GS House Under Construction"], ["GC Maze Center Chest", "GC Maze Right Chest"]];
+  function upgradePlacements(pl, data) {
+    if (!pl || !Object.keys(OLD_DATA_RENAMES).some((o) => o in pl && !data.checks[o] && data.checks[OLD_DATA_RENAMES[o]])) return pl;
+    const out = {};
+    for (const [n, it] of Object.entries(pl)) out[OLD_DATA_RENAMES[n] && !data.checks[n] ? OLD_DATA_RENAMES[n] : n] = it;
+    for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
+    return out;
+  }
   function parseFile(text, data) {
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
@@ -245,6 +259,7 @@ const Seed = (() => {
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
     const legacy = isLegacy(j.generator);
+    j.placements = upgradePlacements(j.placements, data);
     const { vals, warn } = decodeSettings(j.settings, data.schema, legacy, j.generator);
     const sw = withPlacedPatches(logicSwitches(vals, legacy, j.generator), j.placements, data);
     return {
@@ -404,6 +419,7 @@ const Seed = (() => {
   // a seed stored by an older tracker: recompute what newer versions derive from it
   function refresh(sd, data) {
     if (!sd || !sd.vals || !sd.placements) return sd;
+    sd = { ...sd, placements: upgradePlacements(sd.placements, data) };
     // read the settings string again with this version's schema (a stored seed keeps the values its
     // tracker version read, which can use choices OOTRR has since renamed)
     const legacy = isLegacy(sd.generator);
