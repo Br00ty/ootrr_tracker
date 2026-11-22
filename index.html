@@ -209,6 +209,9 @@ main.mapmode #mapview{display:flex}
 .pin:hover{transform:translate(-50%,-50%) scale(1.25);z-index:3}
 .pin.g{background:var(--green)}.pin.y{background:var(--yellow)}.pin.r{background:var(--red);color:#fff}.pin.done{background:var(--grey);opacity:.75}
 .pin.sel{outline:2px solid var(--gold);outline-offset:2px;z-index:3}
+.linkmark{position:absolute;width:30px;height:30px;margin:-15px 0 0 -15px;z-index:4;pointer-events:auto;transition:left .9s linear,top .9s linear;filter:drop-shadow(0 0 2px #000) drop-shadow(0 0 4px rgba(0,0,0,.6))}
+.linkmark>*{width:100%;height:100%;display:block;transition:transform .3s}
+.linkmark.old{opacity:.6}
 .pinpop{position:absolute;z-index:4;min-width:260px;max-width:360px;background:var(--panel);border:1px solid var(--gold);border-radius:8px;box-shadow:0 4px 18px #000c;max-height:60%;overflow:auto}
 .pinpop .ck{padding:4px 10px}
 .vsong{color:var(--faint);font-size:11px}
@@ -2722,6 +2725,8 @@ const SHARED_ICONS = {
   Item_Medal_Light: ["DataFileImportantIcon_03"], Item_Medal_Forest: ["DataFileImportantIcon_04"], Item_Medal_Fire: ["DataFileImportantIcon_05"],
   Item_Medal_Water: ["DataFileImportantIcon_06"], Item_Medal_Spirit: ["DataFileImportantIcon_07"], Item_Medal_Shadow: ["DataFileImportantIcon_08"],
   Obj_Heart_Piece: ["CollectHeartBase_00"],
+  // the arrow the game's own map draws for Link (MapIconPlayer_00/01/02: black, red, gold; the tracker uses the red one)
+  Map_Player: ["MapIconPlayer_01"],
   Item_Melody_ZeldaLullaby: ["OcarinaMelodyIcon_00"], Item_Melody_EponaSong: ["OcarinaMelodyIcon_01"], Item_Melody_SariaSong: ["OcarinaMelodyIcon_02"],
   Item_Melody_SunSong: ["OcarinaMelodyIcon_03"], Item_Melody_TimeSong: ["OcarinaMelodyIcon_04"], Item_Melody_StormSong: ["OcarinaMelodyIcon_05"],
   Item_Melody_ForestMinuet: ["OcarinaMelodyIcon_07", [112, 214, 110]], Item_Melody_FireBolero: ["OcarinaMelodyIcon_08", [240, 104, 84]],
@@ -3638,6 +3643,8 @@ function renderMap() {
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
     list.length && !noMap ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
+    LINK.pos ? h("button", { class: "btn", style: S.showLink === false ? "" : "border-color:var(--gold);color:var(--gold)", title: "Show where Link is on the map (live with the Longshot helper, or where your last save was made)",
+      onclick: () => { S.showLink = S.showLink === false; render(); } }, S.showLink === false ? "Show Link" : "Link shown") : null,
     DEV && m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
       onclick: () => { S.pinEdit = !S.pinEdit; pinPlace = null; pinOpen = null; render(); } }, S.pinEdit ? "Done editing" : "Edit pins") : null,
     h("button", { class: "btn", onclick: () => { iconMsg = ""; mapMsg = ""; iconView = "main"; openIcons(); } }, nMaps() ? "Maps" : "Load maps"));
@@ -3705,8 +3712,44 @@ function pinGroups(key, list) {
   }
   return groups;
 }
+// ---------- Link on the map ----------
+// Where Link is: live from the Longshot helper every second, or where the last save read put him. Shown on the
+// map of the area he's in (and, in a dungeon, on his floor) with the arrow the game's own map uses.
+const LINK = { map: "", pos: null, head: 0, live: false };
+function linkSpot(area, key) {
+  if (S.showLink === false || !LINK.pos || !key || !W.where) return null;
+  const fl = FLOOR_KEY.exec(key), place = fl ? fl[1] : key.replace(/_(Child|Adult)$/, "");
+  const livePlace = (LINK.map || "").replace(/_(Child|Adult)$/, "");
+  if (fl) { if (W.where !== area || W.floor !== fl[2]) return null; }
+  else if (W.where !== area && livePlace !== place) return null;
+  const c = capOf(place);
+  if (!c) return null;
+  const u = 0.5 + (LINK.pos[0] - c[0]) / c[2], v = 0.5 + ((LINK.pos[2] - c[1]) / c[2]) * (2000 / 1440);
+  return u < -0.02 || u > 1.02 || v < -0.02 || v > 1.02 ? null : [u, v];
+}
+const LINK_SVG = '<svg viewBox="0 0 32 32"><path d="M16 2 L28 29 L16 22 L4 29 Z" fill="#c8202a" stroke="#f6e7c1" stroke-width="2.5" stroke-linejoin="round"/></svg>';
+function linkMark(spot) {
+  const el = h("div", { class: `linkmark ${LINK.live ? "" : "old"}`, title: LINK.live ? "Link (live)" : "Link, where the last save was made" });
+  if (PICS.Map_Player) el.append(h("img", { src: PICS.Map_Player, alt: "Link" })); else el.innerHTML = LINK_SVG;
+  setLink(el, spot);
+  return el;
+}
+function setLink(el, [u, v]) {
+  el.style.left = `${u * 100}%`; el.style.top = `${v * 100}%`;
+  el.firstChild.style.transform = `rotate(${LINK.head || 0}deg)`;
+  el.classList.toggle("old", !LINK.live);
+}
+// move the marker on the open map without redrawing it (each live read)
+function placeLink() {
+  const fit = document.querySelector("#mapview .mapfit[data-key]");
+  if (!fit) return;
+  const spot = linkSpot(fit.dataset.area, fit.dataset.key), el = fit.querySelector(".linkmark");
+  if (!spot) { if (el) el.remove(); return; }
+  if (el) setLink(el, spot); else fit.append(linkMark(spot));
+}
 function mapWithPins(area, key, list) {
-  const fit = h("div", { class: "mapfit" }, h("img", { src: mapUrl(key), alt: `Map of ${area}`, draggable: "false" }));
+  const fit = h("div", { class: "mapfit", "data-area": area, "data-key": key }, h("img", { src: mapUrl(key), alt: `Map of ${area}`, draggable: "false" }));
+  { const spot = linkSpot(area, key); if (spot) fit.append(linkMark(spot)); }
   if (!PIN_AREAS.has(area)) return fit;
   const place = key.replace(/_(Child|Adult)$/, "");
   const at = (e) => { const r = fit.getBoundingClientRect(); return [Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)), Math.min(1, Math.max(0, (e.clientY - r.top) / r.height))]; };
@@ -4612,8 +4655,16 @@ function applyPeek(p, label) {
 }
 // Where Link is (a game map name and his position, from a save or live from memory): the area and
 // the dungeon floor he's in. Returns true when the tracker's view moved.
-function followLink(map, pos, child) {
+function followLink(map, pos, child, live) {
   const area = Auto.areaOf(map, DATA.maps, pos);
+  // Link on the map: his position, and the way he last moved (the helper doesn't read his facing): the heading
+  // turns once he has gone half a unit, so standing still keeps the last one
+  if (pos) {
+    const o = LINK.pos, d = o && LINK.map === map ? Math.hypot(pos[0] - o[0], pos[2] - o[2]) : 0;
+    if (d > 0.5) LINK.head = (Math.atan2(pos[0] - o[0], -(pos[2] - o[2]) * (2000 / 1440)) * 180) / Math.PI;
+    if (!o || LINK.map !== map || d > 0.5) LINK.pos = pos;
+    LINK.map = map; LINK.live = !!live;
+  }
   const before = `${S.area}|${S.mapAge}|${JSON.stringify(S.floor)}`;
   W.where = area || ""; W.child = !!child;
   // follow the area, not the map: Lake Hylia and Lon Lon Ranch share the Hyrule Field map
@@ -4629,7 +4680,9 @@ function followLink(map, pos, child) {
   if (S.follow && fl && fk !== lastFloor) S.floor[area] = fl;
   lastFloor = fk;
   lastMap = area || "";
-  return before !== `${S.area}|${S.mapAge}|${JSON.stringify(S.floor)}`;
+  const moved = before !== `${S.area}|${S.mapAge}|${JSON.stringify(S.floor)}`;
+  if (!moved) placeLink();
+  return moved;
 }
 
 async function newestSave(dir) {
@@ -4898,7 +4951,7 @@ async function livePoll() {
       LIVE.where = !!(st.map && st.pos);
       if (LIVE.where) {
         const k = `${st.map}|${st.pos.map((x) => Math.round(x)).join(",")}|${st.child}`;
-        if (k !== LIVE.whereKey) { LIVE.whereKey = k; if (followLink(st.map, st.pos, st.child)) changed = true; }
+        if (k !== LIVE.whereKey) { LIVE.whereKey = k; if (followLink(st.map, st.pos, st.child, true)) changed = true; }
       }
     }
     // items and Link's area: from the save, each time the game writes it
