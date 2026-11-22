@@ -2495,8 +2495,10 @@ const EXTRA_FLAGS = {
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
   // King Dodongo's Heart: its pickup left no mark in the save (2026-11-22), so the boss being beaten stands in for
   // it, then the placed item's count (BOSS_HEART_WAIT). Gohma's and Bongo Bongo's have pickup marks (DROP_FLAGS).
-  // Queen Gohma's Heart: its own pickup flag (confirmed 2026-11-22); the kill counter is dropped (DROP_FLAGS)
-  "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained"],
+  // Queen Gohma's Heart: its own pickup flag when the heart is there (confirmed 2026-11-22 with Bombs (20)), but with
+  // a Gold Skulltula Token in its place the pickup set no flag and no known key (2026-11-22, nightly seed), so the
+  // kill counter stands in too and the heart waits for the placed item's count (BOSS_HEART_WAIT)
+  "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained", "DefeatedEnemyNum.Enemy_DungeonBoss_Gohma"],
   "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
   "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
@@ -2545,9 +2547,6 @@ const DROP_FLAGS = {
   // reward is taken (seen 2026-11-22 with King Dodongo). The reward is found by its own flag or by the placed
   // item's get event instead. (The Heart Containers keep the counter: picking one up sets nothing else.)
   "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
-  // Queen Gohma's Heart has a pickup flag of its own (confirmed 2026-11-22: InsideTheDekuTree_Heart_Container_Obtained
-  // and the heart's key were set when it was picked up), so the kill counter OOTRR gives it is dropped
-  "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
   // Bongo Bongo's Heart ticked at the kill (2026-11-22); it's detected by its pickup key (OWN_KEYS)
   "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
 
@@ -2644,7 +2643,7 @@ for (const n of SHIELDS) MAX[n] = 1;  // each shield is a tier of the Shield (ha
 const DROP_KINDS = new Set(["crate", "pot", "hive", "rock", "grass"]);
 // Boss Hearts whose pickup leaves no mark in the save (King Dodongo's and Volvagia's set nothing, 2026-11-22): they
 // tick like a drop, on the boss beaten counter and then the placed item's count rising (junk ticks at the kill)
-const BOSS_HEART_WAIT = new Set(["Dodongos Cavern King Dodongo Heart", "Jabu Jabus Belly Barinade Heart", "Forest Temple Phantom Ganon Heart",
+const BOSS_HEART_WAIT = new Set(["Deku Tree Queen Gohma Heart", "Dodongos Cavern King Dodongo Heart", "Jabu Jabus Belly Barinade Heart", "Forest Temple Phantom Ganon Heart",
   "Fire Temple Volvagia Heart", "Water Temple Morpha Heart", "Spirit Temple Twinrova Heart"]);
 const DROP_JUNK = /^(Rupees? \(|Recovery Heart|Arrows \(|Bombs \(|Bombchus \(|Deku (Nuts|Seeds|Stick|Sticks) \(|Nothing|Fairy|Bugs|Magic Jar|Ice Trap)|Drop$/;
 function dropItem(n) {
