@@ -4658,13 +4658,16 @@ function applyPeek(p, label) {
 }
 // Where Link is (a game map name and his position, from a save or live from memory): the area and
 // the dungeon floor he's in. Returns true when the tracker's view moved.
-function followLink(map, pos, child, live) {
+function followLink(map, pos, child, live, rot) {
   const area = Auto.areaOf(map, DATA.maps, pos);
   // Link on the map: his position, and the way he last moved (the helper doesn't read his facing): the heading
   // turns once he has gone half a unit, so standing still keeps the last one
   if (pos) {
     const o = LINK.pos, d = o && LINK.map === map ? Math.hypot(pos[0] - o[0], pos[2] - o[2]) : 0;
-    if (d > 0.5) LINK.head = (Math.atan2(pos[0] - o[0], -(pos[2] - o[2]) * (2000 / 1440)) * 180) / Math.PI;
+    // the helper reads which way Link faces (Player_Rot_For_Map, degrees: 0 north, 90 west, 180 south); an older
+    // helper doesn't, and then the arrow turns the way he last moved
+    if (typeof rot === "number" && isFinite(rot)) { const r = (rot * Math.PI) / 180; LINK.head = (Math.atan2(-Math.sin(r), Math.cos(r) * (2000 / 1440)) * 180) / Math.PI; }
+    else if (d > 0.5) LINK.head = (Math.atan2(pos[0] - o[0], -(pos[2] - o[2]) * (2000 / 1440)) * 180) / Math.PI;
     if (!o || LINK.map !== map || d > 0.5) LINK.pos = pos;
     LINK.map = map; LINK.live = !!live;
   }
@@ -4953,8 +4956,8 @@ async function livePoll() {
       // where Link is, live (the map he's on and his position), so areas and floors follow him at once
       LIVE.where = !!(st.map && st.pos);
       if (LIVE.where) {
-        const k = `${st.map}|${st.pos.map((x) => Math.round(x)).join(",")}|${st.child}`;
-        if (k !== LIVE.whereKey) { LIVE.whereKey = k; if (followLink(st.map, st.pos, st.child, true)) changed = true; }
+        const k = `${st.map}|${st.pos.map((x) => Math.round(x * 2) / 2).join(",")}|${st.child}|${Math.round((st.rot || 0) / 10)}`;
+        if (k !== LIVE.whereKey) { LIVE.whereKey = k; if (followLink(st.map, st.pos, st.child, true, st.rot)) changed = true; }
       }
     }
     // items and Link's area: from the save, each time the game writes it
