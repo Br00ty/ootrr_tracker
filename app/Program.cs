@@ -47,8 +47,6 @@ namespace OotrrTracker
     sealed class MainForm : Form
     {
         readonly WebView2 view = new WebView2();
-        // the in-game overlay: the tracker's pins over the game's own maps (Overlay.cs)
-        Overlay overlay;
         readonly string placeFile = Path.Combine(Program.Data, "window.txt");
 
         public MainForm()
@@ -146,12 +144,6 @@ namespace OotrrTracker
                 try { msg = e.TryGetWebMessageAsString(); } catch { return; }
                 if (msg != null && msg.StartsWith("saves:", StringComparison.Ordinal))
                     Environment.SetEnvironmentVariable("OOTRR_SAVES", msg.Substring(6));
-                // "overlay:<json>": each field map's pins, for the in-game overlay
-                else if (msg != null && msg.StartsWith("overlay:", StringComparison.Ordinal))
-                {
-                    if (overlay == null) overlay = new Overlay();
-                    overlay.SetPins(msg.Substring(8));
-                }
             };
 
             core.DocumentTitleChanged += (s, e) =>
