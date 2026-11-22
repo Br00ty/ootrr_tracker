@@ -315,8 +315,6 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
-    "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
-    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens (OOTRR: adult only).",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -336,8 +334,8 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus": "True",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
-    // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving)
-    "HF Tektite Grotto Freestanding PoH": "is_child and at('Hyrule Field', is_adult)",
+    // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has its own rule now, is_adult in Hyrule Field; the
+    // tracker follows OOTRR's updated logic, the user's call 2026-11-22)
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
@@ -367,8 +365,8 @@ const Seed = (() => {
     "ZD Trade Prescription": "Prescription",
     "LH Trade Eyeball Frog": "Eyeball_Frog",
     "DMT Trade Eyedrops": "Eyedrops",
-    // 2026-11-21, the user: as child this Skulltula (shown as Spirit Temple GS Statue Room) needs explosives
-    "Spirit Temple GS Sun on Floor Room": "(is_adult or has_explosives)",
+    // (Spirit Temple GS Sun on Floor Room: in the 0.8.3 nightly child Spirit itself needs explosives, so OOTRR's
+    // updated logic covers it)
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = {

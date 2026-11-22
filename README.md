@@ -56,7 +56,6 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | GV GS Pillar | GV GS Behind Tent | (the other half of the swap) |
 | Kak GS Near Gate Guard | Kak GS House Under Construction | OOTRR's names for these two Kakariko Skulltulas are swapped (the 0.8.3 nightly fixed the tree's, not these); confirmed by the game's object positions |
 | Kak GS House Under Construction | Kak GS Near Gate Guard | (the other half of the swap) |
-| LLR Tower Vines Chest (Lon Lon Ranch) | LLR Tunnel Ledge Chest | Up the vines on the Lon Lon Ranch tower; adult with the Hookshot (called HF Tunnel Ledge Chest before the 0.8.3 nightly) |
 | Lake Hylia Adult Remake Rupee 5 (Lake Hylia) | Hyrule Field Adult Remake Rupee 1 | A green rupee among Lake Hylia's Adult Remake Rupees 1–4; OOTRR files it under Hyrule Field |
 | HF Fairy Pond Rupee 1 (Hyrule Field) | LH Lab Child Remake Rupee 3 | A ring of eight child rupees round one in the middle by a Hyrule Field fairy pond; OOTRR files them under Lake Hylia and the Lake Hylia Lab |
 | HF Fairy Pond Rupee 2 (Hyrule Field) | Lake Hylia Child Remake Rupee 5 | (same ring) |
@@ -71,9 +70,8 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | HF East Rupee Grotto Rupee 2 (Hyrule Field) | Lake Hylia Remake Rupee 2 | (same cluster) |
 | HF East Rupee Grotto Rupee 3 (Hyrule Field) | Lake Hylia Remake Rupee 1 | (same cluster) |
 | Bottom of the Well Basement Silver Rupee Behind Rocks | Bottom of the Well Basement Silver Rupee Ladders Top | Behind rocks you blow up, not at the top of the ladders; needs explosives (OOTRR has no requirement) |
-| Spirit Temple GS Statue Room | Spirit Temple GS Sun on Floor Room | The Skulltula is in the statue room; as child it needs explosives |
-| HF Present/Past Chest | HF Tektite Grotto Freestanding PoH | A chest in Hyrule Field: visit it as adult, then child can open it; needs both ages and nothing else (OOTRR's nightly: adult only) |
-| Dodongos Cavern GS Bombable Wall Push Block Room | Dodongos Cavern GS Back Room | The Skulltula is behind a bombable wall in the push block room (OOTRR 0.8.2 called this spot Dodongos Cavern GS Alcove Above Stairs; the 0.8.3 nightly swapped the two names) |
+| Spirit Temple GS Statue Room | Spirit Temple GS Sun on Floor Room | The Skulltula is in the statue room (child Spirit needs explosives in OOTRR's nightly logic) |
+| HF Present/Past Chest | HF Tektite Grotto Freestanding PoH | A chest in Hyrule Field: visit it as adult, then child can open it; the logic is OOTRR's (the nightly: adult only) |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet
