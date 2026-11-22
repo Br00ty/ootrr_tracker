@@ -1359,8 +1359,6 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
-    "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
-    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens (OOTRR: adult only).",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -1380,8 +1378,8 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus": "True",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
-    // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving)
-    "HF Tektite Grotto Freestanding PoH": "is_child and at('Hyrule Field', is_adult)",
+    // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has its own rule now, is_adult in Hyrule Field; the
+    // tracker follows OOTRR's updated logic, the user's call 2026-11-22)
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
@@ -1411,8 +1409,8 @@ const Seed = (() => {
     "ZD Trade Prescription": "Prescription",
     "LH Trade Eyeball Frog": "Eyeball_Frog",
     "DMT Trade Eyedrops": "Eyedrops",
-    // 2026-11-21, the user: as child this Skulltula (shown as Spirit Temple GS Statue Room) needs explosives
-    "Spirit Temple GS Sun on Floor Room": "(is_adult or has_explosives)",
+    // (Spirit Temple GS Sun on Floor Room: in the 0.8.3 nightly child Spirit itself needs explosives, so OOTRR's
+    // updated logic covers it)
   };
   // checks only one age can collect, though OOTRR's rule is an event either age could use once it happened
   const AGE_ONLY = {
@@ -2257,7 +2255,7 @@ const RENAMES = {
   // The 0.8.3 nightly swapped the two names' keys (skull_names.json): this spot (key 13690401647626643497) is now
   // OOTRR's "Dodongos Cavern GS Back Room" ("behind the cracked wall of the block room past the Mouth"); in 0.8.2 it
   // was "... Alcove Above Stairs", which is now the cracked wall at the lobby bridge's east end.
-  "Dodongos Cavern GS Back Room": { name: "Dodongos Cavern GS Bombable Wall Push Block Room" },
+  // The tracker uses OOTRR's new name for it (the user's call 2026-11-22: follow OOTRR's new names and logic).
   // A Gold Skulltula in the Hyrule Field grotto near the Lake Hylia entrance (key 12007978132755687032).
   // OOTRR's skull_names gives it this name only as a "tour" placeholder; its catalog had pooled it with
   // LH GS Small Island. It stays in Hyrule Field; only the name changes.
@@ -2282,7 +2280,7 @@ const RENAMES = {
   // up the vines on the Lon Lon Ranch tower, adult with the Hookshot (confirmed in game 2026-11-18; the rule
   // is in Seed.withFixes). OOTRR has it in Hyrule Field, child only.
   // The 0.8.3 nightly moved it: OOTRR "LLR Tunnel Ledge Chest" (was HF Tunnel Ledge Chest), region LLR Tower, Hookshot.
-  "LLR Tunnel Ledge Chest": { name: "LLR Tower Vines Chest", area: "Lon Lon Ranch" },
+  // The tracker uses OOTRR's new name (the user's call 2026-11-22).
   // a green rupee in the middle of Lake Hylia's Adult Remake Rupees 1-4 (key 4525337806931267688, pinned on the
   // Lake Hylia map in the game's own data; confirmed in game 2026-11-18). OOTRR files it under Hyrule Field.
   "Hyrule Field Adult Remake Rupee 1": { name: "Lake Hylia Adult Remake Rupee 5", area: "Lake Hylia" },
