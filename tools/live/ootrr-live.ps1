@@ -175,6 +175,7 @@ public static class OotrrLive
         handle = IntPtr.Zero; game = ""; bool64Offset = -1;
     }
 
+    public static int GamePid = 0;   // the emulator's process, for the desktop app's in-game overlay
     static string Attach()
     {
         if (Alive()) return null;
@@ -199,11 +200,29 @@ public static class OotrrLive
                 }
             }
             catch { ok = false; }
-            if (ok) { game = Path.GetFileNameWithoutExtension(image); gameImage = image; nextSaveScan = DateTime.MinValue; Console.WriteLine("Reading " + game + " (process " + pid + ")"); return null; }
+            if (ok) { game = Path.GetFileNameWithoutExtension(image); gameImage = image; GamePid = pid; nextSaveScan = DateTime.MinValue; Console.WriteLine("Reading " + game + " (process " + pid + ")"); return null; }
             handle = IntPtr.Zero;
             CloseHandle(h);
         }
         return "The game isn't running (or hasn't loaded a save yet).";
+    }
+
+    // ---------- where Link is and which menu is open, on its own (quick: the desktop app's in-game overlay asks
+    // several times a second) ----------
+    public static string WhereNow()
+    {
+        lock (typeof(OotrrLive))
+        {
+            try
+            {
+                string why = Attach();
+                if (why != null) return "{\"ok\":false}";
+                ulong holder = U64(slot), manager = holder != 0 ? U64(holder) : 0;
+                if (manager == 0) return "{\"ok\":false}";
+                return "{\"ok\":true" + Where(manager) + "}";
+            }
+            catch { return "{\"ok\":false}"; }
+        }
     }
 
     // ---------- the snapshot ----------
@@ -249,6 +268,9 @@ public static class OotrrLive
     // Float table entries are 40 bytes with the current value at +28 (found 2026-11-22 in the 2026-11-16 probe:
     // it follows his walking direction while he moves)
     const uint PLAYER_ROT = 0xA4AEE8CDU;
+    // the pause menu's page: an Enum (56-byte entries, current value at +28, a hash of the page's name).
+    // Found with the map probe 2026-11-22: 0xb6eede09 no menu, 0x23e49b16 the map page, other values the other pages
+    const uint PAUSE_PAGE = 0x578D41E1U;
     static Dictionary<uint, int[]> typed = new Dictionary<uint, int[]>();   // hash -> [table offset, index]
     static ulong typedFor = 0;
     static ulong TypedValue(ulong manager, uint hash, int stride, int off)
@@ -293,6 +315,9 @@ public static class OotrrLive
             float r = BitConverter.ToSingle(rv, 0);
             if (!float.IsNaN(r) && Math.Abs(r) <= 360) sb.Append(",\"rot\":").Append(r.ToString("R", CultureInfo.InvariantCulture));
         }
+        ulong pg = TypedValue(manager, PAUSE_PAGE, 56, 28);
+        byte[] pgv = pg != 0 ? Read(pg, 4) : null;
+        if (pgv != null) sb.Append(",\"page\":\"").Append(BitConverter.ToUInt32(pgv, 0).ToString("x8")).Append('"');
         ulong ma = TypedValue(manager, CURRENT_BANC, 264, 116);
         byte[] mv = ma != 0 ? Read(ma, 64) : null;
         if (mv != null)
@@ -486,6 +511,7 @@ public static class OotrrLive
                     Respond(stream, "200 OK", "application/json", Encoding.UTF8.GetBytes(lastJson), null);
                 }
             }
+            else if (path == "/where") Respond(stream, "200 OK", "application/json", Encoding.UTF8.GetBytes(WhereNow()), null);
             else if (path == "/save")
             {
                 FileInfo f;
