@@ -2305,10 +2305,6 @@ const OWN_FLAGS = {
   // the Ocarina of Time in the castle moat: OOTRR's own pickup flag (door_gate.rs PICKED), set however the item
   // was shuffled. Confirmed in a real save 2026-11-21 (OOTRR's target only looks for the vanilla Ocarina's get event)
   "HF Ocarina of Time Item": ["HavePlayedEvent.HyruleField_DoorOfTime_GetOcarinaOfTime"],
-  // the boss reward after King Dodongo: set when the reward is taken (confirmed 2026-11-22, with Prelude of Light
-  // there; the scene stays after a shuffled reward). Barinade's twin flag is the same story event, not yet seen.
-  "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
-  "Barinade": ["HavePlayedEvent.Get_StoneOfWater_Complete"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
@@ -2355,11 +2351,7 @@ const OWN_FLAGS = {
   "Kak 10 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward10"], "Kak 20 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward20"],
   "Kak 30 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward30"], "Kak 40 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward40"],
   "Kak 50 Gold Skulltula Reward": ["KakarikoVillage_GatheringTokenGold_GetReward50"], "Kak 100 Gold Skulltula Reward": ["GatheringTokenGold_Father_BacktoHuman"],
-  // bosses: the game counts each boss beaten; OOTRR's rule (getting the vanilla Stone or Medallion) misses when rewards move
-  "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"], "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
-  "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"], "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
-  "Volvagia": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia"], "Morpha": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
-  "Bongo Bongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"], "Twinrova": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
+  // (boss rewards: see BOSS_FLAGS; the boss beaten counters and Gohma_DefeatBoss count up at the kill)
   "ZR Frogs Zeldas Lullaby": ["MiniGame_FrogTenors_ZeldaLullaby"], "ZR Frogs Eponas Song": ["MiniGame_FrogTenors_EponaSong"],
   "ZR Frogs Sarias Song": ["MiniGame_FrogTenors_SariaSong"], "ZR Frogs Suns Song": ["MiniGame_FrogTenors_SunSong"],
   "ZR Frogs Song of Time": ["MiniGame_FrogTenors_TimeSong"], "ZR Frogs in the Rain": ["MiniGame_FrogTenors_StormSong"],
@@ -2371,13 +2363,22 @@ const OWN_FLAGS = {
   "Market Bombchu Bowling First Prize": ["MiniGame_BombchuBowling_ClearSecondTime"],
   "Market Bombchu Bowling Second Prize": ["MiniGame_BombchuBowling_ClearThirdTime"],
 };
+// Boss rewards: flags set when the reward is taken, added to the placed item's get event (never the boss beaten
+// counters, which count up at the kill: seen 2026-11-22 with King Dodongo and Queen Gohma)
+const BOSS_FLAGS = {
+  // confirmed 2026-11-22 (Prelude of Light there): set when the reward is taken
+  "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
+  // the same story event for Jabu Jabu, not seen yet
+  "Barinade": ["HavePlayedEvent.Get_StoneOfWater_Complete"],
+};
 const EXTRA_FLAGS = {
   // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
   // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
   // boss Heart Containers: the save keeps no mark of the pickup itself (its key isn't stored), so the
   // boss being beaten stands in for it; the heart appears when the boss falls
-  "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss", "InsideTheDekuTree_Heart_Container_Obtained"],
+  // (Queen Gohma's Heart has its own pickup flag, InsideTheDekuTree_Heart_Container_Obtained: see DROP_FLAGS)
+  "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained"],
   "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
   "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
@@ -2431,7 +2432,10 @@ const DROP_FLAGS = {
   // Boss rewards: OOTRR's npc_flags.rs uses the boss's defeated counter, which counts up at the kill, before the
   // reward is taken (seen 2026-11-22 with King Dodongo). The reward is found by its own flag or by the placed
   // item's get event instead. (The Heart Containers keep the counter: picking one up sets nothing else.)
-  "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma"],
+  "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
+  // Queen Gohma's Heart: the only boss heart with a pickup flag of its own (to confirm in game), so the kill
+  // counter OOTRR gives it is dropped
+  "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
   "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
@@ -2455,6 +2459,7 @@ function detectMap() {
   for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
+  for (const [n, f] of Object.entries(BOSS_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
   // OOTRR's web tracker's NPC and reward flags (its confirmed ones and its guesses), added to each check's rule
   for (const [n, e] of Object.entries(DATA.npc_flags || {})) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f: e.f }];
   // flags OOTRR's data gives the wrong check: taken off it (a rule left with nothing is dropped)
