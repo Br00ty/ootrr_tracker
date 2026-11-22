@@ -2531,15 +2531,17 @@ function autoTick(found, before) {
     const it = dropItem(n);
     if (!it) { tick(n); continue; }
     const now = have(it);
-    if (pend[n] !== undefined) { if (now > pend[n]) tick(n); continue; }
+    if (pend[n] !== undefined) { if (now > pend[n] || now >= MAX[it]) tick(n); continue; }
     const was = before ? before(it) : now;
-    if (now > was) tick(n); else { pend[n] = now; changed = true; }
+    // an item already at its most (a Goron Tunic bought in the shop before its beehive was broken) can't
+    // count up, so the break is all there is to go on
+    if (now > was || now >= MAX[it]) tick(n); else { pend[n] = now; changed = true; }
   }
   // broken earlier, item picked up since
   for (const [n, c] of Object.entries(pend)) {
     const it = dropItem(n);
     if (S.auto.done[n] || !it) { delete pend[n]; continue; }
-    if (have(it) > c) tick(n);
+    if (have(it) > c || have(it) >= MAX[it]) tick(n);
   }
   return changed;
 }
