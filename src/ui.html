@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/ootrando/ootrr),
-  and its data files are embedded (0.8.2). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.8.3-nightly.20261122.3). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -263,8 +263,7 @@ const RENAMES = {
   // The remake's hidden hole in Lake Hylia (save flag LakeHylia_secretHole_appearTreasureBox) holds the
   // chest OOTRR's catalog pins to this name (IsTreasureBoxOpen.6900843020594897860).
   "HF Open Grotto Chest": { name: "LH Open Grotto Chest", area: "Lake Hylia" },
-  // A remake-only chest that a Poe guards on the Lake Hylia shore (IsTreasureBoxOpen.17023457248274633121).
-  "HF Lake Poe Chest": { name: "LH Poe Chest", area: "Lake Hylia" },
+  // (HF Lake Poe Chest: the 0.8.3 nightly calls it LH Poe Chest in Lake Hylia itself, so no rename is needed)
   // 2026-11-21, the user: the fifth basement silver rupee is behind rocks you blow up, not at the top of the ladders
   "Bottom of the Well Basement Silver Rupee Ladders Top": { name: "Bottom of the Well Basement Silver Rupee Behind Rocks" },
   // 2026-11-21, the user: the Skulltula is in the statue room, and child needs explosives for it
@@ -273,7 +272,10 @@ const RENAMES = {
   // Tektite grotto: OOTRR's object is in HyruleField_Adult_Dynamic / HyruleField_Child_Static)
   "HF Tektite Grotto Freestanding PoH": { name: "HF Present/Past Chest" },
   // 2026-11-22, the user: the Skulltula is in the push block room, behind a bombable wall
-  "Dodongos Cavern GS Alcove Above Stairs": { name: "Dodongos Cavern GS Bombable Wall Push Block Room" },
+  // The 0.8.3 nightly swapped the two names' keys (skull_names.json): this spot (key 13690401647626643497) is now
+  // OOTRR's "Dodongos Cavern GS Back Room" ("behind the cracked wall of the block room past the Mouth"); in 0.8.2 it
+  // was "... Alcove Above Stairs", which is now the cracked wall at the lobby bridge's east end.
+  "Dodongos Cavern GS Back Room": { name: "Dodongos Cavern GS Bombable Wall Push Block Room" },
   // A Gold Skulltula in the Hyrule Field grotto near the Lake Hylia entrance (key 12007978132755687032).
   // OOTRR's skull_names gives it this name only as a "tour" placeholder; its catalog had pooled it with
   // LH GS Small Island. It stays in Hyrule Field; only the name changes.
@@ -290,12 +292,15 @@ const RENAMES = {
   // Kakariko: OOTRR's names for three child Skulltulas are rotated from the game's (confirmed in game
   // 2026-11-16: the tree skulltula sets key 7677963516305772491, and the game's object positions agree).
   // Only the labels move; each keeps its OOTRR name's item and rule.
-  "Kak GS House Under Construction": { name: "Kak GS Tree" },        // key 7677963516305772491, on the tree
-  "Kak GS Tree": { name: "Kak GS Near Gate Guard" },                 // key 11629189455828560791, by the gate guard
+  // The 0.8.3 nightly fixed the tree (OOTRR "Kak GS Tree" is now key 7677963516305772491), but the other two are
+  // still swapped: OOTRR "House Under Construction" is key 11629189455828560791, by the gate guard, and
+  // "Near Gate Guard" is key 14107117960174262321, at the house.
+  "Kak GS House Under Construction": { name: "Kak GS Near Gate Guard" },  // key 11629189455828560791, by the gate guard
   "Kak GS Near Gate Guard": { name: "Kak GS House Under Construction" },  // key 14107117960174262321, at the house
   // up the vines on the Lon Lon Ranch tower, adult with the Hookshot (confirmed in game 2026-11-18; the rule
   // is in Seed.withFixes). OOTRR has it in Hyrule Field, child only.
-  "HF Tunnel Ledge Chest": { name: "LLR Tower Vines Chest", area: "Lon Lon Ranch" },
+  // The 0.8.3 nightly moved it: OOTRR "LLR Tunnel Ledge Chest" (was HF Tunnel Ledge Chest), region LLR Tower, Hookshot.
+  "LLR Tunnel Ledge Chest": { name: "LLR Tower Vines Chest", area: "Lon Lon Ranch" },
   // a green rupee in the middle of Lake Hylia's Adult Remake Rupees 1-4 (key 4525337806931267688, pinned on the
   // Lake Hylia map in the game's own data; confirmed in game 2026-11-18). OOTRR files it under Hyrule Field.
   "Hyrule Field Adult Remake Rupee 1": { name: "Lake Hylia Adult Remake Rupee 5", area: "Lake Hylia" },
@@ -420,7 +425,8 @@ const DEFAULT = {
 };
 let S = load();
 // checks OOTRR renamed: progress, hand-placed pins and notes saved under the old name carry over
-const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint" };  // OOTRR 0.6.2
+const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint",  // OOTRR 0.6.2
+  "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest" };  // OOTRR 0.8.3 nightly
 // Saria's gift used to be detected by a flag OOTRR sets on every new game, so it could be ticked from the save
 // without the gift. Clear that tick (and any untick made because of it) once; the save ticks it again for real.
 if (!S.fixes) S.fixes = {};
@@ -450,6 +456,8 @@ if (S.settings) {
   if (v.open_kakariko === "zelda") v.open_kakariko = "closed";
   if (v.open_door_of_time === true) { v.open_door_of_time = false; v.door_of_time_condition = "open"; }
   delete v.trials_random;
+  // OOTRR 0.8.3 nightly: the Starting Wallet price range became Cheap (0 to 95 rupees)
+  if (v.shopsanity_prices === "starting") v.shopsanity_prices = "cheap";
 }
 for (const m of [S.done, S.auto && S.auto.done, S.ignore, S.pinFix]) if (m) for (const [o, n] of Object.entries(OLD_NAMES)) if (o in m) { if (!(n in m)) m[n] = m[o]; delete m[o]; }
 if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
@@ -1171,10 +1179,10 @@ const PIN_FIXES = {
   "Kak Anju as Child": { place: "KakarikoVillage", u: 0.4087, v: 0.6823 },
   "Kak Bazaar Item 1": { place: "KakarikoVillage", u: 0.4087, v: 0.3 },
   "Kak GS Above Impas House": { place: "KakarikoVillage", u: 0.5551, v: 0.8927 },
-  "Kak GS House Under Construction": { place: "KakarikoVillage", u: 0.4057, v: 0.5059 },  // shown as Kak GS Tree
+  "Kak GS Tree": { place: "KakarikoVillage", u: 0.4057, v: 0.5059 },  // key 7677963516305772491, on the tree
   "Kak GS Near Gate Guard": { place: "KakarikoVillage", u: 0.4585, v: 0.6122 },  // shown as Kak GS House Under Construction
   "Kak GS Skulltula House": { place: "KakarikoVillage", u: 0.5928, v: 0.6032 },
-  "Kak GS Tree": { place: "KakarikoVillage", u: 0.3937, v: 0.2728 },  // shown as Kak GS Near Gate Guard
+  "Kak GS House Under Construction": { place: "KakarikoVillage", u: 0.3937, v: 0.2728 },  // key 11629189455828560791, shown as Kak GS Near Gate Guard
   "Kak Granny Trade Odd Mushroom": { place: "KakarikoVillage", u: 0.5943, v: 0.4244 },
   "Kak Impas House Cow": { place: "KakarikoVillage", u: 0.5038, v: 0.9041 },
   "Kak Impas House Freestanding PoH": { place: "KakarikoVillage", u: 0.5279, v: 0.895 },
@@ -1844,7 +1852,7 @@ function counter(name, max, step = 1) {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261122.3 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2228,7 +2236,7 @@ function seedSummary() {
 }
 function openSettings() {
   const body = $("#dlgBody");
-  // where the tracker's logic knowingly differs from OOTRR 0.8.2's (Seed.withFixes)
+  // where the tracker's logic knowingly differs from OOTRR 0.8.3-nightly's (Seed.withFixes)
   const fixes = h("details", { style: "margin-top:12px;color:var(--dim);font-size:12px" },
     h("summary", { style: "cursor:pointer" }, "Logic corrections"),
     h("p", { style: "margin:6px 0 4px" }, "The tracker follows OOTRR's logic, except where that logic lets you do something the game doesn't:"),
@@ -2275,7 +2283,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261122.3 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
@@ -2323,7 +2331,7 @@ function paintSeed() {
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
-    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.2's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
+    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261122.3's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
   // the X closes the notes for this seed; another seed (or other notes) brings them back
   const b = $("#banner");

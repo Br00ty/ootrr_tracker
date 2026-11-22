@@ -267,6 +267,9 @@ if POOLS:
     # 0.8: shops with one keeper (the potion shops, "once") take deals from their own room first (shops/layout.rs)
     POOLS['deals'] = {'order': [[k, n] for k, si, n in _order], 'once': sorted({n for k, si, n in _order if _sh['shops'][si].get('once')})}
     if os.path.exists('tools/out/deal_room.json'): POOLS['deals'] |= json.load(open('tools/out/deal_room.json'))
+    # nightly (0.8.3): shops/rules.rs room() keeps every deal slot of the level, so the room is unlimited
+    # (no deal_room.json: delete it when the OOTRR in use has no deal room)
+    else: POOLS['deals'] |= {'base': 9999, 'delta': {}}
 schema = [{k: s[k] for k in ('num', 'id', 'kind', 'default', 'wire', 'deps', 'min', 'max', 'step', 'times', 'max_by', 'disabled', 'label', 'group', 'tag') if k in s} | ({'choices': [c['id'] for c in s['choices']]} if 'choices' in s else {}) for s in SCH['settings']]
 items = [[n, a] for n, a in L['items']]
 # Map pins: OOTRR's map index, cut down to what the Map Tracker uses ({pins: hash -> [[map, u, v, floor, tray,
@@ -316,6 +319,14 @@ for _p in _fp:
         _set = re.search(r'pub const SETTING: &str = "([^"]+)"', _t).group(1)
         _list = re.search(r'pub const PICKUPS: \[&str; \d+\] = \[(.*?)\];', _t, re.S).group(1)
         START_FLAGS.append([_set, 'true', ['HavePlayedGetEvent.' + x for x in re.findall(r'"([^"]+)"', _list)]])
+# 0.8.3 nightly area_intros.rs: Skip area intros marks each intro scene played and its area visited at new game
+_ai = os.path.join(D, '..', 'randomizer', 'core', 'src', 'area_intros.rs')
+if os.path.exists(_ai):
+    _t = open(_ai).read()
+    _set = re.search(r'pub const SETTING: &str = "([^"]+)"', _t).group(1)
+    _rows = re.findall(r'\("([^"]+)", (?:Some\("([^"]+)"\)|None)\)', re.search(r'pub const INTROS.*?\];', _t, re.S).group(0))
+    _fl = ['HavePlayedEvent.' + sc for sc, a in _rows] + sorted({'IsVisitLocation.' + a for sc, a in _rows if a})
+    START_FLAGS.append([_set, 'true', _fl])
 if len(sys.argv) > 2: MAP_INDEX = map_index(sys.argv[2])
 else:
     try: MAP_INDEX = json.load(open(os.path.join(os.path.dirname(__file__), '..', 'data', 'data.json'))).get('map_index')

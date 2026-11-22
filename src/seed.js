@@ -170,6 +170,11 @@ const Seed = (() => {
     else if (!open && v.door_of_time_song === false) out.push(["open_door_of_time", before(gen, [0, 8, 1]) ? "stones" : "req"]);
     // 0.8.2 prelude_gate.rs: Prelude Trigger = Classic, Sheik teaches the Prelude once you hold the Forest Medallion
     if (v.prelude_trigger === "classic") out.push(["prelude_medallion", "true"]);
+    if (before(gen, [0, 8, 3])) return out;
+    // 0.8.3 nightly open_world/trade.rs LOGIC: the adult trade items never spoil or revert, always
+    out.push(["disable_trade_revert", "true"]);
+    // 0.8.3 nightly slice/skull_day.rs: Skulltulas by day, the logic no longer waits for night
+    if (v.skulls_by_day === true) out.push(["gold_skulls_ignore_daytime", "true"]);
     return out;
   }
   // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
@@ -289,7 +294,6 @@ const Seed = (() => {
     "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
     "LW Trade Cojiro and LW Trade Odd Potion are adult only: OOTRR's rules are trade events ('Odd Mushroom Access', 'Poachers Saw Access') either age can use once they have happened.",
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
-    "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
@@ -297,12 +301,11 @@ const Seed = (() => {
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
-    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens; it needs both ages and nothing else (OOTRR: in the Tektite grotto, Golden Scale or Iron Boots).",
+    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens (OOTRR: adult only).",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
   const OWN_RULES = {
-    "HF Tunnel Ledge Chest": "can_use(Hookshot)",
     // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
     "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
     // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
@@ -333,8 +336,7 @@ const Seed = (() => {
     // 2026-11-21, the user: the tree is in Zora's River past the boulders at its entrance, so it needs a way into
     // Zora River itself (OOTRR: ZR Front, before the boulders, which is open from Hyrule Field)
     "ZR GS Tree": "Zora River",
-    // 2026-11-21, the user: shown as HF Present/Past Chest, a chest out in Hyrule Field (not in the Tektite grotto)
-    "HF Tektite Grotto Freestanding PoH": "Hyrule Field",
+    // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has it in Hyrule Field itself)
   };
   // checks that need something more for one age (added to OOTRR's rule)
   const AGE_EXTRA = {

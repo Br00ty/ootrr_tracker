@@ -1,0 +1,15 @@
+{
+ "id": "night1",
+ "name": "nightly test",
+ "tip": "test",
+ "order": 99,
+ "settings": {
+  "skulls_by_day": true,
+  "owl_warps": true,
+  "skip_area_intros": true,
+  "shuffle_shops": "deals_4",
+  "shopsanity_prices": "cheap",
+  "damage_taken": "double",
+  "shuffle_trade_checks": true
+ }
+}

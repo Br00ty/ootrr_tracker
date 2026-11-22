@@ -6,7 +6,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 > **Disclaimer:** this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use **Report a bug** on the tracker or [open an issue](https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml).
 
-- **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.8.2's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
+- **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.8.3-nightly.20261122.3's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
 - **Or set the settings by hand.** Without a seed file, Settings works like OOTRR's own settings page: the same groups, presets, labels and help text, settings that only count when another one is on, and a box for an OOTRR settings string. The tracker then lists exactly the locations OOTRR would shuffle with those settings.
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Dungeon entrance shuffle.** With Entrances set to Dungeons, the logic follows which dungeon is behind each door, exactly like OOTRR's. Each dungeon in the list shows **door: ?** until you click it (or until your save has Link inside it), so the layout isn't spoiled.
@@ -50,15 +50,13 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | Shown as | OOTRR name | Why |
 |---|---|---|
 | LH Open Grotto Chest (Lake Hylia) | HF Open Grotto Chest | The chest is in a hidden hole in Lake Hylia |
-| LH Poe Chest (Lake Hylia) | HF Lake Poe Chest | A remake-only chest on the Lake Hylia shore |
 | HF GS Grotto Near Lake Entrance (Hyrule Field) | HF GS Cow Grotto | A Gold Skulltula in the grotto near the Lake Hylia entrance; OOTRR uses this name only as a placeholder for it |
 | HF GS Tree By KF (Hyrule Field) | LLR GS Rain Shed | A Gold Skulltula in a Hyrule Field tree near Kokiri Forest; OOTRR's data names it as Lon Lon Ranch's |
 | GV GS Behind Tent | GV GS Pillar | OOTRR's catalog has these two the wrong way round; the labels swap so each shows the item that drops there |
 | GV GS Pillar | GV GS Behind Tent | (the other half of the swap) |
-| Kak GS Tree | Kak GS House Under Construction | OOTRR's names for three Kakariko Skulltulas are rotated; confirmed in game (the tree Skulltula sets this one's flag) and by the game's object positions |
-| Kak GS Near Gate Guard | Kak GS Tree | (part of the same rotation) |
-| Kak GS House Under Construction | Kak GS Near Gate Guard | (part of the same rotation) |
-| LLR Tower Vines Chest (Lon Lon Ranch) | HF Tunnel Ledge Chest | Up the vines on the Lon Lon Ranch tower; adult with the Hookshot (the tracker's logic says so too; OOTRR has it child only) |
+| Kak GS Near Gate Guard | Kak GS House Under Construction | OOTRR's names for these two Kakariko Skulltulas are swapped (the 0.8.3 nightly fixed the tree's, not these); confirmed by the game's object positions |
+| Kak GS House Under Construction | Kak GS Near Gate Guard | (the other half of the swap) |
+| LLR Tower Vines Chest (Lon Lon Ranch) | LLR Tunnel Ledge Chest | Up the vines on the Lon Lon Ranch tower; adult with the Hookshot (called HF Tunnel Ledge Chest before the 0.8.3 nightly) |
 | Lake Hylia Adult Remake Rupee 5 (Lake Hylia) | Hyrule Field Adult Remake Rupee 1 | A green rupee among Lake Hylia's Adult Remake Rupees 1–4; OOTRR files it under Hyrule Field |
 | HF Fairy Pond Rupee 1 (Hyrule Field) | LH Lab Child Remake Rupee 3 | A ring of eight child rupees round one in the middle by a Hyrule Field fairy pond; OOTRR files them under Lake Hylia and the Lake Hylia Lab |
 | HF Fairy Pond Rupee 2 (Hyrule Field) | Lake Hylia Child Remake Rupee 5 | (same ring) |
@@ -74,13 +72,13 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | HF East Rupee Grotto Rupee 3 (Hyrule Field) | Lake Hylia Remake Rupee 1 | (same cluster) |
 | Bottom of the Well Basement Silver Rupee Behind Rocks | Bottom of the Well Basement Silver Rupee Ladders Top | Behind rocks you blow up, not at the top of the ladders; needs explosives (OOTRR has no requirement) |
 | Spirit Temple GS Statue Room | Spirit Temple GS Sun on Floor Room | The Skulltula is in the statue room; as child it needs explosives |
-| HF Present/Past Chest | HF Tektite Grotto Freestanding PoH | A chest in Hyrule Field: visit it as adult, then child can open it; needs both ages and nothing else (OOTRR: underwater in the Tektite grotto) |
-| Dodongos Cavern GS Bombable Wall Push Block Room | Dodongos Cavern GS Alcove Above Stairs | The Skulltula is behind a bombable wall in the push block room |
+| HF Present/Past Chest | HF Tektite Grotto Freestanding PoH | A chest in Hyrule Field: visit it as adult, then child can open it; needs both ages and nothing else (OOTRR's nightly: adult only) |
+| Dodongos Cavern GS Bombable Wall Push Block Room | Dodongos Cavern GS Back Room | The Skulltula is behind a bombable wall in the push block room (OOTRR 0.8.2 called this spot Dodongos Cavern GS Alcove Above Stairs; the 0.8.3 nightly swapped the two names) |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet
 
-- Shuffled entrances: only **dungeon entrance shuffle** is followed (the only kind OOTRR 0.8.2 can generate besides vanilla). Overworld and other entrance pools will come when OOTRR builds them.
+- Shuffled entrances: only **dungeon entrance shuffle** is followed (the only kind OOTRR 0.8.3-nightly can generate besides vanilla). Overworld and other entrance pools will come when OOTRR builds them.
 - Shuffled shop shelves: shop items and prices aren't tracked.
 
 The page shows a banner when a loaded seed uses entrance or shop shuffle.
@@ -95,7 +93,7 @@ The page shows a banner when a loaded seed uses entrance or shop shuffle.
 | `src/seed.js` | `.ootrr` seed files and settings strings |
 | `src/autotrack.js` | `progress.sav` reading and save-based detection |
 | `src/texdec.js` | Game texture reading for the map tracker: zstd, BNTX, block-linear swizzle and ASTC (ported from ootrr-core's `tex` module) |
-| `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.8.2 |
+| `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.8.3-nightly.20261122.3 |
 | `tools/deal_room.py` | Measures how many special deals fit with each setting (`tools/out/deal_room.json`), for the manual settings' shop shelves |
 | `tools/pool_matrix.py` | Runs OOTRR's generator once per setting value and records which locations each one adds or removes (`tools/out/pools.json`), for the manual settings |
 | `tools/` | Scripts that rebuild `data/data.json` for a new OOTRR version, and the cross-check |
