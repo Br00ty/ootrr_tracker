@@ -75,6 +75,7 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | Bottom of the Well Basement Silver Rupee Behind Rocks | Bottom of the Well Basement Silver Rupee Ladders Top | Behind rocks you blow up, not at the top of the ladders; needs explosives (OOTRR has no requirement) |
 | Spirit Temple GS Statue Room | Spirit Temple GS Sun on Floor Room | The Skulltula is in the statue room; as child it needs explosives |
 | HF Present/Past Chest | HF Tektite Grotto Freestanding PoH | A chest in Hyrule Field: visit it as adult, then child can open it; needs both ages and nothing else (OOTRR: underwater in the Tektite grotto) |
+| Dodongos Cavern GS Bombable Wall Push Block Room | Dodongos Cavern GS Alcove Above Stairs | The Skulltula is behind a bombable wall in the push block room |
 | Gerudo Proving Ground … (every check, region and key there) | Gerudo Training Ground … | The remake renamed the dungeon; OOTRR keeps OoTR's name, so seeds and logic still use it |
 
 ## Not handled yet
