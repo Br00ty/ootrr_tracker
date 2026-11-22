@@ -646,7 +646,38 @@ function render() {
   renderStats(); renderItems(); renderMode();
   if (S.view === "map") renderMap(); else { renderAreas(); renderChecks(); }
   renderBroadcast();
+  sendOverlay();
   save();
+}
+// ---------- the desktop app's in-game overlay ----------
+// The app draws the tracker's pins over the game's own maps (the pause map and the minimap). It reads where
+// Link is and which menu is open itself; the page hands it each field map's pins: { "GoronCity_Child":
+// [[u, v, status, name], ...], ... } (u/v on the map picture, as the Map Tracker uses them), only when they change.
+let OVERLAY_SENT = "";
+function sendOverlay() {
+  const wv = window.OOTRR_APP && window.chrome && window.chrome.webview;
+  if (!wv) return;
+  const on = S.overlay !== false;
+  const maps = {};
+  if (on && PINS) {
+    for (const c of R.values()) {
+      if (!S.show[c.st] || c.st === "done") continue;
+      const keys = new Set(), fix = fixOf(c.n);
+      if (fix !== undefined) { if (fix && !fix.hide && fix.place && !FLOOR_KEY.exec(fix.place)) { keys.add(`${fix.place}_Child`); keys.add(`${fix.place}_Adult`); } }
+      else for (const hs of hashesOf(c.n)) for (const p of PINS[hs] || []) if (/_(Child|Adult)$/.test(p[0])) keys.add(p[0]);
+      const age = ageOf(c.n);
+      for (const k of keys) {
+        if (!CAPS[k] && !CAPS[k.replace(/_(Child|Adult)$/, "")]) continue;
+        if (age && !k.endsWith(age === "child" ? "_Child" : "_Adult")) continue;
+        const p = pinOf(c.n, k);
+        if (p) (maps[k] ||= []).push([+p[1].toFixed(4), +p[2].toFixed(4), c.st, shownName(c.n)]);
+      }
+    }
+  }
+  const msg = JSON.stringify({ on, maps });
+  if (msg === OVERLAY_SENT) return;
+  OVERLAY_SENT = msg;
+  try { wv.postMessage("overlay:" + msg); } catch (e) {}
 }
 function tally(list) { const t = { g: 0, y: 0, r: 0, done: 0 }; for (const c of list) t[c.st]++; return t; }
 function renderStats() {
@@ -1679,6 +1710,8 @@ function renderMap() {
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
     h("span", { class: "spacer" }),
     list.length && !noMap ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
+    window.OOTRR_APP ? h("button", { class: "btn", style: S.overlay === false ? "" : "border-color:var(--gold);color:var(--gold)", title: "Draw the tracker's pins over the game's own pause map and minimap (Longshot, overworld areas)",
+      onclick: () => { S.overlay = S.overlay === false; render(); } }, S.overlay === false ? "Game overlay off" : "Game overlay on") : null,
     LINK.pos ? h("button", { class: "btn", style: S.showLink === false ? "" : "border-color:var(--gold);color:var(--gold)", title: "Show where Link is on the map (live with the Longshot helper, or where your last save was made)",
       onclick: () => { S.showLink = S.showLink === false; render(); } }, S.showLink === false ? "Show Link" : "Link shown") : null,
     DEV && m.key && PIN_AREAS.has(area) ? h("button", { class: "btn", style: S.pinEdit ? "border-color:var(--gold);color:var(--gold)" : "", title: "Move pins that are in the wrong spot, and place checks that have none",
