@@ -4016,7 +4016,9 @@ function ckRow(c, again, open = false) {
   }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null),
     h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
     c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
-    !c.fromSave && S.auto.pend && S.auto.pend[c.n] !== undefined && !isDone(c.n) ? h("span", { class: "sv broke", title: `Broken, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "broken") : null,
+    !c.fromSave && S.auto.pend && S.auto.pend[c.n] !== undefined && !isDone(c.n) ? (BOSS_HEART_WAIT.has(c.n)
+      ? h("span", { class: "sv broke", title: `Boss beaten, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "beaten")
+      : h("span", { class: "sv broke", title: `Broken, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "broken")) : null,
     crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
     // a shop deal: its price in this seed
     dealPrice(c.n) != null ? h("span", { class: "price", title: "Price in this seed" }, `${dealPrice(c.n)} rupees`) : null,
@@ -4366,6 +4368,9 @@ const BOSS_FLAGS = {
   "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
   // the same story event for Jabu Jabu, not seen yet
   "Barinade": ["HavePlayedEvent.Get_StoneOfWater_Complete"],
+  // confirmed 2026-11-22 (a Gold Skulltula Token there): Volvagia's reward scene, with the Sage of Fire's awakening;
+  // the kill sets SageOfFire_DefeatBoss and the beaten counter
+  "Volvagia": ["HavePlayedEvent.Dm_FireTemple_0030"],
   // confirmed 2026-11-22 (Rupees (5) there): Bongo Bongo's reward scene, set when the reward is taken with the blue
   // warp (with the Sage of Shadow's awakening, Dm_Awake_Shadow_Get); the kill sets only ShadowTemple_BossWin
   "Bongo Bongo": ["HavePlayedEvent.Dm_ShadowTemple_0020"],
@@ -4375,7 +4380,7 @@ const EXTRA_FLAGS = {
   // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
   // King Dodongo's Heart: its pickup left no mark in the save (2026-11-22), so the boss being beaten stands in for
-  // it. The other boss Hearts go by their own pickup marks (see DROP_FLAGS).
+  // it, then the placed item's count (BOSS_HEART_WAIT). Gohma's and Bongo Bongo's have pickup marks (DROP_FLAGS).
   // Queen Gohma's Heart: its own pickup flag (confirmed 2026-11-22); the kill counter is dropped (DROP_FLAGS)
   "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained"],
   "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
@@ -4431,14 +4436,7 @@ const DROP_FLAGS = {
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
   // Bongo Bongo's Heart ticked at the kill (2026-11-22); it's detected by its pickup key (OWN_KEYS)
   "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
-  // the other boss Hearts ticked at the kill too (Volvagia's, 2026-11-22): they wait for their own key (Gohma's was
-  // set on pickup, Bongo Bongo's was a key OOTRR doesn't know). King Dodongo's keeps the counter: its pickup set
-  // nothing at all in the save.
-  "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
-  "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
-  "Fire Temple Volvagia Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia", "DefeatedEnemyNum.Dm_Enemy_DungeonBoss_Volvagia"],
-  "Water Temple Morpha Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
-  "Spirit Temple Twinrova Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
+
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
   "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
@@ -4529,10 +4527,14 @@ for (const [, , it] of SILVER) MAX[it] = 5;
 // item ticks only once that item's count has also gone up; it waits ("pending") in between. Junk (rupees, hearts,
 // ammo, nothing) and items the tracker can't count tick on the break, as there's nothing to confirm.
 const DROP_KINDS = new Set(["crate", "pot", "hive", "rock", "grass"]);
+// Boss Hearts whose pickup leaves no mark in the save (King Dodongo's and Volvagia's set nothing, 2026-11-22): they
+// tick like a drop, on the boss beaten counter and then the placed item's count rising (junk ticks at the kill)
+const BOSS_HEART_WAIT = new Set(["Dodongos Cavern King Dodongo Heart", "Jabu Jabus Belly Barinade Heart", "Forest Temple Phantom Ganon Heart",
+  "Fire Temple Volvagia Heart", "Water Temple Morpha Heart", "Spirit Temple Twinrova Heart"]);
 const DROP_JUNK = /^(Rupees? \(|Recovery Heart|Arrows \(|Bombs \(|Bombchus \(|Deku (Nuts|Seeds|Stick|Sticks) \(|Nothing|Fairy|Bugs|Magic Jar|Ice Trap)|Drop$/;
 function dropItem(n) {
   const c = DATA.checks[n], it = S.seed && S.seed.placements && S.seed.placements[n];
-  if (!c || !DROP_KINDS.has(c[1]) || !it || DROP_JUNK.test(it) || MAX[it] == null) return null;
+  if (!c || !(DROP_KINDS.has(c[1]) || BOSS_HEART_WAIT.has(n)) || !it || DROP_JUNK.test(it) || MAX[it] == null) return null;
   return it;
 }
 // tick the checks a read found; `before(item)` is the item's count before this read's items came in
