@@ -3849,17 +3849,24 @@ function areaRow(name, also = [], onMap = false) {
   if (!list.length) return null;
   const t = tally(list);
   // with dungeon entrances shuffled, where the dungeon's door is (hidden until the player uncovers it)
-  let door = null;
+  let door = null, entranceTip;
+  // hovering a dungeon tells which entrance leads into it (its own door, or with dungeon entrances shuffled the
+  // door the seed put it behind)
+  if (DUNGEON_AREAS.includes(name) && POOL.has(name)) {
+    const at = entrancesShuffled() ? doorOf(name) : null;
+    entranceTip = at ? `${name}: entered through the ${at} entrance (${areaName(POOL.get(at)[1])})`
+      : `${name}: entered through its own entrance (${areaName(POOL.get(name)[1])})`;
+  }
   if (DUNGEON_AREAS.includes(name) && entrancesShuffled() && POOL.has(name)) {
     const at = doorOf(name), shown = S.reveal[name];
     const where = at ? `the ${at} door, ${areaName(POOL.get(at)[1])}` : "its own door";
     door = h("span", {
       class: `door ${shown ? "" : "hid"}`,
-      title: shown ? `${name} is behind the ${at || name} entrance. Click to hide again.` : "Click to show which door leads to this dungeon. It also shows by itself once your save has Link inside it.",
+      title: shown ? `${name} is behind the ${at || name} entrance. Click to hide again.` : `${entranceTip}. Click to keep it shown here; it also shows by itself once your save has Link inside it.`,
       onclick: (e) => { e.stopPropagation(); S.reveal[name] = !shown; render(); },
     }, shown ? `behind ${where}` : "door: ?");
   }
-  return h("div", { class: `area ${S.area === name || also.includes(S.area) ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, onclick: () => { S.area = name; render(); } },
+  return h("div", { class: `area ${S.area === name || also.includes(S.area) ? "sel" : ""} ${t.done === list.length ? "done" : ""}`, title: entranceTip, onclick: () => { S.area = name; render(); } },
     h("span", { class: "nm" }, name, door),
     h("span", { class: "pills" }, t.g ? h("span", { class: "pill g" }, t.g) : null, t.y ? h("span", { class: "pill y" }, t.y) : null, t.r && !t.g && !t.y ? h("span", { class: "pill r" }, t.r) : null, !t.g && !t.y && !t.r ? h("span", { style: "color:var(--faint);font-size:11px" }, "✓") : null));
 }
