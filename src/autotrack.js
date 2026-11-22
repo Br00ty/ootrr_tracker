@@ -101,6 +101,8 @@ const Auto = (() => {
     set("Progressive Scale", tier(["Item_Scale_Silver", "Item_Scale_Gold"]));
     set("Progressive Wallet", tier(["Item_Wallet_Medium", "Item_Wallet_Large"]));
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
+    // the Shield: Deku -> Hylian -> Mirror, the best one held (a burnt or eaten shield keeps its IsGet)
+    set("Progressive Shield", tier(["Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror"]));
     const mp = p.int("PlayerStatus.MPMax");
     set("Magic Meter", mp >= 480 || p.on("IsGet.Item_FairyBless_MPDouble") ? 2 : mp >= 240 || p.on("IsGet.Item_FairyBless_MP") ? 1 : 0);
     // Shuffled silver rupees (OOTRR slice/silver.rs): the 1st to 4th of a room set its spare flags in turn,
@@ -116,7 +118,7 @@ const Auto = (() => {
       Boomerang: ["Item_Boomerang"], "Lens of Truth": ["Armor_GlassTruth"], "Megaton Hammer": ["Item_Hammer"],
       "Dins Fire": ["Item_DinFire"], "Farores Wind": ["Item_FaroreWind"], "Nayrus Love": ["Item_NayruLove"],
       "Fire Arrows": ["Item_Arrow_Fire"], "Ice Arrows": ["Item_Arrow_Ice"], "Light Arrows": ["Item_Arrow_Light"], Bombchus: ["Item_Bombchu"],
-      "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"], "Mirror Shield": ["Weapon_Shield_Mirror"],
+      "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"],
       "Goron Tunic": ["Armor_Adult_Goron"], "Zora Tunic": ["Armor_Adult_Zora"], "Iron Boots": ["Armor_Adult_HeavyBoot"], "Hover Boots": ["Armor_Adult_HoverBoot"],
       // having sticks or nuts satisfies OOTRR's Sticks / Nuts helpers (which accept a drop of them)
       "Deku Stick Drop": ["Item_DekuStick"], "Deku Nut Drop": ["Item_DekuNut"],
