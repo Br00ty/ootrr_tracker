@@ -4240,6 +4240,10 @@ const OWN_FLAGS = {
   // the Ocarina of Time in the castle moat: OOTRR's own pickup flag (door_gate.rs PICKED), set however the item
   // was shuffled. Confirmed in a real save 2026-11-21 (OOTRR's target only looks for the vanilla Ocarina's get event)
   "HF Ocarina of Time Item": ["HavePlayedEvent.HyruleField_DoorOfTime_GetOcarinaOfTime"],
+  // the boss reward after King Dodongo: set when the reward is taken (confirmed 2026-11-22, with Prelude of Light
+  // there; the scene stays after a shuffled reward). Barinade's twin flag is the same story event, not yet seen.
+  "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
+  "Barinade": ["HavePlayedEvent.Get_StoneOfWater_Complete"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
@@ -4357,7 +4361,20 @@ const OOTRR_FLAGS = {
 // Object keys confirmed in real saves for checks OOTRR's data couldn't match to an object (its locations.json
 // "unmatched_oot"). The save keeps the object's key once it's done.
 // the Lost Woods ledge chest's flag belongs to KF West Ledge Chest (confirmed in game), not the grotto's chest
-const DROP_FLAGS = { "LW Near Shortcuts Grotto Chest": ["IsTreasureBoxOpen.17479747339356189279"] };
+const DROP_FLAGS = {
+  "LW Near Shortcuts Grotto Chest": ["IsTreasureBoxOpen.17479747339356189279"],
+  // Boss rewards: OOTRR's npc_flags.rs uses the boss's defeated counter, which counts up at the kill, before the
+  // reward is taken (seen 2026-11-22 with King Dodongo). The reward is found by its own flag or by the placed
+  // item's get event instead. (The Heart Containers keep the counter: picking one up sets nothing else.)
+  "Queen Gohma": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma"],
+  "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
+  "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
+  "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
+  "Volvagia": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia", "DefeatedEnemyNum.Dm_Enemy_DungeonBoss_Volvagia"],
+  "Morpha": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
+  "Bongo Bongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
+  "Twinrova": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
+};
 // Pools: checks whose save keys OOTRR knows only as a group (locations.json "pool"), so they tick by count:
 // Rupee i is ticked once any i of the keys are set. Confirmed in game 2026-11-18 (all 8 race rupees, one race).
 const POOL_KEYS = {
