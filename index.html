@@ -945,6 +945,8 @@ const Auto = (() => {
     set("Progressive Scale", tier(["Item_Scale_Silver", "Item_Scale_Gold"]));
     set("Progressive Wallet", tier(["Item_Wallet_Medium", "Item_Wallet_Large"]));
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
+    // the Shield: Deku -> Hylian -> Mirror, the best one held (a burnt or eaten shield keeps its IsGet)
+    set("Progressive Shield", tier(["Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror"]));
     const mp = p.int("PlayerStatus.MPMax");
     set("Magic Meter", mp >= 480 || p.on("IsGet.Item_FairyBless_MPDouble") ? 2 : mp >= 240 || p.on("IsGet.Item_FairyBless_MP") ? 1 : 0);
     // Shuffled silver rupees (OOTRR slice/silver.rs): the 1st to 4th of a room set its spare flags in turn,
@@ -960,7 +962,7 @@ const Auto = (() => {
       Boomerang: ["Item_Boomerang"], "Lens of Truth": ["Armor_GlassTruth"], "Megaton Hammer": ["Item_Hammer"],
       "Dins Fire": ["Item_DinFire"], "Farores Wind": ["Item_FaroreWind"], "Nayrus Love": ["Item_NayruLove"],
       "Fire Arrows": ["Item_Arrow_Fire"], "Ice Arrows": ["Item_Arrow_Ice"], "Light Arrows": ["Item_Arrow_Light"], Bombchus: ["Item_Bombchu"],
-      "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"], "Mirror Shield": ["Weapon_Shield_Mirror"],
+      "Kokiri Sword": ["Weapon_Sword_Kokiri"], "Biggoron Sword": ["Weapon_Sword_Biggoron"],
       "Goron Tunic": ["Armor_Adult_Goron"], "Zora Tunic": ["Armor_Adult_Zora"], "Iron Boots": ["Armor_Adult_HeavyBoot"], "Hover Boots": ["Armor_Adult_HoverBoot"],
       // having sticks or nuts satisfies OOTRR's Sticks / Nuts helpers (which accept a drop of them)
       "Deku Stick Drop": ["Item_DekuStick"], "Deku Nut Drop": ["Item_DekuNut"],
@@ -2311,7 +2313,7 @@ const INV = [
 ];
 const ARROWS = [["Fire Arrows","Fire Arrows",1,"arrow"],["Ice Arrows","Ice Arrows",1,"arrow"],["Light Arrows","Light Arrows",1,"arrow"]];
 const GEAR = [
-  ["Kokiri Sword","Kokiri Sword",1],["Biggoron Sword","Biggoron Sword",1],["Mirror Shield","Mirror Shield",1],["Goron Tunic","Goron Tunic",1],["Zora Tunic","Zora Tunic",1],["Iron Boots","Iron Boots",1],
+  ["Kokiri Sword","Kokiri Sword",1],["Biggoron Sword","Biggoron Sword",1],["Progressive Shield","Shield",3],["Goron Tunic","Goron Tunic",1],["Zora Tunic","Zora Tunic",1],["Iron Boots","Iron Boots",1],
   ["Hover Boots","Hover Boots",1],["Progressive Strength Upgrade","Strength",3],["Progressive Scale","Scale",2],["Progressive Wallet","Wallet",2],["Gerudo Membership Card","Gerudo Card",1],["Stone of Agony","Echo Gem",1],
 ];
 const CHILD_TRADE = [
@@ -2415,6 +2417,8 @@ if (S.settings) {
 }
 for (const m of [S.done, S.auto && S.auto.done, S.ignore, S.pinFix]) if (m) for (const [o, n] of Object.entries(OLD_NAMES)) if (o in m) { if (!(n in m)) m[n] = m[o]; delete m[o]; }
 if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
+// 2026-11-22: the Mirror Shield became the Shield (Deku -> Hylian -> Mirror), a marked Mirror Shield is its 3rd tier
+if (S.items && S.items["Mirror Shield"]) { S.items["Progressive Shield"] = Math.max(S.items["Progressive Shield"] || 0, 3); delete S.items["Mirror Shield"]; }
 function load() {
   try {
     const v = JSON.parse(localStorage.getItem(KEY) || "null");
@@ -2449,7 +2453,12 @@ const startTable = () => (S.seed ? S.seed.start : manualVals().__start) || {};
 const skippedList = () => (S.seed ? S.seed.skipped : manualVals().__skipped) || [];
 const startOf = (n) => startTable()[n] || 0;
 const silverShuffled = () => (S.seed ? S.seed.vals : manualVals()).shuffle_silver_rupees === true;
-const have = (n) => Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n), keysFound(n));
+const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n), keysFound(n), n === "Progressive Shield" ? shieldStart() : 0);
+// The shields are one tracker item that goes Deku Shield -> Hylian Shield -> Mirror Shield (the user's choice,
+// 2026-11-22): its tier counts as having that shield and the ones before it, in the logic and for drop checks.
+const SHIELDS = ["Deku Shield", "Hylian Shield", "Mirror Shield"];
+const shieldStart = () => SHIELDS.reduce((t, n, i) => (startOf(n) ? i + 1 : t), 0);
+const shieldTier = () => have("Progressive Shield");
 // Small keys and silver rupees gotten: every done check that holds one (the seed's item there, or the
 // vanilla one where the seed doesn't shuffle that spot) counts one; a key ring counts them all.
 let KEYS_FOUND = null;
@@ -2565,7 +2574,7 @@ function compute() {
     for (const b of ["A", "C up", "C down", "C left", "C right"]) { const i = w.items.find(`Ocarina ${b} Button`); if (i !== undefined) counts.push([i, 1]); }
     // Treasure Chest Game keys aren't given: they're in their vanilla rooms (the seller and each room's top chest),
     // which the logic collects as it reaches them, so the reward needs Lens of Truth like in OOTRR.
-    const names = new Set([...Object.keys(S.items), ...Object.keys(S.auto.items), ...Object.keys(startTable())]);
+    const names = new Set([...Object.keys(S.items), ...Object.keys(S.auto.items), ...Object.keys(startTable()), ...SHIELDS]);
     for (const n of names) { const i = w.items.find(n), c = have(n); if (i !== undefined && c > 0) counts.push([i, c]); }
     return { w, s: new Engine.Search(w, counts).run(place) };
   });
@@ -2627,6 +2636,7 @@ const TIERS = {
   "Progressive Strength Upgrade": ["Goron's Bracelet", "Silver Gauntlets", "Golden Gauntlets"],
   "Progressive Scale": ["Silver Scale", "Golden Scale"],
   "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
+  "Progressive Shield": ["Deku Shield", "Hylian Shield", "Mirror Shield"],
 };
 // ---------- item pictures ----------
 // The pictures are the game's own art, so they aren't shipped with the tracker: they're decoded from the game's
@@ -2640,7 +2650,7 @@ const ICON = {
   "Dins Fire": "Item_DinFire", "Farores Wind": "Item_FaroreWind", "Nayrus Love": "Item_NayruLove",
   "Bombchus": "Item_Bombchu", "Magic Bean": "Item_MagicBean", "Bottle": "Item_Bottle",
   "Fire Arrows": "Item_Arrow_Fire_PouchIcon", "Ice Arrows": "Item_Arrow_Ice_PouchIcon", "Light Arrows": "Item_Arrow_Light_PouchIcon",
-  "Kokiri Sword": "Weapon_Sword_Kokiri", "Biggoron Sword": "Weapon_Sword_Biggoron", "Mirror Shield": "Weapon_Shield_Mirror",
+  "Kokiri Sword": "Weapon_Sword_Kokiri", "Biggoron Sword": "Weapon_Sword_Biggoron", "Progressive Shield": ["Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror"],
   "Goron Tunic": "Armor_Adult_Goron", "Zora Tunic": "Armor_Adult_Zora", "Iron Boots": "Armor_Adult_HeavyBoot", "Hover Boots": "Armor_Adult_HoverBoot",
   "Progressive Strength Upgrade": ["Armor_Child_Gauntlet_Goron", "Armor_Adult_Gauntlet_Silver", "Armor_Adult_Gauntlet_Gold"],
   "Progressive Scale": ["Item_Scale_Silver", "Item_Scale_Gold"], "Progressive Wallet": ["Item_Wallet_Medium", "Item_Wallet_Large"],
@@ -4532,6 +4542,7 @@ for (const L of [INV, ARROWS, GEAR, CHILD_TRADE, ADULT_TRADE, SONGS, REWARDS]) f
 for (const [n, , m] of COUNTERS) if (typeof m !== "function") MAX[n] = m;
 for (const [, sk, m, bk] of DUNGEONS) { MAX[sk] = m; if (bk) MAX[bk] = 1; }
 for (const [, , it] of SILVER) MAX[it] = 5;
+for (const n of SHIELDS) MAX[n] = 1;  // each shield is a tier of the Shield (have() reads it from the tier)
 
 // Drop checks (crates, pots, beehives, rocks, grass): the save marks the object when it breaks, and picking up what
 // falls out leaves no mark of its own (confirmed in saves 2026-11-19). So with a seed, a drop check holding a real
