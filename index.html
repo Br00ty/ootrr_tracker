@@ -1029,7 +1029,16 @@ const Auto = (() => {
     return (fallback && fallback[map]) || null;
   }
 
-  return { murmur3, peek, fromRows, checks, items, areaOf };
+  // what in the save makes a check found: the flags and keys of its rules that hold (for "found by something new")
+  function evidence(p, rules) {
+    const out = [];
+    for (const r of rules || []) {
+      for (const f of r.f || []) if (holds(p, f)) out.push("f:" + f);
+      for (const k of r.k || []) if (p.keys.has(k)) out.push("k:" + k);
+    }
+    return out;
+  }
+  return { murmur3, peek, fromRows, checks, items, areaOf, evidence };
 })();
 if (typeof module !== "undefined") module.exports = Auto;
 </script>
@@ -2366,6 +2375,17 @@ if (!S.fixes) S.fixes = {};
 if (!S.fixes.kfWestLedgePin) { if (S.pinFix) delete S.pinFix["KF West Ledge Chest"]; S.fixes.kfWestLedgePin = 1; }
 // the grotto chest was ticked by the KF West Ledge Chest's flag; undo that once (only an auto tick)
 if (!S.fixes.lwGrottoChest) { if (S.auto) delete S.auto.done["LW Near Shortcuts Grotto Chest"]; S.fixes.lwGrottoChest = 1; }
+// 2026-11-22: boss rewards and Hearts unticked after they ticked at the kill come back when their real flag or key
+// shows up (the unticks only covered the kill flags)
+if (!S.fixes.bossUntick && S.ignore) {
+  const kill = { Gohma: ["Queen Gohma", "Deku Tree Queen Gohma Heart"], Dodongo: ["King Dodongo", "Dodongos Cavern King Dodongo Heart"],
+    Barinade: ["Barinade", "Jabu Jabus Belly Barinade Heart"], PhantomGanon: ["Phantom Ganon", "Forest Temple Phantom Ganon Heart"],
+    Volvagia: ["Volvagia", "Fire Temple Volvagia Heart"], Morpha: ["Morpha", "Water Temple Morpha Heart"],
+    BongoBongo: ["Bongo Bongo", "Shadow Temple Bongo Bongo Heart"], Twinrova: ["Twinrova", "Spirit Temple Twinrova Heart"] };
+  for (const [b, ns] of Object.entries(kill)) for (const n of ns)
+    if (S.ignore[n] === 1) S.ignore[n] = [`f:DefeatedEnemyNum.Enemy_DungeonBoss_${b}`, "f:Gohma_DefeatBoss"];
+  S.fixes.bossUntick = 1;
+}
 if (!S.fixes.saria0150) { if (S.auto) delete S.auto.done["LW Gift from Saria"]; if (S.ignore) delete S.ignore["LW Gift from Saria"]; S.fixes.saria0150 = 1; }
 // OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
 if (S.settings && typeof S.settings.shuffle_dungeon_rewards === "boolean") S.settings.shuffle_dungeon_rewards = S.settings.shuffle_dungeon_rewards ? "anywhere" : "vanilla";
@@ -3848,9 +3868,25 @@ function renderAreas() {
 // Clicking a check shows its rule exactly as OOTRR's logic writes it, with the logic region the rule
 // belongs to (reaching that region has rules of its own).
 let openCheck = null, clickTimer = 0;
+// Unticking a check the save found keeps it unticked, but only against what the save showed then: the flags and
+// keys behind it are remembered, and the check comes back when the save shows something new for it (a boss
+// Heart unticked after a kill-flag tick, then picked up, 2026-11-22).
+let LAST_PEEK = null;
 function toggleDone(n) {
-  if (isDone(n)) { delete S.done[n]; if (S.auto.done[n]) S.ignore[n] = 1; } else { S.done[n] = 1; delete S.ignore[n]; }
+  if (isDone(n)) {
+    delete S.done[n];
+    if (S.auto.done[n]) S.ignore[n] = LAST_PEEK ? Auto.evidence(LAST_PEEK, detectMap()[n]) : 1;
+  } else { S.done[n] = 1; delete S.ignore[n]; }
   render();
+}
+// after a save read: an unticked check found by a flag or key it didn't have when unticked is found again
+function reviewIgnored(p) {
+  const map = detectMap();
+  for (const [n, was] of Object.entries(S.ignore || {})) {
+    if (!Array.isArray(was)) continue;  // unticked before this existed: stays unticked
+    const now = Auto.evidence(p, map[n]);
+    if (now.some((e) => !was.includes(e))) { delete S.ignore[n]; S.auto.done[n] = 1; }
+  }
 }
 // entrances into each logic region: target → [[from region, rule], …]
 const ENTRANCES = new Map();
@@ -4527,6 +4563,7 @@ function applyPeek(p, label) {
     S.auto.items[n] = got;
   }
   autoTick(Auto.checks(p, detectMap()), before);
+  LAST_PEEK = p; reviewIgnored(p);
   W.read = new Date(); W.err = ""; W.name = label;
   // with the Longshot helper reading Link live, a save (written a moment later) doesn't move him back
   if (!(LIVE.on && LIVE.where)) followLink(p.map, p.pos, p.child);

@@ -185,6 +185,15 @@ const Auto = (() => {
     return (fallback && fallback[map]) || null;
   }
 
-  return { murmur3, peek, fromRows, checks, items, areaOf };
+  // what in the save makes a check found: the flags and keys of its rules that hold (for "found by something new")
+  function evidence(p, rules) {
+    const out = [];
+    for (const r of rules || []) {
+      for (const f of r.f || []) if (holds(p, f)) out.push("f:" + f);
+      for (const k of r.k || []) if (p.keys.has(k)) out.push("k:" + k);
+    }
+    return out;
+  }
+  return { murmur3, peek, fromRows, checks, items, areaOf, evidence };
 })();
 if (typeof module !== "undefined") module.exports = Auto;
