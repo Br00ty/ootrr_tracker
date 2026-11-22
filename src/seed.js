@@ -294,6 +294,7 @@ const Seed = (() => {
     "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
+    "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
     "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens; it needs both ages and nothing else (OOTRR: in the Tektite grotto, Golden Scale or Iron Boots).",
@@ -319,6 +320,13 @@ const Seed = (() => {
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
     // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving)
     "HF Tektite Grotto Freestanding PoH": "is_child and at('Hyrule Field', is_adult)",
+  };
+  // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
+  const EXTRA_EXITS = {
+    // 2026-11-22, the user: Volvagia showed out of logic with the Boss Key, Hammer, Goron Tunic and Hover Boots
+    // in hand. OOTRR 0.8.2's rebuilt Fire Temple reaches the boss door only from the top floor (all 8 keys, then
+    // the Hammer pillar); the original randomizer also lets Hover Boots cross from the first room to the boss door.
+    "Fire Temple Near Boss": { "Fire Temple Before Boss": "can_use(Hover_Boots)" },
   };
   // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
   const MOVE_REGION = {
@@ -372,6 +380,13 @@ const Seed = (() => {
     for (const [loc, sh] of Object.entries(shops || {})) if (placed && loc in placed && sh && priceRule(sh.price)) loc_fixes[loc] = priceRule(sh.price);
     // locations the tracker moves to another region, keeping their rule
     let regions = data.regions;
+    if (regions) regions = regions.map((r) => {
+      const add = EXTRA_EXITS[r.n];
+      if (!add) return r;
+      const x = { ...(r.x || {}) };
+      for (const [to, q] of Object.entries(add)) x[to] = x[to] ? `(${x[to]}) or (${q})` : q;
+      return { ...r, x };
+    });
     if (regions && Object.keys(MOVE_REGION).length) regions = regions.map((r) => {
       const out = Object.entries(MOVE_REGION).filter(([loc]) => r.l && loc in r.l);
       const into = Object.entries(MOVE_REGION).filter(([loc, to]) => to === r.n && !(r.l && loc in r.l));
