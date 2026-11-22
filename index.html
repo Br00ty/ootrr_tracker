@@ -2520,6 +2520,9 @@ function compute() {
     w.locs.forEach((l, k) => {
       if (l.event !== null || tracked.has(l.name) || excluded.has(l.name)) return;
       const v = DATA.vanilla[l.name];
+      // a vanilla small key already picked up (the save shows its location found) is in the key count read from
+      // the save, so it isn't placed again: Shadow Temple's unshuffled Freestanding Key counted twice (2026-11-22)
+      if (v !== undefined && v.startsWith("Small Key (") && S.auto.done[l.name]) return;
       if (v !== undefined) { const i = w.items.find(v); if (i !== undefined) place[k] = i; }
     });
     const counts = [];
