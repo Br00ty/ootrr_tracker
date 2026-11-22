@@ -2377,6 +2377,9 @@ const BOSS_FLAGS = {
   "King Dodongo": ["HavePlayedEvent.Get_StoneOfFire_Complete"],
   // the same story event for Jabu Jabu, not seen yet
   "Barinade": ["HavePlayedEvent.Get_StoneOfWater_Complete"],
+  // confirmed 2026-11-22 (Rupees (5) there): Bongo Bongo's reward scene, set when the reward is taken with the blue
+  // warp (with the Sage of Shadow's awakening, Dm_Awake_Shadow_Get); the kill sets only ShadowTemple_BossWin
+  "Bongo Bongo": ["HavePlayedEvent.Dm_ShadowTemple_0020"],
 };
 const EXTRA_FLAGS = {
   // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
@@ -2442,8 +2445,7 @@ const DROP_FLAGS = {
   // Queen Gohma's Heart has a pickup flag of its own (confirmed 2026-11-22: InsideTheDekuTree_Heart_Container_Obtained
   // and the heart's key were set when it was picked up), so the kill counter OOTRR gives it is dropped
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
-  // Bongo Bongo's Heart ticked at the kill (2026-11-22): it waits for its own key (Queen Gohma's heart key was set
-  // on pickup) until we know what its pickup sets
+  // Bongo Bongo's Heart ticked at the kill (2026-11-22); it's detected by its pickup key (OWN_KEYS)
   "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
@@ -2460,6 +2462,9 @@ const POOL_KEYS = {
     "3236392495739397075", "4184471392680640567", "8404733154085657768", "8987278980043647768"],
 };
 const OWN_KEYS = {
+  // confirmed 2026-11-22: picking up Bongo Bongo's Heart (a Gold Skulltula Token there) set this key, which OOTRR's
+  // data doesn't know; its tracker target (17599164808183510748) stayed unset. Both are kept.
+  "Shadow Temple Bongo Bongo Heart": ["9305840402089458269", "17599164808183510748"],
 };
 function detectMap() {
   const out = detectMapBase();
