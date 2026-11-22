@@ -4375,16 +4375,11 @@ const EXTRA_FLAGS = {
   // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
   // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
-  // boss Heart Containers: the save keeps no mark of the pickup itself (its key isn't stored), so the
-  // boss being beaten stands in for it; the heart appears when the boss falls
+  // King Dodongo's Heart: its pickup left no mark in the save (2026-11-22), so the boss being beaten stands in for
+  // it. The other boss Hearts go by their own pickup marks (see DROP_FLAGS).
   // Queen Gohma's Heart: its own pickup flag (confirmed 2026-11-22); the kill counter is dropped (DROP_FLAGS)
   "Deku Tree Queen Gohma Heart": ["InsideTheDekuTree_Heart_Container_Obtained"],
   "Dodongos Cavern King Dodongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
-  "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
-  "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
-  "Fire Temple Volvagia Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia"],
-  "Water Temple Morpha Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
-  "Spirit Temple Twinrova Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
   "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
   "Market Lost Dog": ["SubEvent_FindRichard_GetHeartPiece"],
@@ -4437,6 +4432,14 @@ const DROP_FLAGS = {
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
   // Bongo Bongo's Heart ticked at the kill (2026-11-22); it's detected by its pickup key (OWN_KEYS)
   "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
+  // the other boss Hearts ticked at the kill too (Volvagia's, 2026-11-22): they wait for their own key (Gohma's was
+  // set on pickup, Bongo Bongo's was a key OOTRR doesn't know). King Dodongo's keeps the counter: its pickup set
+  // nothing at all in the save.
+  "Jabu Jabus Belly Barinade Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
+  "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
+  "Fire Temple Volvagia Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia", "DefeatedEnemyNum.Dm_Enemy_DungeonBoss_Volvagia"],
+  "Water Temple Morpha Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
+  "Spirit Temple Twinrova Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
   "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
