@@ -291,7 +291,7 @@ const Seed = (() => {
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
     "HF Tunnel Ledge Chest (shown as LLR Tower Vines Chest) needs adult Link with the Hookshot: it's up the vines on the Lon Lon Ranch tower, where OOTRR's rule has it child only with nothing needed.",
     "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
-    "DMC Central Local Remake Rupee 1 and 4 need the Hookshot (adult Link); OOTRR has them with no requirement.",
+    "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
@@ -305,8 +305,8 @@ const Seed = (() => {
     // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
     "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
     // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
-    "DMC Central Local Remake Rupee 1": "can_use(Hookshot)",
-    "DMC Central Local Remake Rupee 4": "can_use(Hookshot)",
+    "DMC Central Local Remake Rupee 1": "can_use(Longshot)",
+    "DMC Central Local Remake Rupee 4": "can_use(Longshot)",
     // HF East Rupee Grotto Rupee 1-3: in a grotto blown open with an explosive (confirmed in game 2026-11-19);
     // same rule as OOTRR's other bombable field grottos (HF Southeast / Near Market / Fairy Grotto). OOTRR: True
     "Lake Hylia Remake Rupee 1": "can_blast_or_smash",
