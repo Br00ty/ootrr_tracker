@@ -1890,9 +1890,12 @@ function areaRow(name, also = [], onMap = false) {
   let door = null, entranceTip;
   // hovering a dungeon tells which entrance leads into it (its own door, or with dungeon entrances shuffled the
   // door the seed put it behind)
+  // door the seed put it behind). With shuffled entrances that's a spoiler until Link has been inside (or the player
+  // clicked "door: ?"), so the hover only tells it then.
   if (DUNGEON_AREAS.includes(name) && POOL.has(name)) {
-    const at = entrancesShuffled() ? doorOf(name) : null;
-    entranceTip = at ? `${name}: entered through the ${at} entrance (${areaName(POOL.get(at)[1])})`
+    const shuffled = entrancesShuffled(), at = shuffled ? doorOf(name) : null;
+    if (shuffled && !S.reveal[name]) entranceTip = `${name}: you haven't been inside yet, so its entrance stays hidden. Click "door: ?" to show it anyway.`;
+    else entranceTip = at ? `${name}: entered through the ${at} entrance (${areaName(POOL.get(at)[1])})`
       : `${name}: entered through its own entrance (${areaName(POOL.get(name)[1])})`;
   }
   if (DUNGEON_AREAS.includes(name) && entrancesShuffled() && POOL.has(name)) {
@@ -1900,7 +1903,7 @@ function areaRow(name, also = [], onMap = false) {
     const where = at ? `the ${at} door, ${areaName(POOL.get(at)[1])}` : "its own door";
     door = h("span", {
       class: `door ${shown ? "" : "hid"}`,
-      title: shown ? `${name} is behind the ${at || name} entrance. Click to hide again.` : `${entranceTip}. Click to keep it shown here; it also shows by itself once your save has Link inside it.`,
+      title: shown ? `${name} is behind the ${at || name} entrance. Click to hide again.` : "Click to show which door leads to this dungeon. It also shows by itself once your save has Link inside it.",
       onclick: (e) => { e.stopPropagation(); S.reveal[name] = !shown; render(); },
     }, shown ? `behind ${where}` : "door: ?");
   }
