@@ -2390,7 +2390,6 @@ const EXTRA_FLAGS = {
   "Forest Temple Phantom Ganon Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
   "Fire Temple Volvagia Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Volvagia"],
   "Water Temple Morpha Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Morpha"],
-  "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
   "Spirit Temple Twinrova Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Twinrova"],
   "LW Skull Kid": ["Npc_SkullKid_Child_IsGetHeartPiece"],
   "LW Ocarina Memory Game": ["Minigame_SkullKidSession_IsGetHeartPiece"],
@@ -2442,6 +2441,9 @@ const DROP_FLAGS = {
   // Queen Gohma's Heart has a pickup flag of its own (confirmed 2026-11-22: InsideTheDekuTree_Heart_Container_Obtained
   // and the heart's key were set when it was picked up), so the kill counter OOTRR gives it is dropped
   "Deku Tree Queen Gohma Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_Gohma", "Gohma_DefeatBoss"],
+  // Bongo Bongo's Heart ticked at the kill (2026-11-22): it waits for its own key (Queen Gohma's heart key was set
+  // on pickup) until we know what its pickup sets
+  "Shadow Temple Bongo Bongo Heart": ["DefeatedEnemyNum.Enemy_DungeonBoss_BongoBongo"],
   "King Dodongo": ["DefeatedEnemyNum.Enemy_DungeonBoss_Dodongo"],
   "Barinade": ["DefeatedEnemyNum.Enemy_DungeonBoss_Barinade"],
   "Phantom Ganon": ["DefeatedEnemyNum.Enemy_DungeonBoss_PhantomGanon"],
