@@ -2450,11 +2450,13 @@ function manualVals() {
   if (MV && k === MVkey) return MV;
   const v = Object.fromEntries(DATA.schema.map((s) => [s.id, s.id in S.settings ? S.settings[s.id] : s.default]));
   for (const s of DATA.schema) if (!Seed.enabled(s, v)) v[s.id] = "disabled" in s ? s.disabled : s.default;
-  // Kakariko skip (open Kakariko with the forest not closed): the child Zelda story is given at the start,
-  // with the vanilla items of its two checks when there is no seed
+  // Kakariko skip (open Kakariko with the forest open): the child Zelda story is given at the start. Without a
+  // seed, a skipped check's vanilla item counts as a starting item only when that check isn't shuffled (with
+  // vanilla songs Impa's gift is Zelda's Lullaby; with songs shuffled it could be anything)
   const skipped = Seed.kakarikoSkip(v) ? ["HC Zeldas Letter", "Song from Impa"] : [];
   const start = Seed.startItems(v, DATA.start_items);
-  for (const l of skipped) { const it = DATA.vanilla[l]; if (it) start[it] = (start[it] || 0) + 1; }
+  const pool = skipped.length ? Seed.poolOf(v, DATA) : null;
+  for (const l of skipped) { const it = DATA.vanilla[l]; if (it && !pool.has(l)) start[it] = (start[it] || 0) + 1; }
   MV = Object.assign(v, { __start: start, __skipped: skipped }); MVkey = k;
   return MV;
 }
