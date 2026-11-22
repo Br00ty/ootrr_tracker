@@ -245,6 +245,10 @@ public static class OotrrLive
     // 2026-11-16): Vector3 entries are 64 bytes with the current value at +36; String64 entries are 264
     // bytes with the current text at +116. The game updates both as Link moves, between saves.
     const uint PLAYER_POS = 0x960AD56AU, CURRENT_BANC = 0x1D6189DAU;
+    // Player_Rot_For_Map: the way Link faces, in degrees (0 = north on the map, 90 = west, 180/-180 = south).
+    // Float table entries are 40 bytes with the current value at +28 (found 2026-11-22 in the 2026-11-16 probe:
+    // it follows his walking direction while he moves)
+    const uint PLAYER_ROT = 0xA4AEE8CDU;
     static Dictionary<uint, int[]> typed = new Dictionary<uint, int[]>();   // hash -> [table offset, index]
     static ulong typedFor = 0;
     static ulong TypedValue(ulong manager, uint hash, int stride, int off)
@@ -281,6 +285,13 @@ public static class OotrrLive
             float x = BitConverter.ToSingle(pv, 0), y = BitConverter.ToSingle(pv, 4), z = BitConverter.ToSingle(pv, 8);
             if (!float.IsNaN(x) && !float.IsNaN(y) && !float.IsNaN(z) && Math.Abs(x) < 1e6 && Math.Abs(y) < 1e6 && Math.Abs(z) < 1e6)
                 sb.Append(",\"pos\":[").Append(x.ToString("R", CultureInfo.InvariantCulture)).Append(',').Append(y.ToString("R", CultureInfo.InvariantCulture)).Append(',').Append(z.ToString("R", CultureInfo.InvariantCulture)).Append(']');
+        }
+        ulong ra = TypedValue(manager, PLAYER_ROT, 40, 28);
+        byte[] rv = ra != 0 ? Read(ra, 4) : null;
+        if (rv != null)
+        {
+            float r = BitConverter.ToSingle(rv, 0);
+            if (!float.IsNaN(r) && Math.Abs(r) <= 360) sb.Append(",\"rot\":").Append(r.ToString("R", CultureInfo.InvariantCulture));
         }
         ulong ma = TypedValue(manager, CURRENT_BANC, 264, 116);
         byte[] mv = ma != 0 ? Read(ma, 64) : null;
@@ -549,6 +560,95 @@ public static class OotrrLive
         Console.WriteLine("Done: " + Path.Combine(outDir, "probe.json"));
     }
 
+    // ---------- research: the game's maps (run with OOTRR_PROBE=map) ----------
+    // Walks the player through a few steps (map closed, map open, zoomed, other menu pages...) and at each step
+    // copies every GameData type table's entries (all but the huge ones) three times, a second apart, into
+    // map-probe\step-<n>-<k>.bin, with map-probe\index.json saying what each step was and where each table
+    // sits in the file. Comparing steps shows which values follow the map screen. Reads only.
+    static readonly string[] MAP_STEPS = {
+        "Unpause the game and stand still (no menus open)",
+        "Open the pause menu on the MAP page",
+        "Close the pause menu",
+        "Open the pause menu on the MAP page again",
+        "On the map page, zoom in (or switch to the other map view)",
+        "Zoom back out, and scroll or move the map cursor around",
+        "Switch the pause menu to a different page (items, equipment...)",
+        "Close the pause menu, then turn the camera around slowly (Link standing still)",
+        "Walk Link in a circle (no menus)",
+        "Stand still, no menus (last step)",
+    };
+    public static void MapProbe(string outDir)
+    {
+        Directory.CreateDirectory(outDir);
+        string why = null;
+        for (int i = 0; i < 20; i++) { nextScan = DateTime.MinValue; why = Attach(); if (why == null) break; Console.WriteLine("Waiting for the game: " + why); Thread.Sleep(1000); }
+        if (why != null) { File.WriteAllText(Path.Combine(outDir, "index.json"), "{\"ok\":false,\"why\":" + Str(why) + "}"); return; }
+        ulong holder = U64(slot), manager = holder != 0 ? U64(holder) : 0;
+        byte[] head = manager != 0 ? Read(manager, 0x1000) : null;
+        List<ulong[]> tabs = new List<ulong[]>();   // [offset, entries, count, size, table]
+        if (head != null)
+            for (int o = 0; o + 32 <= head.Length; o += 8)
+            {
+                uint count = BitConverter.ToUInt32(head, o), size = BitConverter.ToUInt32(head, o + 28);
+                ulong entries = BitConverter.ToUInt64(head, o + 8), table = BitConverter.ToUInt64(head, o + 16);
+                if (count == 0 || count > MAX_ITEMS || size == 0 || size > MAX_ITEMS || entries == 0 || table == 0 || (entries & 3) != 0 || (table & 3) != 0 || entries >= (1UL << 48) || table >= (1UL << 48)) continue;
+                if (count > 50000) continue;
+                tabs.Add(new ulong[] { (ulong)o, entries, count, size, table });
+            }
+        StringBuilder js = new StringBuilder();
+        js.Append("{\"ok\":true,\"game\":").Append(Str(game)).Append(",\"manager\":").Append(manager).Append(",\"tables\":[");
+        for (int i = 0; i < tabs.Count; i++)
+        {
+            if (i > 0) js.Append(',');
+            // each table's hash slots too, so values can be named afterwards (murmur3 of the flag names)
+            byte[] raw = Read(tabs[i][4], (int)(tabs[i][3] * 8));
+            string rawName = "table-" + tabs[i][0] + ".bin";
+            if (raw != null) File.WriteAllBytes(Path.Combine(outDir, rawName), raw);
+            js.Append("{\"o\":").Append(tabs[i][0]).Append(",\"count\":").Append(tabs[i][2]).Append(",\"size\":").Append(tabs[i][3]).Append(",\"slots\":").Append(Str(raw != null ? rawName : ""));
+            js.Append("}");
+        }
+        js.Append("],\"steps\":[");
+        for (int st = 0; st < MAP_STEPS.Length; st++)
+        {
+            Console.WriteLine();
+            Console.WriteLine("Step " + (st + 1) + " of " + MAP_STEPS.Length + ": " + MAP_STEPS[st]);
+            for (int c = 8; c > 0; c--) { Console.Write("\r  starting in " + c + "s  "); Thread.Sleep(1000); }
+            Console.WriteLine("\r  recording, keep doing it...   ");
+            if (st > 0) js.Append(',');
+            js.Append("{\"step\":").Append(Str(MAP_STEPS[st])).Append(",\"files\":[");
+            for (int k = 0; k < 3; k++)
+            {
+                string name = "step-" + (st + 1) + "-" + (k + 1) + ".bin";
+                using (FileStream fs = File.Create(Path.Combine(outDir, name)))
+                {
+                    if (k > 0) js.Append(',');
+                    js.Append("{\"file\":").Append(Str(name)).Append(",\"parts\":[");
+                    long at = 0;
+                    for (int i = 0; i < tabs.Count; i++)
+                    {
+                        int len = (int)Math.Min(tabs[i][2] * 64, 4UL << 20);
+                        // the entry size differs per type (24 to 264 bytes): read generously, and less if that runs off the end
+                        byte[] d = Read(tabs[i][1], len);
+                        while (d == null && len > 4096) { len /= 2; d = Read(tabs[i][1], len); }
+                        if (d == null) d = new byte[0];
+                        fs.Write(d, 0, d.Length);
+                        if (i > 0) js.Append(',');
+                        js.Append("[").Append(tabs[i][0]).Append(',').Append(at).Append(',').Append(d.Length).Append("]");
+                        at += d.Length;
+                    }
+                    js.Append("]}");
+                }
+                Thread.Sleep(1000);
+            }
+            js.Append("]}");
+            Console.WriteLine("  done.");
+        }
+        js.Append("]}");
+        File.WriteAllText(Path.Combine(outDir, "index.json"), js.ToString());
+        Console.WriteLine();
+        Console.WriteLine("All done: " + outDir);
+    }
+
     public static void Run(int port)
     {
         TcpListener listener = new TcpListener(IPAddress.Loopback, port);
@@ -566,7 +666,12 @@ public static class OotrrLive
 '@
 }
 
-if ($env:OOTRR_PROBE) {
+if ($env:OOTRR_PROBE -eq 'map') {
+    # research mode: the game's map screens, into %LOCALAPPDATA%\ootrr\map-probe
+    $out = Join-Path $env:LOCALAPPDATA 'ootrr\map-probe'
+    [OotrrLive]::MapProbe($out)
+    Write-Host "Finished. Tell Claude it's done; you can close this window."
+} elseif ($env:OOTRR_PROBE) {
     # research mode: samples where the game keeps Link's position, into %LOCALAPPDATA%\ootrr\tracker-probe
     $out = Join-Path $env:LOCALAPPDATA 'ootrr\tracker-probe'
     [OotrrLive]::Probe($out, [int]$env:OOTRR_PROBE)
