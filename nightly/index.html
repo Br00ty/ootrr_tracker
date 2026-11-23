@@ -2723,7 +2723,9 @@ function compute() {
   for (const n of [...names, ...vsongs]) {
     const [a, k] = DATA.checks[n];
     const c = { n, a, k };
-    const dest = tracked.has(n) ? out : VSONGS;
+    // a spot keeping its vanilla key is a check like any other (counted, on the floor tabs), though the logic gives
+    // it its key; unshuffled songs only show on the map
+    const dest = tracked.has(n) || KEY_SPOTS.has(n) ? out : VSONGS;
     if (!tracked.has(n)) c.vanilla = DATA.vanilla[n] || "";
     const [L, T] = res.map(({ w, s }) => { const l = w.lix.get(n); return l === undefined ? null : [s.locAccess(l, 1), s.locAccess(l, 0)]; });
     let st = "r";
@@ -4322,7 +4324,7 @@ function ckRow(c, again, open = false) {
     // one click opens the description; a double click marks the check done and cancels the pending click
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; again(); }, 230); },
     ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
-  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null),
+  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: KEY_SPOTS.has(c.n) ? "Keys aren't shuffled here in this seed: this spot holds its usual key" : "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null),
     h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
     c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
     !c.fromSave && S.auto.pend && S.auto.pend[c.n] !== undefined && !isDone(c.n) ? (BOSS_HEART_WAIT.has(c.n)
