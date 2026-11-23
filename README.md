@@ -71,6 +71,12 @@ A few checks are listed under a different name (and sometimes area) than OOTRR g
 | HF Fairy Pond Rupee 7 (Hyrule Field) | Lake Hylia Child Remake Rupee 4 | (same ring) |
 | HF Fairy Pond Rupee 8 (Hyrule Field) | Lake Hylia Child Remake Rupee 1 | (same ring) |
 | HF Fairy Pond Rupee 9 (Hyrule Field) | Lake Hylia Child Remake Rupee 2 | (same ring) |
+| DMT SoS Grotto Rupee 1 | DMT Rock Red Rupee | The six rupees by the Death Mountain Trail Song of Storms grotto only appear after playing Song of Storms; numbered clockwise from the north |
+| DMT SoS Grotto Rupee 2 | Death Mountain Remake Rupee 1 | (same cluster) |
+| DMT SoS Grotto Rupee 3 | Death Mountain Remake Rupee 4 | (same cluster) |
+| DMT SoS Grotto Rupee 4 | Death Mountain Remake Rupee 5 | (same cluster) |
+| DMT SoS Grotto Rupee 5 | Death Mountain Remake Rupee 3 | (same cluster) |
+| DMT SoS Grotto Rupee 6 | Death Mountain Remake Rupee 2 | (same cluster) |
 | HF East Rupee Grotto Rupee 1 (Hyrule Field) | Lake Hylia Remake Rupee 3 | Three of a cluster of seven rupees by Hyrule Field's east rupee grotto (the other four aren't randomized); OOTRR files them under Lake Hylia |
 | HF East Rupee Grotto Rupee 2 (Hyrule Field) | Lake Hylia Remake Rupee 2 | (same cluster) |
 | HF East Rupee Grotto Rupee 3 (Hyrule Field) | Lake Hylia Remake Rupee 1 | (same cluster) |

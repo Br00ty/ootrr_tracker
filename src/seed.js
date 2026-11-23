@@ -296,6 +296,7 @@ const Seed = (() => {
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "HF GS Tree By KF (OOTRR: LLR GS Rain Shed) can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
+    "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
@@ -322,6 +323,14 @@ const Seed = (() => {
     "LLR GS Rain Shed": "can_bonk",
     // an OOTRR developer told the user (2026-11-23) these two now need the Boomerang; not in OOTRR's pushed code
     // yet (nightly def150e: the child bridge area takes the Boomerang or the Slingshot). Drop these once it is.
+    // 2026-11-23, the user: the DMT rupees by the Song of Storms grotto (shown as DMT SoS Grotto Rupee 1-6) only
+    // appear after playing Song of Storms there
+    "DMT Rock Red Rupee": "can_play(Song_of_Storms)",
+    "Death Mountain Remake Rupee 1": "can_play(Song_of_Storms)",
+    "Death Mountain Remake Rupee 2": "can_play(Song_of_Storms)",
+    "Death Mountain Remake Rupee 3": "can_play(Song_of_Storms)",
+    "Death Mountain Remake Rupee 4": "can_play(Song_of_Storms)",
+    "Death Mountain Remake Rupee 5": "can_play(Song_of_Storms)",
     "Spirit Temple Child Bridge Chest": "Boomerang",
     "Spirit Temple GS Metal Fence": "Boomerang",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
