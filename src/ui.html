@@ -1925,7 +1925,7 @@ function tile([name, label, max, cls]) {
   const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${label.replace("-", "")}${max > 1 ? ` (${v}/${max})` : ""}`;
   const pic = picOf(name, v), told = hintTip(name);
   return h("div", {
-    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""} ${pic ? "pic" : ""} ${told ? "hinted" : ""}`, "data-name": name, title: `${tip}${fromSave ? "\nRead from your save" : ""}${told}\nClick to add, right-click to remove`,
+    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""} ${pic ? "pic" : ""} ${told && !v ? "hinted" : ""}`, "data-name": name, title: `${tip}${fromSave ? "\nRead from your save" : ""}${told}\nClick to add, right-click to remove`,
     onclick: () => bump(name, max, max === 1 && v ? -1 : 1),
     oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); },
   }, pic ? h("img", { src: pic, alt: text }) : text,
@@ -1985,7 +1985,8 @@ function stoneName(stone) {
 function hintTip(tileName) {
   const hs = seedHints().filter((x) => S.heard && S.heard[x.stone] && tileOf(x.item) === tileName);
   if (!hs.length) return "";
-  const said = [...new Set(hs.map((x) => `${x.text} (${stoneName(x.stone)})`))];
+  // only what the stones said: naming the stone read like the item's own spot
+  const said = [...new Set(hs.map((x) => x.text))];
   return `\nHinted:\n${said.map((t) => `• ${t}`).join("\n")}`;
 }
 // Probe (2026-11-23, the talk flag didn't show): near a stone, the flags that turn on or off compared with when
@@ -2096,12 +2097,12 @@ function renderItems() {
     h("h2", {}, "Counters"),
     h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, maxOf(m)))))),
     h("h2", {}, "Dungeon keys"),
-    h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", { title: hintTip(sk).trim() || undefined, class: hintTip(sk) ? "hinted" : "" },
+    h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", { title: hintTip(sk).trim() || undefined, class: hintTip(sk) && !have(sk) ? "hinted" : "" },
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
       h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""} ${PICS.Item_Dungeon_BossKey ? "pic" : ""}`, title: "Boss key", onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "Boss key" }) : "Boss key") : "")))),
     // the rooms whose Silver Rupees OOTRR can shuffle; when it doesn't, they're where they always are and count as you find them
     h("h2", { title: silverShuffled() ? "Silver rupees are shuffled: find five for a room to open it." : "Silver rupees aren't shuffled in these settings: each room's five are where they always are, and the logic counts them as you find them." }, "Silver rupees"),
-    h("table", { class: "dtab" }, SILVER.map(([d, room, it]) => h("tr", { title: `${d}: ${room}${hintTip(it)}`, class: hintTip(it) ? "hinted" : "" },
+    h("table", { class: "dtab" }, SILVER.map(([d, room, it]) => h("tr", { title: `${d}: ${room}${hintTip(it)}`, class: hintTip(it) && !have(it) ? "hinted" : "" },
       h("td", {}, d, h("span", { style: "color:var(--faint);font-size:11px;margin-left:5px" }, room)), h("td", { style: "text-align:right" }, counter(it, 5))))),
     h("h2", {}, "Child trade"), h("div", { class: g }, CHILD_TRADE.map(tile)),
     h("h2", {}, "Adult trade"), h("div", { class: g }, ADULT_TRADE.map(tile)),
