@@ -333,3 +333,6 @@ out = {'generator': L['generator'], 'regions': base, 'patches': patches, 'helper
                                                                  for sc in pg['sections']]} for pg in SCH['menu']]).replace('Gerudo Training Ground', 'Gerudo Proving Ground'))}
 json.dump(out, open('data/data.json', 'w'), separators=(',', ':'))
 print('detect', len(det), 'maps', len(maps), file=sys.stderr)
+# the gossip stone hints (tools/hint_data.py): what each stone says comes from the seed, with these tables
+import subprocess
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hint_data.py'), os.path.join(D, '..')], check=True)
