@@ -2578,17 +2578,30 @@ function excludedSet() {
 function trackedNames() {
   const ex = excludedSet();
   // checks the seed hands out at new game (skipped child Zelda story) aren't in the world
-  if (S.seed) return Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !(S.seed.skipped || []).includes(n));
+  if (S.seed) return withKeySpots(Object.keys(S.seed.placements).filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !(S.seed.skipped || []).includes(n)), ex);
   // without a seed: the locations OOTRR would shuffle with the manual settings
   const pool = Seed.poolOf(manualVals(), DATA), skip = skippedList();
-  if (pool) return [...pool].filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !skip.includes(n));
+  if (pool) return withKeySpots([...pool].filter((n) => DATA.checks[n] && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !skip.includes(n)), ex);
+  KEY_SPOTS = new Set();
   return DATA.classic.filter((n) => !HIDDEN_CHECKS.has(n) && !ex.has(n) && S.cats[catOf(DATA.checks[n][1])]);
+}
+// Spots that keep their vanilla small key or boss key (not shuffled with these settings) stay on the tracker
+// anyway, so nobody walks past a key thinking nothing is there (the user's call, 2026-11-23: the Fire Temple
+// Near Boss Chest). They're listed and ticked like any check, but the logic still gives them their vanilla key
+// (compute leaves them out of the shuffled set).
+const VANILLA_KEY = /^(Small Key|Boss Key) \(/;
+let KEY_SPOTS = new Set();
+function withKeySpots(names, ex) {
+  const have = new Set(names);
+  // (not the Treasure Chest Game's: those keys are the minigame's own)
+  KEY_SPOTS = new Set(Object.keys(DATA.checks).filter((n) => !have.has(n) && VANILLA_KEY.test(DATA.vanilla[n] || "") && !/Treasure Chest Game/.test(DATA.vanilla[n]) && !HIDDEN_CHECKS.has(n) && !ex.has(n) && !skippedList().includes(n)));
+  return [...names, ...KEY_SPOTS];
 }
 function compute() {
   ensureWorlds();
   const names = trackedNames();
   // skipped checks hold nothing in the world: their items are starting items
-  const tracked = new Set([...names, ...skippedList()]);
+  const tracked = new Set([...names.filter((n) => !KEY_SPOTS.has(n)), ...skippedList()]);
   // excluded locations are shuffled (with junk): they must not get their vanilla item in the logic either
   const excluded = excludedSet();
   const res = worlds.map((w) => {
