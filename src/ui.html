@@ -473,6 +473,7 @@ if (!S.fixes.bossUntick && S.ignore) {
 }
 // 2026-11-22: the Great Fairies now go by their own fountain's flags; ticks from another fairy's gift item are
 // cleared once, and the ones really done come back with the next read
+if (!S.fixes.labDive) { if (S.auto) delete S.auto.done["LH Lab Dive"]; S.fixes.labDive = 1; }
 if (!S.fixes.fairyOwn) { if (S.auto) for (const z of ["DMT", "HC", "ZF", "Colossus", "OGC", "DMC"]) delete S.auto.done[`${z} Great Fairy Reward`]; S.fixes.fairyOwn = 1; }
 if (!S.fixes.saria0150) { if (S.auto) delete S.auto.done["LW Gift from Saria"]; if (S.ignore) delete S.ignore["LW Gift from Saria"]; S.fixes.saria0150 = 1; }
 // OOTRR 0.7: Dungeon Rewards went from a toggle to a choice (off = Vanilla, on = Anywhere)
@@ -2569,6 +2570,11 @@ const OWN_FLAGS = {
   // the Ocarina of Time in the castle moat: OOTRR's own pickup flag (door_gate.rs PICKED), set however the item
   // was shuffled. Confirmed in a real save 2026-11-21 (OOTRR's target only looks for the vanilla Ocarina's get event)
   "HF Ocarina of Time Item": ["HavePlayedEvent.HyruleField_DoorOfTime_GetOcarinaOfTime"],
+  // the lab dive: OOTRR's tracker target is the Piece of Heart's get event, set by any Piece of Heart (2026-11-23:
+  // ticked without the dive done). The scientist's own flags instead: his dive event (OOTRR npc_flags.rs, adult),
+  // the child one, and touching the bottom
+  "LH Lab Dive": ["HavePlayedEvent.Npc_Hylia_045_AdultDivingChallenge", "HavePlayedEvent.Npc_Hylia_045_ChildDivingChallenge",
+    "Npc_Hylia_045_DivingChallenge_IsOncedTouchtheBottom_Adult", "Npc_Hylia_045_DivingChallenge_IsOncedTouchtheBottom_Child"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
