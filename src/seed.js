@@ -252,6 +252,14 @@ const Seed = (() => {
     for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
     return out;
   }
+  // the names the seed's generator used, for the hints: a 0.8.2-data seed's stones were written from its own names
+  function generatorNames(pl, gen) {
+    if (!pl || !before(gen, [0, 8, 3])) return pl;
+    const out = { ...pl };
+    for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
+    for (const [o, nw] of Object.entries(OLD_DATA_RENAMES)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
+    return out;
+  }
   function parseFile(text, data) {
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
@@ -265,6 +273,7 @@ const Seed = (() => {
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
+      hints: hintsOf(String(j.seed || ""), generatorNames(j.placements, String(j.generator || "")), vals, data),
       vals, warn: retiredNote(warn, String(j.generator || "")), switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
     };
   }
@@ -439,7 +448,7 @@ const Seed = (() => {
     // tracker version read, which can use choices OOTRR has since renamed)
     const legacy = isLegacy(sd.generator);
     if (sd.settingsString) try { sd = { ...sd, vals: decodeSettings(sd.settingsString, data.schema, legacy, sd.generator).vals }; } catch (e) { /* keep the stored values */ }
-    return { ...sd, switches: withPlacedPatches(logicSwitches(sd.vals, legacy, sd.generator), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+    return { ...sd, hints: hintsOf(sd.seed, generatorNames(sd.placements, sd.generator), sd.vals, data), switches: withPlacedPatches(logicSwitches(sd.vals, legacy, sd.generator), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
   // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what
@@ -507,6 +516,49 @@ const Seed = (() => {
     }
     return set;
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES };
+
+  // ---------- gossip stone hints (OOTRR core/src/hints.rs) ----------
+  // OOTRR writes 40 hints into the stones' text, picked from the seed alone: every hintable item placed
+  // (once per item and place), shuffled by its xoshiro256** stream seeded with fnv1a("<seed>/hints"), then
+  // hint i goes to stone i in name order (more stones than hints: they repeat). Placements in the order of
+  // the seed file's keys (a Rust BTreeMap: byte order). Returns [{stone, item, text, place}] or [] when the
+  // tables are missing or the seed has gossip hints off.
+  const M64 = (1n << 64n) - 1n;
+  function hintRng(text) {
+    let h = 0xCBF29CE484222325n;
+    for (const b of new TextEncoder().encode(text)) { h ^= BigInt(b); h = (h * 0x100000001B3n) & M64; }
+    let x = h;
+    const split = () => { x = (x + 0x9E3779B97F4A7C15n) & M64; let z = x; z = ((z ^ (z >> 30n)) * 0xBF58476D1CE4E5B9n) & M64; z = ((z ^ (z >> 27n)) * 0x94D049BB133111EBn) & M64; return z ^ (z >> 31n); };
+    const s = [split(), split(), split(), split()];
+    const rotl = (v, k) => ((v << BigInt(k)) | (v >> BigInt(64 - k))) & M64;
+    const next = () => {
+      const r = (rotl((s[0] + s[3]) & M64, 23) + s[0]) & M64, t = (s[1] << 17n) & M64;
+      s[2] ^= s[0]; s[3] ^= s[1]; s[1] ^= s[2]; s[0] ^= s[3]; s[2] ^= t; s[3] = rotl(s[3], 45);
+      return r;
+    };
+    const below = (n) => { n = BigInt(n); if (n <= 1n) return 0; const zone = M64 - (M64 % n); for (;;) { const r = next(); if (r < zone) return Number(r % n); } };
+    return { shuffle(v) { let i = v.length; while (i > 1) { const j = below(i); i--; [v[i], v[j]] = [v[j], v[i]]; } } };
+  }
+  const byteOrder = (a, b) => { const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b); for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i] - y[i]; return x.length - y.length; };
+  function hintsOf(seedId, placements, vals, data) {
+    const H = data.hints;
+    if (!H || !placements || (vals && vals.gossip_hints === false)) return [];
+    const can = new Set(H.items), seen = new Set(), all = [];
+    for (const loc of Object.keys(placements).sort(byteOrder)) {
+      const item = placements[loc];
+      if (!can.has(item)) continue;
+      let place = H.areas[loc];
+      if (place === undefined) { const p = H.prefixes.find(([pre]) => loc.startsWith(pre)); if (!p) continue; place = p[1]; }
+      const key = `${item}\u0000${place}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      const shown = H.shown[item] || item;
+      all.push({ item, place, text: `They say that ${shown.startsWith("Progressive ") ? "a" : "the"} ${shown} lies in ${place}.` });
+    }
+    if (!all.length) return [];
+    hintRng(`${seedId}/hints`).shuffle(all);
+    return H.stones.map((stone, i) => ({ stone, ...all[i % all.length] }));
+  }
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

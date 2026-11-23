@@ -167,6 +167,18 @@ dialog.wide{width:min(860px,94vw)}
 .auto label{white-space:nowrap}
 .auto b{color:var(--ink);font-weight:600}
 .it.auto{box-shadow:inset 0 -2px 0 var(--green)}
+/* an item a gossip stone you've heard named: a blue hue (the hover tells what the stone said) */
+.it.hinted{border-color:#4a8fd6;background:#1c2a3c;box-shadow:0 0 8px rgba(74,163,255,.45)}
+.it.hinted.on{background:#22354d;border-color:#5aa6f0}
+.it.hinted img{filter:grayscale(.4) sepia(1) hue-rotate(175deg) saturate(2.2) brightness(1.05);opacity:.75}
+.it.hinted.on img{filter:sepia(.35) hue-rotate(175deg) saturate(1.6);opacity:1}
+.it.hinted.auto{box-shadow:inset 0 -2px 0 var(--green),0 0 8px rgba(74,163,255,.45)}
+.dtab tr.hinted td{color:#8cc4ff}
+.dtab tr.hinted td:first-child{box-shadow:inset 2px 0 0 #4a8fd6}
+.stones{max-width:620px;max-height:65vh;overflow:auto;font-size:12.5px}
+.stones label{display:flex;gap:8px;align-items:flex-start;padding:4px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.stones .st{min-width:180px;color:var(--faint)}
+.stones .heard .st{color:#8cc4ff}
 .ck .sv{font-size:10px;color:var(--green);border:1px solid #2e5a3e;border-radius:3px;padding:0 4px}
 .ck .sv.broke{color:var(--yellow);border-color:#6a5a24}
 /* map tracker: the map takes the place of the overworld, dungeon and location columns */
@@ -434,6 +446,7 @@ const DEFAULT = {
   settings: Object.fromEntries(DATA.schema.map((s) => [s.id, s.default])),
   seed: null,
   reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
+  heard: {},   // gossip stones the player has talked to: { GOSSIP_label: 1 }
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -1920,9 +1933,9 @@ function tile([name, label, max, cls]) {
   const tiers = TIERS[name];
   const text = tiers ? tiers[Math.max(0, Math.min(v, tiers.length) - 1)] : label.replace("-", "­");
   const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${label.replace("-", "")}${max > 1 ? ` (${v}/${max})` : ""}`;
-  const pic = picOf(name, v);
+  const pic = picOf(name, v), told = hintTip(name);
   return h("div", {
-    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""} ${pic ? "pic" : ""}`, "data-name": name, title: `${tip}${fromSave ? "\nRead from your save" : ""}\nClick to add, right-click to remove`,
+    class: `it ${cls || ""} ${v ? "on" : ""} ${fromSave ? "auto" : ""} ${pic ? "pic" : ""} ${told ? "hinted" : ""}`, "data-name": name, title: `${tip}${fromSave ? "\nRead from your save" : ""}${told}\nClick to add, right-click to remove`,
     onclick: () => bump(name, max, max === 1 && v ? -1 : 1),
     oncontextmenu: (e) => { e.preventDefault(); bump(name, max, -1); },
   }, pic ? h("img", { src: pic, alt: text }) : text,
@@ -1936,6 +1949,78 @@ function counter(name, max, step = 1) {
     h("span", {}, `${v}/${max}`),
     h("button", { onclick: () => bump(name, max, step), "aria-label": "more" }, "+"));
 }
+// ---------- gossip stone hints ----------
+// The seed decides what each of the 40 stones says (Seed.hintsOf, OOTRR hints.rs). An item a stone you've heard
+// named gets a blue hue, and its hover tells what was said. Heard stones come from the Longshot helper (while
+// you talk to a stone the game sets GossipStone_PlayingEvent; the stone is the one Link stands at) or are
+// ticked by hand in the Gossip stones list.
+const HINT_TALK = 0x760192e1;   // GossipStone_PlayingEvent
+const seedHints = () => (S.seed && S.seed.hints) || [];
+// the tile (or counter row) an item a hint names counts on
+let TILE_NAMES = null;
+function tileOf(item) {
+  if (!TILE_NAMES) TILE_NAMES = new Set([...INV, ...ARROWS, ...GEAR, ...SONGS, ...REWARDS, ...CHILD_TRADE, ...ADULT_TRADE].map((t) => t[0]));
+  if (TILE_NAMES.has(item)) return item;
+  if (/^Bombchus/.test(item)) return "Bombchus";
+  if (/^Bottle/.test(item)) return "Bottle";
+  if (/Shield$/.test(item)) return "Progressive Shield";
+  if (item === "Giants Knife") return "Biggoron Sword";
+  if (item === "Magic Bean Pack") return "Magic Bean";
+  let m = item.match(/^Silver Rupee(?: Pouch)? \((.+)\)$/);
+  if (m) return `Silver Rupee (${m[1]})`;
+  m = item.match(/^Small Key(?: Ring)? \((.+)\)$/);
+  if (m) return `Small Key (${m[1]})`;
+  return item;
+}
+// where a stone stands, for people: the area of the map Link talks to it on ("Lake Hylia" sits on Hyrule Field's)
+function stoneName(stone) {
+  const w = (DATA.hints && DATA.hints.where[stone]) || [];
+  let a = w.length ? w[0][0].replace(/_(Child|Adult)(_Alternative)?$/, "") : "";
+  if (a === "HyruleField" && /LAKE_HYLIA/.test(stone)) a = "LakeHylia";
+  a = a.replace(/Hounted/, "Haunted").replace(/([a-z])([A-Z])/g, "$1 $2");
+  const n = (stone.match(/_(\d+)$/) || [])[1];
+  return `${a || stone} stone${n ? ` ${+n}` : ""}`;
+}
+// the hover text for a tile: what the heard stones said about its item
+function hintTip(tileName) {
+  const hs = seedHints().filter((x) => S.heard && S.heard[x.stone] && tileOf(x.item) === tileName);
+  if (!hs.length) return "";
+  const said = [...new Set(hs.map((x) => `${x.text} (${stoneName(x.stone)})`))];
+  return `\nHinted:\n${said.map((t) => `• ${t}`).join("\n")}`;
+}
+// the live helper: the stone Link stands at while the game plays a stone's talk
+function heardLive(st) {
+  if (!S.seed || !DATA.hints || !st.map || !st.pos || !(st.bools || []).some((b) => +b === HINT_TALK)) return false;
+  let best = null, bd = 8;
+  for (const [stone, spots] of Object.entries(DATA.hints.where))
+    for (const [banc, at, stand] of spots) {
+      if (banc !== st.map) continue;
+      for (const q of [at, stand]) { if (!q) continue; const d = Math.hypot(q[0] - st.pos[0], q[2] - st.pos[2]); if (d < bd) { bd = d; best = stone; } }
+    }
+  if (!best || S.heard[best]) return false;
+  S.heard = { ...S.heard, [best]: 1 };
+  return true;
+}
+// the Gossip stones list: every stone, its hint once heard, a tick for the ones heard before the helper ran
+function stonesButton() {
+  if (!S.seed || !seedHints().length) return null;
+  const n = seedHints().filter((x) => S.heard && S.heard[x.stone]).length;
+  return h("span", { class: "tilehelp", style: "width:auto;padding:0 6px;border-radius:8px", title: "Gossip stones: the hints you've heard", onclick: openStones }, `Hints ${n}/${seedHints().length}`);
+}
+function openStones() {
+  const row = (x) => {
+    const on = !!(S.heard && S.heard[x.stone]);
+    const c = h("input", { type: "checkbox" }); c.checked = on;
+    c.onchange = () => { S.heard = { ...S.heard }; if (c.checked) S.heard[x.stone] = 1; else delete S.heard[x.stone]; render(); openStones(); };
+    return h("label", { class: on ? "heard" : "" }, c, h("span", { class: "st" }, stoneName(x.stone)), h("span", {}, on ? x.text : h("span", { style: "color:var(--faint)" }, "not heard yet")));
+  };
+  const list = [...seedHints()].sort((a, b) => stoneName(a.stone).localeCompare(stoneName(b.stone), undefined, { numeric: true }));
+  $("#dlgBody").replaceChildren(h("h3", {}, "Gossip stones"),
+    h("p", { style: "max-width:600px;color:var(--faint);font-size:12px;line-height:1.5" }, "With the Longshot helper running, a stone is ticked when you talk to it. Tick the ones you heard before that here: a heard stone's item gets a blue hue, and hovering the item shows the hint."),
+    h("div", { class: "stones" }, list.map(row)),
+    h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
 const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261122.3 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
@@ -1947,7 +2032,7 @@ function renderItems() {
     $("#dlgBody").replaceChildren(h("h3", {}, "Items"), h("p", { style: "max-width:460px;line-height:1.55" }, ITEMS_HELP), h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")));
     $("#dlg").showModal(); } }, "?");
   const main = [
-    h("h2", { style: "display:flex;align-items:center;margin-right:12px" }, h("span", { style: "flex:1" }, "Items"), help), h("div", { class: "grid" }, INV.map(tile)),
+    h("h2", { style: "display:flex;align-items:center;margin-right:12px;gap:6px" }, h("span", { style: "flex:1" }, "Items"), stonesButton(), help), h("div", { class: "grid" }, INV.map(tile)),
     h("h2", {}, "Magic arrows"), h("div", { class: "grid" }, ARROWS.map(tile)),
     h("h2", {}, "Equipment"), h("div", { class: "grid" }, GEAR.map(tile)),
     h("h2", {}, "Songs"), h("div", { class: "grid" }, SONGS.map(tile)),
@@ -1962,12 +2047,12 @@ function renderItems() {
     h("h2", {}, "Counters"),
     h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, maxOf(m)))))),
     h("h2", {}, "Dungeon keys"),
-    h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", {},
+    h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", { title: hintTip(sk).trim() || undefined, class: hintTip(sk) ? "hinted" : "" },
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
       h("td", { style: "text-align:right" }, bk ? h("span", { class: `bk ${have(bk) ? "on" : ""} ${PICS.Item_Dungeon_BossKey ? "pic" : ""}`, title: "Boss key", onclick: () => bump(bk, 1, S.items[bk] ? -1 : 1) }, PICS.Item_Dungeon_BossKey ? h("img", { src: PICS.Item_Dungeon_BossKey, alt: "Boss key" }) : "Boss key") : "")))),
     // the rooms whose Silver Rupees OOTRR can shuffle; when it doesn't, they're where they always are and count as you find them
     h("h2", { title: silverShuffled() ? "Silver rupees are shuffled: find five for a room to open it." : "Silver rupees aren't shuffled in these settings: each room's five are where they always are, and the logic counts them as you find them." }, "Silver rupees"),
-    h("table", { class: "dtab" }, SILVER.map(([d, room, it]) => h("tr", { title: `${d}: ${room}` },
+    h("table", { class: "dtab" }, SILVER.map(([d, room, it]) => h("tr", { title: `${d}: ${room}${hintTip(it)}`, class: hintTip(it) ? "hinted" : "" },
       h("td", {}, d, h("span", { style: "color:var(--faint);font-size:11px;margin-left:5px" }, room)), h("td", { style: "text-align:right" }, counter(it, 5))))),
     h("h2", {}, "Child trade"), h("div", { class: g }, CHILD_TRADE.map(tile)),
     h("h2", {}, "Adult trade"), h("div", { class: g }, ADULT_TRADE.map(tile)),
@@ -2378,7 +2463,7 @@ $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
   clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
-  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.heard = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
 };
 
 
@@ -2392,7 +2477,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; S.heard = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
   }
   W.err = "";
   render();
@@ -3038,6 +3123,7 @@ async function livePoll() {
       // a drop check's item comes in with the next save, so here it only starts waiting (see autoTick)
       if (autoTick(Auto.checks(p, detectMap()), null)) changed = true;
       W.child = !!st.child;
+      if (heardLive(st)) changed = true;
       // where Link is, live (the map he's on and his position), so areas and floors follow him at once
       LIVE.where = !!(st.map && st.pos);
       if (LIVE.where) {
