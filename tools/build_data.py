@@ -336,3 +336,5 @@ print('detect', len(det), 'maps', len(maps), file=sys.stderr)
 # the gossip stone hints (tools/hint_data.py): what each stone says comes from the seed, with these tables
 import subprocess
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hint_data.py'), os.path.join(D, '..')], check=True)
+# what unshuffled locations hold, as OOTRR fills them (tools/remake_vanilla.py: the remake's own item first)
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'remake_vanilla.py'), os.path.join(D, '..')], check=True)
