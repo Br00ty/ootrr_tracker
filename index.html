@@ -3988,13 +3988,23 @@ function tileOf(item) {
   return item;
 }
 // where a stone stands, for people: the area of the map Link talks to it on ("Lake Hylia" sits on Hyrule Field's)
+let STONE_NAMES = null;
 function stoneName(stone) {
-  const w = (DATA.hints && DATA.hints.where[stone]) || [];
-  let a = w.length ? w[0][0].replace(/_(Child|Adult)(_Alternative)?$/, "") : "";
-  if (a === "HyruleField" && /LAKE_HYLIA/.test(stone)) a = "LakeHylia";
-  a = a.replace(/Hounted/, "Haunted").replace(/([a-z])([A-Z])/g, "$1 $2");
-  const n = (stone.match(/_(\d+)$/) || [])[1];
-  return `${a || stone} stone${n ? ` ${+n}` : ""}`;
+  if (!STONE_NAMES) {
+    // the area of the map Link talks to it on (the game's label names don't always match: Lake Hylia's stones
+    // sit on Hyrule Field's map, and some labels name another area), numbered within that area
+    const areaOf = (s) => {
+      const w = (DATA.hints && DATA.hints.where[s]) || [];
+      let a = w.length ? w[0][0].replace(/_(Child|Adult)(_Alternative)?$/, "") : "";
+      if (a === "HyruleField" && /LAKE_HYLIA/.test(s)) a = "LakeHylia";
+      return a.replace(/Hounted/, "Haunted").replace(/([a-z])([A-Z])/g, "$1 $2") || s;
+    };
+    const by = {};
+    for (const s of (DATA.hints && DATA.hints.stones) || []) (by[areaOf(s)] = by[areaOf(s)] || []).push(s);
+    STONE_NAMES = {};
+    for (const [a, list] of Object.entries(by)) list.forEach((s, i) => { STONE_NAMES[s] = list.length > 1 ? `${a} stone ${i + 1}` : `${a} stone`; });
+  }
+  return STONE_NAMES[stone] || stone;
 }
 // the hover text for a tile: what the heard stones said about its item
 function hintTip(tileName) {
@@ -4005,7 +4015,7 @@ function hintTip(tileName) {
 }
 // the live helper: the stone Link stands at while the game plays a stone's talk
 function heardLive(st) {
-  if (!S.seed || !DATA.hints || !st.map || !st.pos || !(st.bools || []).some((b) => +b === HINT_TALK)) return false;
+  if (!seedHints().length || !DATA.hints || !st.map || !st.pos || !(st.bools || []).some((b) => +b === HINT_TALK)) return false;
   let best = null, bd = 8;
   for (const [stone, spots] of Object.entries(DATA.hints.where))
     for (const [banc, at, stand] of spots) {
