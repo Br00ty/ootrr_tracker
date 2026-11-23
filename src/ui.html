@@ -1988,8 +1988,37 @@ function hintTip(tileName) {
   const said = [...new Set(hs.map((x) => `${x.text} (${stoneName(x.stone)})`))];
   return `\nHinted:\n${said.map((t) => `• ${t}`).join("\n")}`;
 }
+// Probe (2026-11-23, the talk flag didn't show): near a stone, the flags that turn on or off compared with when
+// Link walked up, kept in localStorage "ootrr-hint-probe" and shown in the Hints list to copy
+const PROBE = { stone: null, base: null, on: {}, off: {}, d: 99, polls: 0, map: "" };
+function nearestStone(map, pos) {
+  let best = null, bd = 99;
+  for (const [stone, spots] of Object.entries((DATA.hints && DATA.hints.where) || {}))
+    for (const [banc, at, stand] of spots) {
+      if (banc !== map) continue;
+      for (const q of [at, stand]) { if (!q) continue; const d = Math.hypot(q[0] - pos[0], q[2] - pos[2]); if (d < bd) { bd = d; best = stone; } }
+    }
+  return [best, bd];
+}
+function probeLive(st) {
+  if (!st.map || !st.pos) return;
+  const [stone, d] = nearestStone(st.map, st.pos), now = new Set((st.bools || []).map(Number));
+  if (PROBE.stone && (stone !== PROBE.stone || d > 14)) {
+    let log = [];
+    try { log = JSON.parse(localStorage.getItem("ootrr-hint-probe") || "[]"); } catch (e) {}
+    log.push({ stone: PROBE.stone, map: PROBE.map, closest: Math.round(PROBE.d * 10) / 10, polls: PROBE.polls, on: PROBE.on, off: PROBE.off, at: new Date().toISOString() });
+    try { localStorage.setItem("ootrr-hint-probe", JSON.stringify(log.slice(-12))); } catch (e) {}
+    PROBE.stone = null;
+  }
+  if (!stone || d > 10) return;
+  if (!PROBE.stone) Object.assign(PROBE, { stone, base: now, on: {}, off: {}, d, polls: 0, map: st.map });
+  PROBE.polls++; PROBE.d = Math.min(PROBE.d, d);
+  for (const b of now) if (!PROBE.base.has(b)) PROBE.on[b] = (PROBE.on[b] || 0) + 1;
+  for (const b of PROBE.base) if (!now.has(b)) PROBE.off[b] = (PROBE.off[b] || 0) + 1;
+}
 // the live helper: the stone Link stands at while the game plays a stone's talk
 function heardLive(st) {
+  try { probeLive(st); } catch (e) {}
   if (!seedHints().length || !DATA.hints || !st.map || !st.pos || !(st.bools || []).some((b) => +b === HINT_TALK)) return false;
   let best = null, bd = 8;
   for (const [stone, spots] of Object.entries(DATA.hints.where))
@@ -2018,6 +2047,13 @@ function openStones() {
   $("#dlgBody").replaceChildren(h("h3", {}, "Gossip stones"),
     h("p", { style: "max-width:600px;color:var(--faint);font-size:12px;line-height:1.5" }, "With the Longshot helper running, a stone is ticked when you talk to it. Tick the ones you heard before that here: a heard stone's item gets a blue hue, and hovering the item shows the hint."),
     h("div", { class: "stones" }, list.map(row)),
+    (() => {
+      let log = "[]"; try { log = localStorage.getItem("ootrr-hint-probe") || "[]"; } catch (e) {}
+      const n = JSON.parse(log).length;
+      return h("p", { style: "font-size:12px;color:var(--faint);margin-top:8px" }, `Stone probe: ${n} stone visit${n === 1 ? "" : "s"} recorded. `,
+        h("button", { class: "btn", onclick: (e) => { navigator.clipboard.writeText(log).then(() => { e.target.textContent = "Copied"; }, () => { e.target.textContent = "Couldn't copy"; }); } }, "Copy probe"),
+        " ", h("button", { class: "btn", onclick: () => { try { localStorage.removeItem("ootrr-hint-probe"); } catch (e) {} openStones(); } }, "Clear"));
+    })(),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close")));
   if (!$("#dlg").open) $("#dlg").showModal();
 }
