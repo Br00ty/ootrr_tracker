@@ -2016,28 +2016,41 @@ function probeLive(st) {
   if (PROBE.stone && (stone !== PROBE.stone || d > 14)) {
     let log = [];
     try { log = JSON.parse(localStorage.getItem("ootrr-hint-probe") || "[]"); } catch (e) {}
-    log.push({ stone: PROBE.stone, map: PROBE.map, closest: Math.round(PROBE.d * 10) / 10, polls: PROBE.polls, on: PROBE.on, off: PROBE.off, at: new Date().toISOString() });
+    log.push({ stone: PROBE.stone, map: PROBE.map, closest: Math.round(PROBE.d * 10) / 10, polls: PROBE.polls, trail: (PROBE.trail || []).slice(-40), heard: !!S.heard[PROBE.stone], on: PROBE.on, off: PROBE.off, at: new Date().toISOString() });
     try { localStorage.setItem("ootrr-hint-probe", JSON.stringify(log.slice(-12))); } catch (e) {}
     PROBE.stone = null;
   }
   if (!stone || d > 10) return;
   if (!PROBE.stone) Object.assign(PROBE, { stone, base: now, on: {}, off: {}, d, polls: 0, map: st.map });
   PROBE.polls++; PROBE.d = Math.min(PROBE.d, d);
+  (PROBE.trail = PROBE.polls === 1 ? [] : PROBE.trail || []).push([Math.round(d * 10) / 10, typeof st.rot === "number" ? Math.round(st.rot) : null, (() => { try { return facingStone(st, stone) ? 1 : 0; } catch (e) { return null; } })()]);
   for (const b of now) if (!PROBE.base.has(b)) PROBE.on[b] = (PROBE.on[b] || 0) + 1;
   for (const b of PROBE.base) if (!now.has(b)) PROBE.off[b] = (PROBE.off[b] || 0) + 1;
 }
-// the live helper: the stone Link stands at while the game plays a stone's talk
+// the live helper: a talk freezes Link at the stone, facing it. The game sets no flag the helper sees while a
+// stone talks (probe 2026-11-23: GossipStone_PlayingEvent never showed), so a stone counts as heard when Link
+// stays still within TALK_NEAR of it (or of the spot the game puts him to talk), facing it, for TALK_POLLS reads
+// in a row (the helper reads once a second).
+const TALK_NEAR = 2.2, TALK_POLLS = 3, TALK_STILL = 0.12, TALK_FACE = 60;
+const TALK = { stone: null, n: 0, pos: null };
+function facingStone(st, stone) {
+  if (typeof st.rot !== "number" || !isFinite(st.rot)) return true;   // an older helper doesn't read his facing
+  const spot = DATA.hints.where[stone].find((w) => w[0] === st.map);
+  const r = (st.rot * Math.PI) / 180, fx = -Math.sin(r), fz = -Math.cos(r);
+  const dx = spot[1][0] - st.pos[0], dz = spot[1][2] - st.pos[2], len = Math.hypot(dx, dz) || 1;
+  return (Math.acos(Math.max(-1, Math.min(1, (fx * dx + fz * dz) / len))) * 180) / Math.PI <= TALK_FACE;
+}
 function heardLive(st) {
   try { probeLive(st); } catch (e) {}
-  if (!seedHints().length || !DATA.hints || !st.map || !st.pos || !(st.bools || []).some((b) => +b === HINT_TALK)) return false;
-  let best = null, bd = 8;
-  for (const [stone, spots] of Object.entries(DATA.hints.where))
-    for (const [banc, at, stand] of spots) {
-      if (banc !== st.map) continue;
-      for (const q of [at, stand]) { if (!q) continue; const d = Math.hypot(q[0] - st.pos[0], q[2] - st.pos[2]); if (d < bd) { bd = d; best = stone; } }
-    }
-  if (!best || S.heard[best]) return false;
-  S.heard = { ...S.heard, [best]: 1 };
+  if (!seedHints().length || !DATA.hints || !st.map || !st.pos) return false;
+  const [stone, d] = nearestStone(st.map, st.pos);
+  const still = TALK.pos && Math.hypot(st.pos[0] - TALK.pos[0], st.pos[2] - TALK.pos[2]) <= TALK_STILL;
+  const ok = stone && d <= TALK_NEAR && facingStone(st, stone);
+  if (ok && stone === TALK.stone && still) TALK.n++;
+  else Object.assign(TALK, { stone: ok ? stone : null, n: ok ? 1 : 0 });
+  TALK.pos = st.pos;
+  if (!ok || TALK.n < TALK_POLLS || S.heard[stone]) return false;
+  S.heard = { ...S.heard, [stone]: 1 };
   return true;
 }
 // the Gossip stones list: every stone, its hint once heard, a tick for the ones heard before the helper ran
