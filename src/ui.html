@@ -715,7 +715,7 @@ function heartContainersGot() {
 }
 function shownCount(n) {
   if (n === "Heart Container") return Math.max(S.items[n] || 0, startOf(n) + heartContainersGot());
-  if (n === "Piece of Heart") return Math.max(S.items[n] || 0, startOf(n), (S.auto.items[n] || 0) - 4 * heartContainersGot());
+  if (n === "Piece of Heart") return Math.max(S.items[n] || 0, startOf(n), Math.min(36, (S.auto.items[n] || 0) - 4 * heartContainersGot()));
   return have(n);
 }
 function bump(name, max, d) {
