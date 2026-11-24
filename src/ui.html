@@ -2028,15 +2028,26 @@ function facingStone(st, stone) {
   const dx = spot[1][0] - st.pos[0], dz = spot[1][2] - st.pos[2], len = Math.hypot(dx, dz) || 1;
   return (Math.acos(Math.max(-1, Math.min(1, (fx * dx + fz * dz) / len))) * 180) / Math.PI <= TALK_FACE;
 }
+// A grotto's stone: inside a grotto the game keeps Link's map position at the grotto's entrance up in the area
+// (a save at the Kakariko beehive grotto's stone, 2026-11-23), so it can't see him at the stone. The stone counts
+// as heard once he has been in its grotto (at its entrance) for GROTTO_POLLS reads, about 5 seconds: the user's
+// call for now (a quick look in also counts). The entrance is the 4th entry of the stone's spot (hint_data.py).
+const GROTTO_NEAR = 2.5, GROTTO_POLLS = 5;
+function grottoStone(map, pos) {
+  for (const [stone, spots] of Object.entries((DATA.hints && DATA.hints.where) || {}))
+    for (const [banc, , , door] of spots) if (door && banc === map && Math.hypot(door[0] - pos[0], door[2] - pos[2]) <= GROTTO_NEAR) return stone;
+  return null;
+}
 function heardLive(st) {
   if (!seedHints().length || !DATA.hints || !st.map || !st.pos) return false;
-  const [stone, d] = nearestStone(st.map, st.pos);
+  const grotto = grottoStone(st.map, st.pos);
+  const [near, d] = grotto ? [grotto, 0] : nearestStone(st.map, st.pos), stone = near;
   const still = TALK.pos && Math.hypot(st.pos[0] - TALK.pos[0], st.pos[2] - TALK.pos[2]) <= TALK_STILL;
-  const ok = stone && d <= TALK_NEAR && facingStone(st, stone);
+  const ok = stone && (grotto || (d <= TALK_NEAR && facingStone(st, stone)));
   if (ok && stone === TALK.stone && still) TALK.n++;
   else Object.assign(TALK, { stone: ok ? stone : null, n: ok ? 1 : 0 });
   TALK.pos = st.pos;
-  if (!ok || TALK.n < TALK_POLLS || S.heard[stone]) return false;
+  if (!ok || TALK.n < (grotto ? GROTTO_POLLS : TALK_POLLS) || S.heard[stone]) return false;
   S.heard = { ...S.heard, [stone]: 1 };
   return true;
 }
