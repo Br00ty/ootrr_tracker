@@ -707,15 +707,18 @@ function renderStats() {
 // What the heart counters show. The save only has the hearts in all (Piece of Heart, as the logic counts them),
 // so the Heart Containers shown are the done checks whose item is one, and the Pieces of Heart shown are the rest
 // (the user, 2026-11-24: the count should follow the Heart Containers gotten, not their vanilla spots)
-function heartContainersGot() {
+// With a seed, each counts the done checks that hold that item (the user, 2026-11-24: Pieces of Heart go up only
+// with a Piece of Heart, not with a Heart Container); without one, the save's hearts less the containers ticked.
+function gotFromChecks(item) {
   const pl = (S.seed && S.seed.placements) || {};
   let n = 0;
-  for (const [c, it] of Object.entries(pl)) if (it === "Heart Container" && isDone(c)) n++;
+  for (const [c, it] of Object.entries(pl)) if (it === item && isDone(c)) n++;
   return n;
 }
+const heartContainersGot = () => gotFromChecks("Heart Container");
 function shownCount(n) {
   if (n === "Heart Container") return Math.max(S.items[n] || 0, startOf(n) + heartContainersGot());
-  if (n === "Piece of Heart") return Math.max(S.items[n] || 0, startOf(n), Math.min(36, (S.auto.items[n] || 0) - 4 * heartContainersGot()));
+  if (n === "Piece of Heart") return Math.max(S.items[n] || 0, startOf(n) + (S.seed ? Math.min(36, gotFromChecks(n)) : Math.min(36, (S.auto.items[n] || 0) - 4 * heartContainersGot())));
   return have(n);
 }
 function bump(name, max, d) {
@@ -2729,6 +2732,12 @@ const BOSS_FLAGS = {
   // confirmed 2026-11-22 (Rupees (5) there): Bongo Bongo's reward scene, set when the reward is taken with the blue
   // warp (with the Sage of Shadow's awakening, Dm_Awake_Shadow_Get); the kill sets only ShadowTemple_BossWin
   "Bongo Bongo": ["HavePlayedEvent.Dm_ShadowTemple_0020"],
+  // confirmed 2026-11-24 (Bottle with Milk there, whose taking set no get event): Morpha's reward scene and the
+  // Sage of Water's awakening, after the reward; the kill set only the beaten counter
+  "Morpha": ["HavePlayedEvent.Dm_WaterTemple_0040", "HavePlayedEvent.Dm_Awake_Water_Get"],
+  // each sage's awakening comes with its boss's reward (seen for Water and Shadow; the others not seen yet)
+  "Phantom Ganon": ["HavePlayedEvent.Dm_Awake_Forest_Get"],
+  "Twinrova": ["HavePlayedEvent.Dm_Awake_Spirit_Get"],
 };
 const EXTRA_FLAGS = {
   // NPC gifts that OOTRR's data only knows by the vanilla item's get event: with a seed file that becomes the placed
