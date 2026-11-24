@@ -2755,7 +2755,14 @@ function detectMap() {
 const TRADE_KEEP = new Set(["Kak Anju as Adult", "Kak Anju Trade Pocket Cucco", "LW Trade Cojiro", "Kak Granny Trade Odd Mushroom",
   "LW Trade Odd Potion", "GV Trade Poachers Saw", "DMT Trade Broken Sword", "ZD Trade Prescription", "LH Trade Eyeball Frog", "DMT Trade Eyedrops"]);
 function detectMapBase() {
-  if (!S.seed) return { ...DATA.detect };
+  // no seed file (manual settings, or a settings string): which item a cow holds isn't known, so a cow ticks by its
+  // own one-time event as well as the Milk rule. A shuffled cow never gives Milk, so the Milk rule alone missed
+  // every shuffled cow (a user's report, 2026-11-24: cows only tracked once the seed file was loaded).
+  if (!S.seed) {
+    const out = { ...DATA.detect };
+    for (const [n, f] of Object.entries(DATA.cow_flags || {})) if (out[n]) out[n] = [...out[n], { f: [f] }];
+    return out;
+  }
   const placed = S.seed.placements, copies = {};
   for (const v of Object.values(placed)) copies[v] = (copies[v] || 0) + 1;
   const out = {};
