@@ -2925,10 +2925,19 @@ function recheckHeartDrops() {
   }
 }
 // tick the checks a read found; `before(item)` is the item's count before this read's items came in
-function autoTick(found, before) {
+// Boss Hearts whose own pickup mark is in the read (the heart's key, as OOTRR's data has it): taken for sure,
+// whatever the counts say (2026-11-24: Morpha's Heart set its key 14426685265732353862 when picked up, but was
+// left waiting because the count it waited from already had the piece in it)
+function heartsPicked(p) {
+  const out = new Set();
+  for (const n of BOSS_HEART_WAIT) if (DATA.detect[n] && Auto.checks(p, { [n]: DATA.detect[n] }).has(n)) out.add(n);
+  return out;
+}
+function autoTick(found, before, sure) {
   const pend = (S.auto.pend ||= {});
   let changed = false;
   const tick = (n) => { S.auto.done[n] = 1; delete pend[n]; changed = true; };
+  if (sure) for (const n of sure) if (!S.auto.done[n]) tick(n);
   for (const n of found) {
     if (S.auto.done[n]) continue;
     const it = dropItem(n);
@@ -2973,7 +2982,7 @@ function applyPeek(p, label) {
   }
   recheckHeartDrops();
   for (const [n, c] of Object.entries(S.auto.pend || {})) if (c === -1) { const it = dropItem(n); if (it) S.auto.pend[n] = have(it); else delete S.auto.pend[n]; }
-  autoTick(Auto.checks(p, detectMap()), before);
+  autoTick(Auto.checks(p, detectMap()), before, heartsPicked(p));
   LAST_PEEK = p; reviewIgnored(p);
   W.read = new Date(); W.err = ""; W.name = label;
   // with the Longshot helper reading Link live, a save (written a moment later) doesn't move him back
@@ -3287,7 +3296,7 @@ async function livePoll() {
       // checks straight from memory: the same flags and keys the save holds
       const p = Auto.fromRows({ rows: (st.bools || []).map((x) => [x, 1]), keys: st.keys || [] });
       // a drop check's item comes in with the next save, so here it only starts waiting (see autoTick)
-      if (autoTick(Auto.checks(p, detectMap()), null)) changed = true;
+      if (autoTick(Auto.checks(p, detectMap()), null, heartsPicked(p))) changed = true;
       W.child = !!st.child;
       // the Gold Skulltula Token count, live (a newer helper reads it; otherwise it comes with the next save)
       const tk = st.tokens, tn = "Gold Skulltula Token";
