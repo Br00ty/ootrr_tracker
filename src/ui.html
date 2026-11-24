@@ -2897,19 +2897,20 @@ function dropItem(n) {
   return it;
 }
 // one-time (2026-11-24): boss Hearts and drops holding a Piece of Heart or Heart Container that ticked at once
-// because the Pieces of Heart count looked full (see COUNTERS) wait again for the count to rise
+// because the Pieces of Heart count looked full (see COUNTERS) wait again for the count to rise. The stored count
+// was capped too, so they wait from the next save read's count (-1 until then; applyPeek sets it). (The first try,
+// pohCap, waited from the capped 36 and ticked again on the next save.)
 function recheckHeartDrops() {
-  if (S.fixes.pohCap || !S.seed) return;
-  S.fixes.pohCap = 1;
+  if (S.fixes.pohCap2 || !S.seed) return;
+  S.fixes.pohCap2 = 1;
   const pend = (S.auto.pend ||= {});
   for (const n of Object.keys(S.auto.done || {})) {
     const it = S.seed.placements && S.seed.placements[n];
-    if ((it === "Piece of Heart" || it === "Heart Container") && dropItem(n) && !S.done[n]) { delete S.auto.done[n]; pend[n] = have("Piece of Heart"); }
+    if ((it === "Piece of Heart" || it === "Heart Container") && dropItem(n) && !S.done[n]) { delete S.auto.done[n]; pend[n] = -1; }
   }
 }
 // tick the checks a read found; `before(item)` is the item's count before this read's items came in
 function autoTick(found, before) {
-  recheckHeartDrops();
   const pend = (S.auto.pend ||= {});
   let changed = false;
   const tick = (n) => { S.auto.done[n] = 1; delete pend[n]; changed = true; };
@@ -2918,6 +2919,7 @@ function autoTick(found, before) {
     const it = dropItem(n);
     if (!it) { tick(n); continue; }
     const now = have(it);
+    if (pend[n] === -1) continue;   // waiting for the next save read's count (recheckHeartDrops)
     if (pend[n] !== undefined) { if (now > pend[n] || now >= MAX[it]) tick(n); continue; }
     const was = before ? before(it) : now;
     // an item already at its most (a Goron Tunic bought in the shop before its beehive was broken) can't
@@ -2928,6 +2930,7 @@ function autoTick(found, before) {
   for (const [n, c] of Object.entries(pend)) {
     const it = dropItem(n);
     if (S.auto.done[n] || !it) { delete pend[n]; continue; }
+    if (c === -1) continue;
     if (have(it) > c || have(it) >= MAX[it]) tick(n);
   }
   return changed;
@@ -2953,6 +2956,8 @@ function applyPeek(p, label) {
     if (MAX[n] != null) got = Math.min(got, MAX[n]);
     S.auto.items[n] = got;
   }
+  recheckHeartDrops();
+  for (const [n, c] of Object.entries(S.auto.pend || {})) if (c === -1) { const it = dropItem(n); if (it) S.auto.pend[n] = have(it); else delete S.auto.pend[n]; }
   autoTick(Auto.checks(p, detectMap()), before);
   LAST_PEEK = p; reviewIgnored(p);
   W.read = new Date(); W.err = ""; W.name = label;
