@@ -3206,6 +3206,11 @@ function hashesOf(n) {
 // or null for a pin OOTRR puts in the wrong spot and nobody has placed yet (the check is listed beside the map).
 // place is the map's zone (the map name without _Child/_Adult); u, v are fractions of the map picture.
 const PIN_FIXES = {
+  // Floors OOTRR's index has wrong: the game's own dungeon maps (MapParam, each floor's CollectSign list) put these
+  // Gold Skulltulas a floor off. The user saw it first for the Water Temple's (2026-11-24: 3F, not 2F); the
+  // Forest one came from comparing every pin with MapParam (the two Jabu ones it found are placed further down)
+  "Water Temple GS Central Pillar": { place: "WaterTemple_3F", u: 0.5867, v: 0.6959 },
+  "Forest Temple GS Level Island Courtyard": { place: "ForestTemple_1F", u: 0.3569, v: 0.4412 },
   // Kokiri Forest, placed in game by the player (2026-11-16)
   "KF House of Twins Pot 1": { place: "KokiriForest", u: 0.5551, v: 0.6394 },
   "KF House of Twins Pot 2": { place: "KokiriForest", u: 0.5551, v: 0.6371 },
