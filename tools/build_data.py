@@ -115,7 +115,9 @@ for n, rn in seen.items():
         noarea.append(n); a = 'Other'
     # area, kind, logic region, and the location's own logic rule (for the check's description)
     k = kind_of.get(base_n) or guess_kind(base_n)
-    if ' Bazaar Item ' in n: k = 'shop'  # the bazaars' shelves are shops too (OOTRR's catalog files them as NPCs)
+    # the bazaars' shelves are shops too (OOTRR's catalog files them as NPCs), and since 0.8.3-nightly.20261123.5 every
+    # shelf is named by its position ("KF Shop Left Side Top Right"), which the catalog doesn't know
+    if ' Bazaar Item ' in n or re.search(r'(Shop|Bazaar) (Left|Right) Side (Top|Bottom) (Left|Right)$', n): k = 'shop'
     checks[n] = [a, k, rn, ' '.join(rules[n].split())]
 print('catalog', len(checks), 'no area', len(noarea), noarea[:20], file=sys.stderr)
 print(collections.Counter(k for _, k, *_ in checks.values()), file=sys.stderr)
