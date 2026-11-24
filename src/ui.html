@@ -1113,11 +1113,26 @@ if (DATA.map_index && DATA.map_index.pins) { PINS = DATA.map_index.pins; CAPS = 
 try { localStorage.removeItem(PIN_KEY); localStorage.removeItem("ootrr-tracker-gamedir"); localStorage.removeItem("ootrr-tracker-assets"); localStorage.removeItem("ootrr-tracker-assets-told"); } catch (e) {}
 // the floor Link is on, from his height (OOTRR's project.rs floor_of: the highest floor whose base is at
 // most half a unit above him; floors are named from the lowest, B2 B1 1F 2F…), or null
-function floorAt(id, y) {
+//
+// Height alone misreads a room that rises above the next floor's base: a Water Temple 2F chest stands at 118.4,
+// over 3F's 115.6 (the user, 2026-11-24). So when Link is right by something the game's MapParam puts on a floor
+// (a chest, door, sign, stone tablet, entrance: data.json floor_points, from tools/floor_points.json), he is on
+// that thing's floor.
+const FLOOR_NEAR = 10, FLOOR_DY = 2.5;
+function floorAt(id, y, pos) {
   const fl = FLOORS[id];
   if (!fl || !fl.ys.length || typeof y !== "number" || !isFinite(y)) return null;
   let best = 0;
   fl.ys.forEach((t, i) => { if (t <= y + 0.5 && fl.ys[best] <= t) best = i; });
+  const pts = pos && (DATA.floor_points || {})[id];
+  if (pts) {
+    let bd = FLOOR_NEAR;
+    for (const [i, x, py, z] of pts) {
+      if (Math.abs(py - y) > FLOOR_DY || i >= fl.ys.length) continue;
+      const d = Math.hypot(x - pos[0], py - y, z - pos[2]);
+      if (d < bd) { bd = d; best = i; }
+    }
+  }
   const f = best + fl.min;
   return f < 0 ? `B${-f}` : `${f + 1}F`;
 }
@@ -2928,7 +2943,7 @@ function followLink(map, pos, child, live, rot) {
   if (area && DUNGEON_AREAS.includes(area) && entrancesShuffled()) S.reveal[area] = true;
   // in a dungeon: the floor Link is on, from his height. The map follows it when he changes floor,
   // so a floor you pick by hand stays until he moves to another one.
-  const fl = area && MAP_DUNGEONS[area] && pos ? floorAt(MAP_DUNGEONS[area], pos[1]) : null;
+  const fl = area && MAP_DUNGEONS[area] && pos ? floorAt(MAP_DUNGEONS[area], pos[1], pos) : null;
   W.floor = fl || "";
   const fk = fl ? `${area}:${fl}` : "";
   if (S.follow && fl && fk !== lastFloor) S.floor[area] = fl;

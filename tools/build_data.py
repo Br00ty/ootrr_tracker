@@ -351,3 +351,5 @@ import subprocess
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'hint_data.py'), os.path.join(D, '..')], check=True)
 # what unshuffled locations hold, as OOTRR fills them (tools/remake_vanilla.py: the remake's own item first)
 subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'remake_vanilla.py'), os.path.join(D, '..')], check=True)
+# what each dungeon floor holds, for Link's floor (tools/floor_points.py)
+subprocess.run([sys.executable, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'floor_points.py')], check=True)
