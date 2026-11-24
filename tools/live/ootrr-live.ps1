@@ -249,6 +249,7 @@ public static class OotrrLive
     // Float table entries are 40 bytes with the current value at +28 (found 2026-11-22 in the 2026-11-16 probe:
     // it follows his walking direction while he moves)
     const uint PLAYER_ROT = 0xA4AEE8CDU;
+    const uint TOKENS = 0x04735978U;   // PouchData.Item_Token_Gold.StockNum (Int)
     static Dictionary<uint, int[]> typed = new Dictionary<uint, int[]>();   // hash -> [table offset, index]
     static ulong typedFor = 0;
     static ulong TypedValue(ulong manager, uint hash, int stride, int off)
@@ -292,6 +293,16 @@ public static class OotrrLive
         {
             float r = BitConverter.ToSingle(rv, 0);
             if (!float.IsNaN(r) && Math.Abs(r) <= 360) sb.Append(",\"rot\":").Append(r.ToString("R", CultureInfo.InvariantCulture));
+        }
+        // the Gold Skulltula Token count (Int PouchData.Item_Token_Gold.StockNum; Int entries are 40 bytes like the
+        // Float ones, value at +28): items otherwise come from the last save, so a token taken since showed one
+        // short (2026-11-24: 69 in game, 68 on the tracker)
+        ulong ta = TypedValue(manager, TOKENS, 40, 28);
+        byte[] tv = ta != 0 ? Read(ta, 4) : null;
+        if (tv != null)
+        {
+            int n = BitConverter.ToInt32(tv, 0);
+            if (n >= 0 && n <= 100) sb.Append(",\"tokens\":").Append(n);
         }
         ulong ma = TypedValue(manager, CURRENT_BANC, 264, 116);
         byte[] mv = ma != 0 ? Read(ma, 64) : null;
