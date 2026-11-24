@@ -9,7 +9,9 @@ tracker can say what each stone says. This copies what that needs into data/data
   prefixes the name prefixes hints.rs falls back on for a location the catalog doesn't have
   shown    the "Progressive" names the hints show (logic/src/spoiler.rs SHOWN)
   stones   the stone labels in the game's text file, sorted (hints.rs labels): hint i goes to stone i
-  where    stone -> [[banc, stone position, where Link stands to talk]] from the game's Banc files
+  where    stone -> [[banc, stone position, where Link stands to talk, grotto entrance]] from the game's Banc files
+           (the entrance only for the 11 stones in a grotto: the HidingHole_FieldEntranceGo above the nearest
+           HidingHole_FieldExitGo at the stone's level; inside a grotto the game keeps Link's map position there)
            (tools/gossip_stones.json, read from the remake's romfs on 2026-11-23)
 Usage: hint_data.py <ootrr root> [data.json]"""
 import json, os, re, sys
