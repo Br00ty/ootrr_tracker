@@ -3260,6 +3260,9 @@ async function livePoll() {
       // a drop check's item comes in with the next save, so here it only starts waiting (see autoTick)
       if (autoTick(Auto.checks(p, detectMap()), null)) changed = true;
       W.child = !!st.child;
+      // the Gold Skulltula Token count, live (a newer helper reads it; otherwise it comes with the next save)
+      const tk = st.tokens, tn = "Gold Skulltula Token";
+      if (typeof tk === "number" && tk >= 0 && tk <= 100 && tk > (S.auto.items[tn] || 0)) { S.auto.items[tn] = tk; changed = true; }
       if (heardLive(st)) changed = true;
       // where Link is, live (the map he's on and his position), so areas and floors follow him at once
       LIVE.where = !!(st.map && st.pos);
