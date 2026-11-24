@@ -4668,6 +4668,14 @@ const BOSS_FLAGS = {
   "Bongo Bongo": ["HavePlayedEvent.Dm_ShadowTemple_0020"],
 };
 const EXTRA_FLAGS = {
+  // NPC gifts that OOTRR's data only knows by the vanilla item's get event: with a seed file that becomes the placed
+  // item's event, but from a settings string the placed item isn't known (a user's report, 2026-11-24). Each
+  // NPC's own "done" flag as well (from the game's flag list; not yet seen set in a real save):
+  "DMT Biggoron": ["SubEvent_GetSwordBigGoron_IsCompleted_Exp"],
+  "Market 5 Big Poes": ["SubEvent_GhostShop_IsCompleted_Exp"],
+  "GC Darunias Joy": ["HavePlayedEvent.Meet_Darunia_PlayOcarina"],
+  // OOTRR's one-sale Medigoron sets this after the hand over (flow_extra.json, SimpleShop Event119)
+  "GC Medigoron": ["HaveTalked_Special.Npc_Goron_Medigoron_Adult_Talk_Event26"],
   // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
   // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
