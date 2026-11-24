@@ -2729,8 +2729,22 @@ function renderStats() {
     h("div", { class: "stat" }, h("span", { class: "dot r" }), "Inaccessible ", h("b", {}, t.r)),
   ));
 }
+// What the heart counters show. The save only has the hearts in all (Piece of Heart, as the logic counts them),
+// so the Heart Containers shown are the done checks whose item is one, and the Pieces of Heart shown are the rest
+// (the user, 2026-11-24: the count should follow the Heart Containers gotten, not their vanilla spots)
+function heartContainersGot() {
+  const pl = (S.seed && S.seed.placements) || {};
+  let n = 0;
+  for (const [c, it] of Object.entries(pl)) if (it === "Heart Container" && isDone(c)) n++;
+  return n;
+}
+function shownCount(n) {
+  if (n === "Heart Container") return Math.max(S.items[n] || 0, startOf(n) + heartContainersGot());
+  if (n === "Piece of Heart") return Math.max(S.items[n] || 0, startOf(n), (S.auto.items[n] || 0) - 4 * heartContainersGot());
+  return have(n);
+}
 function bump(name, max, d) {
-  const v = Math.max(0, Math.min(max, have(name) + d));
+  const v = Math.max(0, Math.min(max, (name === "Heart Container" || name === "Piece of Heart" ? shownCount(name) : have(name)) + d));
   if (v) S.items[name] = v; else delete S.items[name];
   render();
 }
@@ -3010,7 +3024,7 @@ function renderBroadcast() {
   if (!BW) return;
   if (BW.closed) { BW = null; return; }
   const d = BW.document, row = (cls, kids) => h("div", { class: `row ${cls}` }, kids), sep = () => h("div", { class: "sep" });
-  const counters = COUNTERS.map(([n, l, m]) => { const max = maxOf(m), v = have(n); return castTile(n, l.replace(" turned in", ""), max, { on: v > 0, count: v, title: l }); });
+  const counters = COUNTERS.map(([n, l, m]) => { const max = n === "Piece of Heart" ? 36 : maxOf(m), v = shownCount(n); return castTile(n, l.replace(" turned in", ""), max, { on: v > 0, count: v, title: l }); });
   // one tile per dungeon with its small keys as the number, and under it the dungeon's boss key (if it has one)
   const keys = DUNGEONS.map(([dn, sk, m, bk]) => { const v = have(sk);
     return castTile(sk, `${CAST_SHORT[dn]} keys`, m, { pic: PICS.Item_Dungeon_SmallKey || null, on: v > 0, count: v, label: CAST_SHORT[dn] || dn, title: `${dn} small keys` }); });
@@ -4024,7 +4038,7 @@ function tile([name, label, max, cls]) {
     max > 1 && v && (!tiers || (pic && !Array.isArray(ICON[name]))) ? h("span", { class: "n" }, v) : null);
 }
 function counter(name, max, step = 1) {
-  const v = have(name);
+  const v = shownCount(name);
   return h("span", { class: "cnt" },
     h("button", { onclick: () => bump(name, max, -step), "aria-label": "less" }, "−"),
     h("span", {}, `${v}/${max}`),
@@ -4169,7 +4183,7 @@ function renderItems() {
   const g = wide ? "grid g5" : "grid";
   const more = [
     h("h2", {}, "Counters"),
-    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, maxOf(m)))))),
+    h("table", { class: "dtab" }, COUNTERS.map(([n, l, m]) => h("tr", {}, h("td", {}, picOf(n, 1) ? h("img", { class: "ico", src: picOf(n, 1), alt: "" }) : null, l), h("td", { style: "text-align:right" }, counter(n, n === "Piece of Heart" ? 36 : maxOf(m)))))),
     h("h2", {}, "Dungeon keys"),
     h("table", { class: "dtab" }, DUNGEONS.map(([d, sk, m, bk]) => h("tr", { title: hintTip(sk).trim() || undefined, class: hintTip(sk) && !have(sk) ? "hinted" : "" },
       h("td", {}, d), h("td", {}, PICS.Item_Dungeon_SmallKey ? h("img", { class: "ico", src: PICS.Item_Dungeon_SmallKey, alt: "small keys", title: "Small keys" }) : null, counter(sk, m)),
