@@ -2417,7 +2417,11 @@ const REWARDS = [
   // Light first: Rauru gives it before any other Medallion
   ["Light Medallion","Light Medallion",1,"med"],["Forest Medallion","Forest Medallion",1,"med"],["Fire Medallion","Fire Medallion",1,"med"],["Water Medallion","Water Medallion",1,"med"],["Shadow Medallion","Shadow Medallion",1,"med"],["Spirit Medallion","Spirit Medallion",1,"med"],
 ];
-const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Heart","Pieces of Heart",36],["Heart Container","Heart Containers",9],["Big Poes Sold","Big Poes turned in",() => bigPoes()]];
+// Pieces of Heart count every heart past the first three as four pieces, the way the logic does (has_hearts:
+// Piece_of_Heart, (n - 3) * 4), so Heart Containers are in it too and it runs to 68 (20 hearts). It was capped at
+// 36, so past 12 hearts it looked full and every boss Heart or Piece of Heart waiting on it ticked at once
+// (2026-11-24: Morpha's Heart ticked at the kill, 54 pieces)
+const COUNTERS = [["Gold Skulltula Token","Skulltula tokens",100],["Piece of Heart","Pieces of Heart",68],["Heart Container","Heart Containers",9],["Big Poes Sold","Big Poes turned in",() => bigPoes()]];
 // the Big Poe target for the Market 5 Big Poes check: the logic's big_poe_count (5 in the remake), 1 with big_poe_one
 function bigPoes() { const v = S.seed ? S.seed.vals : manualVals(); return v && v.big_poe_one === true ? 1 : Math.max(1, +DATA.settings.big_poe_count || 5); }
 const maxOf = (m) => (typeof m === "function" ? m() : m);
@@ -4910,12 +4914,27 @@ const BOSS_HEART_WAIT = new Set(["Deku Tree Queen Gohma Heart", "Dodongos Cavern
   "Fire Temple Volvagia Heart", "Water Temple Morpha Heart", "Spirit Temple Twinrova Heart"]);
 const DROP_JUNK = /^(Rupees? \(|Recovery Heart|Arrows \(|Bombs \(|Bombchus \(|Deku (Nuts|Seeds|Stick|Sticks) \(|Nothing|Fairy|Bugs|Magic Jar|Ice Trap)|Drop$/;
 function dropItem(n) {
-  const c = DATA.checks[n], it = S.seed && S.seed.placements && S.seed.placements[n];
+  const c = DATA.checks[n];
+  let it = S.seed && S.seed.placements && S.seed.placements[n];
+  // a Heart Container shows in the save as four more pieces (see COUNTERS)
+  if (it === "Heart Container") it = "Piece of Heart";
   if (!c || !(DROP_KINDS.has(c[1]) || BOSS_HEART_WAIT.has(n)) || !it || DROP_JUNK.test(it) || MAX[it] == null) return null;
   return it;
 }
+// one-time (2026-11-24): boss Hearts and drops holding a Piece of Heart or Heart Container that ticked at once
+// because the Pieces of Heart count looked full (see COUNTERS) wait again for the count to rise
+function recheckHeartDrops() {
+  if (S.fixes.pohCap || !S.seed) return;
+  S.fixes.pohCap = 1;
+  const pend = (S.auto.pend ||= {});
+  for (const n of Object.keys(S.auto.done || {})) {
+    const it = S.seed.placements && S.seed.placements[n];
+    if ((it === "Piece of Heart" || it === "Heart Container") && dropItem(n) && !S.done[n]) { delete S.auto.done[n]; pend[n] = have("Piece of Heart"); }
+  }
+}
 // tick the checks a read found; `before(item)` is the item's count before this read's items came in
 function autoTick(found, before) {
+  recheckHeartDrops();
   const pend = (S.auto.pend ||= {});
   let changed = false;
   const tick = (n) => { S.auto.done[n] = 1; delete pend[n]; changed = true; };
@@ -5266,6 +5285,11 @@ async function livePoll() {
       // the Gold Skulltula Token count, live (a newer helper reads it; otherwise it comes with the next save)
       const tk = st.tokens, tn = "Gold Skulltula Token";
       if (typeof tk === "number" && tk >= 0 && tk <= 100 && tk > (S.auto.items[tn] || 0)) { S.auto.items[tn] = tk; changed = true; }
+      // and the Pieces of Heart, counted as the save's are (autotrack.js: hearts past three as four pieces each)
+      if (typeof st.life === "number" && typeof st.pieces === "number") {
+        const ph = Math.min(68, Math.max(0, ((st.life / 4) | 0) - 3) * 4 + Math.min(3, st.pieces));
+        if (ph > (S.auto.items["Piece of Heart"] || 0)) { S.auto.items["Piece of Heart"] = ph; changed = true; }
+      }
       if (heardLive(st)) changed = true;
       // where Link is, live (the map he's on and his position), so areas and floors follow him at once
       LIVE.where = !!(st.map && st.pos);

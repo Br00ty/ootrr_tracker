@@ -250,6 +250,7 @@ public static class OotrrLive
     // it follows his walking direction while he moves)
     const uint PLAYER_ROT = 0xA4AEE8CDU;
     const uint TOKENS = 0x04735978U;   // PouchData.Item_Token_Gold.StockNum (Int)
+    const uint MAX_LIFE = 0xFBE01DA1U, HEART_PIECES = 0x51EC97B3U;   // PlayerStatus.MaxLife, PouchData.Obj_Heart_Piece.StockNum (Int)
     static Dictionary<uint, int[]> typed = new Dictionary<uint, int[]>();   // hash -> [table offset, index]
     static ulong typedFor = 0;
     static ulong TypedValue(ulong manager, uint hash, int stride, int off)
@@ -303,6 +304,15 @@ public static class OotrrLive
         {
             int n = BitConverter.ToInt32(tv, 0);
             if (n >= 0 && n <= 100) sb.Append(",\"tokens\":").Append(n);
+        }
+        // heart pieces the same way (PlayerStatus.MaxLife in quarters, and the pieces held toward the next heart),
+        // so a Piece of Heart or Heart Container taken since the last save counts at once (boss Hearts wait on it)
+        ulong la = TypedValue(manager, MAX_LIFE, 40, 28), pa2 = TypedValue(manager, HEART_PIECES, 40, 28);
+        byte[] lv = la != 0 ? Read(la, 4) : null, hv = pa2 != 0 ? Read(pa2, 4) : null;
+        if (lv != null && hv != null)
+        {
+            int life = BitConverter.ToInt32(lv, 0), pieces = BitConverter.ToInt32(hv, 0);
+            if (life >= 12 && life <= 80 && pieces >= 0 && pieces <= 3) sb.Append(",\"life\":").Append(life).Append(",\"pieces\":").Append(pieces);
         }
         ulong ma = TypedValue(manager, CURRENT_BANC, 264, 116);
         byte[] mv = ma != 0 ? Read(ma, 64) : null;
