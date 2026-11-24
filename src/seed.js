@@ -78,7 +78,7 @@ const Seed = (() => {
     const h = murmur(body, 0x4f4f5452), tag = ((h ^ (h >>> 16)) & 0xffff);
     if (((all[all.length - 2] << 8) | all[all.length - 1]) !== tag) throw new Error("the settings string checksum does not match");
     const byNum = new Map(schema.map((s) => [s.num, s]));
-    const vals = {}, warn = [], given = {};
+    const vals = {}, warn = [], given = {}, pre5 = olderThan(gen, NIGHTLY5);
     for (const s of schema) vals[s.id] = s.wire;
     const r = new Rd(body);
     while (!r.done()) {
@@ -89,7 +89,7 @@ const Seed = (() => {
       let v;
       switch (s.kind) {
         case "toggle": v = p.take(1)[0] === 1; break;
-        case "choice": { const i = Number(p.varint()); v = (legacy && OLD_CHOICES[s.id] || s.choices)[i]; if (v === undefined) { warn.push(`${s.id}: unknown choice ${i}`); continue; } break; }
+        case "choice": { const i = Number(p.varint()); v = (legacy && OLD_CHOICES[s.id] || (pre5 && PRE5_CHOICES[s.id] && PRE5_CHOICES[s.id](s.choices)) || s.choices)[i]; if (v === undefined) { warn.push(`${s.id}: unknown choice ${i}`); continue; } break; }
         case "number": v = unzig(p.varint()); break;
         case "multi": { const c = Number(p.varint()); v = []; for (let i = 0; i < c; i++) { const x = s.choices[Number(p.varint())]; if (x !== undefined) v.push(x); } break; }
         case "list": { const c = Number(p.varint()); v = []; for (let i = 0; i < c; i++) { const l = Number(p.varint()); v.push(new TextDecoder().decode(p.take(l))); } break; }
@@ -124,8 +124,17 @@ const Seed = (() => {
     if (v.open_forest === "closed_deku") out.push(["open_forest", "closed_deku"]);
     if (v.open_forest === "open") out.push(["open_forest", "open"]);
     if (doorOpen(v)) out.push(["open_door_of_time", "open"]);
-    if (["any_dungeon", "keysanity", "overworld", "regional"].includes(v.shuffle_smallkeys))
+    const pre5 = olderThan(gen, NIGHTLY5), sk = v.shuffle_smallkeys;
+    // slice/support.rs strict_layouts: keys that leave their dungeon (and, since 20261123.5, removed keys) make the
+    // Fire, Water and Spirit key layouts strict
+    if (["any_dungeon", "keysanity", "overworld", "regional"].includes(sk) || (!pre5 && sk === "remove"))
       for (const k of ["fire_key_layout", "water_key_layout", "spirit_key_layout"]) out.push([k, "shuffled"]);
+    // 20261123.5: own-dungeon keys keep Water and Spirit strict when dungeon chests are shuffled, and the Fire
+    // Temple's loop door starts open (FIRE_LOOP)
+    else if (!pre5 && sk === "dungeon") {
+      if (["dungeons", "all"].includes(v.shuffle_chests)) for (const k of ["water_key_layout", "spirit_key_layout"]) out.push([k, "shuffled"]);
+      out.push(["fire_loop_door", "open"]);
+    }
     if (v.bombchus_in_logic === true) out.push(["free_bombchu_drops", "true"]);
     if (kakarikoSkip(v)) { out.push(["open_kakariko", "open"]); out.push(["skip_child_zelda", "true"]); }
     if (v.anju_one_cucco === true) out.push(["chicken_count", "1"]);
@@ -176,11 +185,34 @@ const Seed = (() => {
     if (before(gen, [0, 8, 3])) return out;
     // 0.8.3 nightly (20261122.3) open_world/trade.rs LOGIC: the adult trade items never spoil or revert, always
     out.push(["disable_trade_revert", "true"]);
+    if (pre5) return out;
+    // 20261123.5 qol.rs Qol::logic: night Skulltulas wait for Sun's Song, the free scarecrow, no tower escape
+    if (v.night_skulls_suns_song === true) out.push(["night_skulls_suns_song", "true"]);
+    if (v.free_scarecrow === true) out.push(["scarecrow_behavior", "free"]);
+    if (v.skip_tower_escape === true) out.push(["skip_tower_escape", "true"]);
+    // medal_gate.rs lacs_goal_logic: the Light Arrows Cutscene by Medallions (1 to 6)
+    if (v.shuffle_ganon_bosskey === "lacs_medallions") { out.push(["lacs_condition", "medallions"]); out.push(["lacs_medallions", String(Math.max(1, Math.min(6, +(v.lacs_medallions ?? 6))))]); }
     return out;
   }
   // open_world.rs Gates::read: the old toggle or Door of Time = Open (door_gate.rs legacy moves the toggle there)
   function doorOpen(v) { return v.open_door_of_time === true || v.door_of_time_condition === "open"; }
   // seeds from before 0.8 keep the switches their own version used (the generator line reads "ootrr-core 0.7.3")
+  // a nightly build's place in line: 0.8.3-nightly.20261123.5 → [0, 8, 3, 20261123, 5]; a release comes after
+  // its own nightlies
+  function genKey(g) {
+    const m = /(\d+)\.(\d+)\.(\d+)(?:-nightly\.(\d+)\.(\d+))?/.exec(String(g || ""));
+    return m ? [+m[1], +m[2], +m[3], m[4] ? +m[4] : 1e9, m[5] ? +m[5] : 0] : null;
+  }
+  function olderThan(g, than) {
+    const a = genKey(g), b = genKey(than);
+    if (!a) return false;
+    for (let i = 0; i < 5; i++) if (a[i] !== b[i]) return a[i] < b[i];
+    return false;
+  }
+  // 0.8.3-nightly.20261123.5: shelves named by position, Light Arrows Cutscene by medallions, own-dungeon key layouts
+  const NIGHTLY5 = "0.8.3-nightly.20261123.5";
+  // that build put LACS medallions second among the Ganon's Boss Key choices, so older strings count without it
+  const PRE5_CHOICES = { shuffle_ganon_bosskey: (c) => c.filter((x) => x !== "lacs_medallions") };
   function isLegacy(generator) { return before(generator, [0, 8, 0]); }
   // whether a seed's generator ("ootrr-core 0.8.0") is older than version v; no version reads as current
   function before(generator, v) {
@@ -245,17 +277,34 @@ const Seed = (() => {
   // the placements follow the objects: renamed, and swapped where the names swapped.
   const OLD_DATA_RENAMES = { "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest" };
   const OLD_DATA_SWAPS = [["Dodongos Cavern GS Alcove Above Stairs", "Dodongos Cavern GS Back Room"], ["Kak GS Tree", "Kak GS House Under Construction"], ["GC Maze Center Chest", "GC Maze Right Chest"]];
+  // 20261123.5 names shop shelves by position (shops.json slots, same order): "<shop> Item i" → "<shop> <i-th here>"
+  const SHELF_NAMES = {
+    "KF Shop": ["Right Side Bottom Left", "Left Side Bottom Left", "Left Side Bottom Right", "Right Side Bottom Right", "Right Side Top Left", "Left Side Top Right", "Right Side Top Right", "Left Side Top Left"],
+    "Market Bazaar": ["Right Side Bottom Left", "Right Side Top Left", "Right Side Top Right", "Left Side Top Left", "Left Side Bottom Right", "Left Side Top Right", "Right Side Bottom Right", "Left Side Bottom Left"],
+    "Kak Bazaar": ["Right Side Bottom Left", "Right Side Top Left", "Right Side Top Right", "Left Side Top Left", "Left Side Bottom Right", "Left Side Top Right", "Right Side Bottom Right", "Left Side Bottom Left"],
+    "Market Potion Shop": ["Left Side Top Right", "Right Side Top Left", "Left Side Top Left", "Left Side Bottom Right", "Left Side Bottom Left", "Right Side Bottom Left", "Right Side Top Right", "Right Side Bottom Right"],
+    "Kak Potion Shop": ["Left Side Bottom Left", "Right Side Bottom Right", "Left Side Top Left", "Left Side Top Right", "Right Side Top Left", "Right Side Bottom Left", "Right Side Top Right", "Left Side Bottom Right"],
+    "Market Bombchu Shop": ["Left Side Bottom Left", "Right Side Top Left", "Left Side Top Left", "Left Side Top Right", "Right Side Bottom Left", "Left Side Bottom Right", "Right Side Top Right", "Right Side Bottom Right"],
+    "GC Shop": ["Right Side Top Left", "Right Side Top Right", "Right Side Bottom Left", "Right Side Bottom Right", "Left Side Bottom Right", "Left Side Top Left", "Left Side Top Right", "Left Side Bottom Left"],
+    "ZD Shop": ["Left Side Bottom Right", "Right Side Top Left", "Left Side Top Right", "Right Side Top Right", "Left Side Bottom Left", "Right Side Bottom Right", "Right Side Bottom Left", "Left Side Top Left"],
+  };
+  const SHOP_RENAMES = Object.fromEntries(Object.entries(SHELF_NAMES).flatMap(([sh, l]) => l.map((p, i) => [`${sh} Item ${i + 1}`, `${sh} ${p}`])));
   function upgradePlacements(pl, data) {
-    if (!pl || !Object.keys(OLD_DATA_RENAMES).some((o) => o in pl && !data.checks[o] && data.checks[OLD_DATA_RENAMES[o]])) return pl;
-    const out = {};
-    for (const [n, it] of Object.entries(pl)) out[OLD_DATA_RENAMES[n] && !data.checks[n] ? OLD_DATA_RENAMES[n] : n] = it;
-    for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
+    if (!pl) return pl;
+    const old = (ren) => Object.keys(ren).some((o) => o in pl && !data.checks[o] && data.checks[ren[o]]);
+    const old082 = old(OLD_DATA_RENAMES), oldShops = old(SHOP_RENAMES);
+    if (!old082 && !oldShops) return pl;
+    const ren = { ...(old082 ? OLD_DATA_RENAMES : {}), ...(oldShops ? SHOP_RENAMES : {}) }, out = {};
+    for (const [n, it] of Object.entries(pl)) out[ren[n] && !data.checks[n] ? ren[n] : n] = it;
+    if (old082) for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
     return out;
   }
   // the names the seed's generator used, for the hints: a 0.8.2-data seed's stones were written from its own names
   function generatorNames(pl, gen) {
-    if (!pl || !before(gen, [0, 8, 3])) return pl;
+    if (!pl || !olderThan(gen, NIGHTLY5)) return pl;
     const out = { ...pl };
+    for (const [o, nw] of Object.entries(SHOP_RENAMES)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
+    if (!before(gen, [0, 8, 3])) return out;
     for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
     for (const [o, nw] of Object.entries(OLD_DATA_RENAMES)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
     return out;
@@ -273,7 +322,7 @@ const Seed = (() => {
     return {
       seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
-      hints: hintsOf(String(j.seed || ""), generatorNames(j.placements, String(j.generator || "")), vals, data),
+      hints: hintsOf(String(j.seed || ""), generatorNames(j.placements, String(j.generator || "")), vals, data, String(j.generator || "")),
       vals, warn: retiredNote(warn, String(j.generator || "")), switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
     };
   }
@@ -318,7 +367,6 @@ const Seed = (() => {
     "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
     "LW Trade Cojiro and LW Trade Odd Potion are adult only: OOTRR's rules are trade events ('Odd Mushroom Access', 'Poachers Saw Access') either age can use once they have happened.",
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
-    "KF West Ledge Chest can also be reached by adult Link from a magic bean plant, not only with the Hookshot. The chest itself sits on a ledge in the Lost Woods.",
     "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
@@ -327,12 +375,11 @@ const Seed = (() => {
     "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
-    "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
   const OWN_RULES = {
-    // confirmed in game: adult can also ride a bean plant up to it (OOTRR: Hookshot only)
-    "KF West Ledge Chest": "can_use(Hookshot) or (is_adult and here(can_plant_bean))",
+    // (KF West Ledge Chest: 20261123.5 has its own bean route, is_adult and here(can_plant_bean), in the Lost
+    // Woods; the tracker follows OOTRR's updated rule)
     // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
     "DMC Central Local Remake Rupee 1": "can_use(Longshot)",
     "DMC Central Local Remake Rupee 4": "can_use(Longshot)",
@@ -372,9 +419,7 @@ const Seed = (() => {
   };
   // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
   const MOVE_REGION = {
-    // 2026-11-21, the user: the tree is in Zora's River past the boulders at its entrance, so it needs a way into
-    // Zora River itself (OOTRR: ZR Front, before the boulders, which is open from Hyrule Field)
-    "ZR GS Tree": "Zora River",
+    // (ZR GS Tree: 20261123.5 moved it to Zora River itself, past the boulders, as the user found 2026-11-21)
     // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has it in Hyrule Field itself)
   };
   // checks that need something more for one age (added to OOTRR's rule)
@@ -448,7 +493,7 @@ const Seed = (() => {
     // tracker version read, which can use choices OOTRR has since renamed)
     const legacy = isLegacy(sd.generator);
     if (sd.settingsString) try { sd = { ...sd, vals: decodeSettings(sd.settingsString, data.schema, legacy, sd.generator).vals }; } catch (e) { /* keep the stored values */ }
-    return { ...sd, hints: hintsOf(sd.seed, generatorNames(sd.placements, sd.generator), sd.vals, data), switches: withPlacedPatches(logicSwitches(sd.vals, legacy, sd.generator), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
+    return { ...sd, hints: hintsOf(sd.seed, generatorNames(sd.placements, sd.generator), sd.vals, data, sd.generator), switches: withPlacedPatches(logicSwitches(sd.vals, legacy, sd.generator), sd.placements, data), start: withSkipped(startItems(sd.vals, data.start_items), sd.vals, sd.placements), skipped: kakarikoSkip(sd.vals) ? KAKARIKO_LOCATIONS.filter((l) => l in sd.placements) : [] };
   }
 
   // The locations a seed with these settings shuffles, without a seed: OOTRR's default pool, changed by what
@@ -540,10 +585,13 @@ const Seed = (() => {
     return { shuffle(v) { let i = v.length; while (i > 1) { const j = below(i); i--; [v[i], v[j]] = [v[j], v[i]]; } } };
   }
   const byteOrder = (a, b) => { const x = new TextEncoder().encode(a), y = new TextEncoder().encode(b); for (let i = 0; i < Math.min(x.length, y.length); i++) if (x[i] !== y[i]) return x[i] - y[i]; return x.length - y.length; };
-  function hintsOf(seedId, placements, vals, data) {
+  // the items a hint could name before 0.8.3-nightly.20261123.5 made the two shields advancement items
+  const PRE5_UNHINTED = ["Deku Shield", "Hylian Shield"];
+  function hintsOf(seedId, placements, vals, data, gen) {
     const H = data.hints;
     if (!H || !placements || (vals && vals.gossip_hints === false)) return [];
     const can = new Set(H.items), seen = new Set(), all = [];
+    if (olderThan(gen, NIGHTLY5)) for (const i of PRE5_UNHINTED) can.delete(i);
     for (const loc of Object.keys(placements).sort(byteOrder)) {
       const item = placements[loc];
       if (!can.has(item)) continue;
@@ -559,6 +607,6 @@ const Seed = (() => {
     hintRng(`${seedId}/hints`).shuffle(all);
     return H.stones.map((stone, i) => ({ stone, ...all[i % all.length] }));
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf, olderThan, NIGHTLY5, SHOP_RENAMES };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

@@ -19,7 +19,7 @@ fn main() {
         if !m.is_empty() { ootrr_core::entr::logic::apply(&mut w, &ootrr_core::entr::Layout::from_map(&m).unwrap()).unwrap(); }
     }
     let mut p = Placement::new(w.locs.len());
-    for l in &w.real { let n = &w.locs[*l].name; if placed.contains(n) { continue; } if let Some(v) = d.vanilla.get(n) { if let Some(i) = w.item(v) { p.put(*l, i); } } }
+    for l in &w.real { let n = &w.locs[*l].name; if placed.contains(n) { continue; } if let Some(v) = d.vanilla_of(n) { if let Some(i) = w.item(v) { p.put(*l, i); } } }
     let mut s = Search::new(&w);
     for it in a.get(3).map(|x| x.split(',').filter(|x| !x.is_empty()).collect::<Vec<_>>()).unwrap_or_default() {
         let (n, c) = it.split_once('*').unwrap_or((it, "1"));

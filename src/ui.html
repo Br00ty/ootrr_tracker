@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/ootrando/ootrr),
-  and its data files are embedded (0.8.3-nightly.20261122.3). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.8.3-nightly.20261123.5). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -234,7 +234,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 </head>
 <body>
 <header>
-  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.8.3-nightly.20261122.3">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.8.3-nightly.20261122.3</small></h1>
+  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.8.3-nightly.20261123.5">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.8.3-nightly.20261123.5</small></h1>
   <div class="stats" id="stats"></div>
   <div class="mode" id="modeBox" title="Switch between the list of locations and the game's maps"></div>
   <div class="spacer"></div>
@@ -452,7 +452,8 @@ const DEFAULT = {
 let S = load();
 // checks OOTRR renamed: progress, hand-placed pins and notes saved under the old name carry over
 const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint",  // OOTRR 0.6.2
-  "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest" };  // OOTRR 0.8.3 nightly
+  "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest",  // OOTRR 0.8.3 nightly
+  ...Seed.SHOP_RENAMES };  // 0.8.3-nightly.20261123.5: shop shelves named by position
 // Saria's gift used to be detected by a flag OOTRR sets on every new game, so it could be ticked from the save
 // without the gift. Clear that tick (and any untick made because of it) once; the save ticks it again for real.
 if (!S.fixes) S.fixes = {};
@@ -1189,31 +1190,31 @@ const PIN_FIXES = {
   "Song from Malon": { place: "LonLonRanch", u: 0.4962, v: 0.5715 },
   // Market (and the Temple of Time, which uses its map), placed in game by the player (2026-11-16)
   "Market 5 Big Poes": { place: "Market", u: 0.5732, v: 0.8362 },  // "Market 10 Big Poes" before OOTRR 0.6.2
-  "Market Bazaar Item 1": { place: "Market", u: 0.5928, v: 0.5918 },
-  "Market Bazaar Item 4": { place: "Market", u: 0.5882, v: 0.5918 },
+  "Market Bazaar Right Side Bottom Left": { place: "Market", u: 0.5928, v: 0.5918 },
+  "Market Bazaar Left Side Top Left": { place: "Market", u: 0.5882, v: 0.5918 },
   "Market Bombchu Bowling Bombchus": { place: "Market", u: 0.3906, v: 0.524 },
   "Market Bombchu Bowling First Prize": { place: "Market", u: 0.3876, v: 0.533 },
   "Market Bombchu Bowling Second Prize": { place: "Market", u: 0.3922, v: 0.524 },
-  "Market Bombchu Shop Item 3": { place: "Market", u: 0.3861, v: 0.6575 },
+  "Market Bombchu Shop Left Side Top Left": { place: "Market", u: 0.3861, v: 0.6575 },
   "Market Lost Dog": { place: "Market", u: 0.5113, v: 0.6665 },
   "Market Potion Shop Free Bottle": { place: "Market", u: 0.5958, v: 0.5127 },
   "Market Potion Shop Red Potion": { place: "Market", u: 0.5943, v: 0.5149 },
-  "Market Potion Shop Item 1": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 2": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 3": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 4": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 5": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 6": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 7": { place: "Market", u: 0.597, v: 0.5158 },
-  "Market Potion Shop Item 8": { place: "Market", u: 0.597, v: 0.5158 },
-  "Kak Potion Shop Item 1": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 2": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 3": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 4": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 5": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 6": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 7": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
-  "Kak Potion Shop Item 8": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Market Potion Shop Left Side Top Right": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Right Side Top Left": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Left Side Top Left": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Left Side Bottom Right": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Left Side Bottom Left": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Right Side Bottom Left": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Right Side Top Right": { place: "Market", u: 0.597, v: 0.5158 },
+  "Market Potion Shop Right Side Bottom Right": { place: "Market", u: 0.597, v: 0.5158 },
+  "Kak Potion Shop Left Side Bottom Left": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Right Side Bottom Right": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Left Side Top Left": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Left Side Top Right": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Right Side Top Left": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Right Side Bottom Left": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Right Side Top Right": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
+  "Kak Potion Shop Left Side Bottom Right": { place: "KakarikoVillage", u: 0.5512, v: 0.3059 },
   // placed by the user in game 2026-11-21
   "Bottom of the Well GS West Inner Room": { place: "BottomOfTheWell_B1", u: 0.5734, v: 0.5095 },
   "Market Shooting Gallery Reward": { place: "Market", u: 0.4359, v: 0.4041 },
@@ -1234,7 +1235,7 @@ const PIN_FIXES = {
   "Kak Anju Trade Pocket Cucco": { place: "KakarikoVillage", u: 0.4118, v: 0.6823 },
   "Kak Anju as Adult": { place: "KakarikoVillage", u: 0.4148, v: 0.6846 },
   "Kak Anju as Child": { place: "KakarikoVillage", u: 0.4087, v: 0.6823 },
-  "Kak Bazaar Item 1": { place: "KakarikoVillage", u: 0.4087, v: 0.3 },
+  "Kak Bazaar Right Side Bottom Left": { place: "KakarikoVillage", u: 0.4087, v: 0.3 },
   "Kak GS Above Impas House": { place: "KakarikoVillage", u: 0.5551, v: 0.8927 },
   "Kak GS Tree": { place: "KakarikoVillage", u: 0.4057, v: 0.5059 },  // key 7677963516305772491, on the tree
   "Kak GS Near Gate Guard": { place: "KakarikoVillage", u: 0.4585, v: 0.6122 },  // shown as Kak GS House Under Construction
@@ -1302,14 +1303,14 @@ const PIN_FIXES = {
   "Graveyard Shield Grave Chest": { place: "Graveyard", u: 0.5239, v: 0.5284 },
   "Song from Royal Familys Tomb": { place: "Graveyard", u: 0.7149, v: 0.447 },
   // Kokiri Forest: the Kokiri Shop, placed in game by the player (2026-11-16)
-  "KF Shop Item 1": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 2": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 3": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 4": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 5": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 6": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 7": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
-  "KF Shop Item 8": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Right Side Bottom Left": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Left Side Bottom Left": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Left Side Bottom Right": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Right Side Bottom Right": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Right Side Top Left": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Left Side Top Right": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Right Side Top Right": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
+  "KF Shop Left Side Top Left": { place: "KokiriForest", u: 0.5098, v: 0.4516 },
   // Death Mountain Trail, placed in game by the player (2026-11-16)
   "DMT Chest": { place: "DeathMountainTrail", u: 0.4615, v: 0.7728 },
   "DMT Cow Grotto Cow": { place: "DeathMountainTrail", u: 0.5279, v: 0.6009 },
@@ -1322,14 +1323,14 @@ const PIN_FIXES = {
   "GC Medigoron": { place: "GoronCity", u: 0.7632, v: 0.5873 },
   "GC Rolling Goron as Adult": { place: "GoronCity", u: 0.5294, v: 0.2774 },
   "GC Rolling Goron as Child": { place: "GoronCity", u: 0.5294, v: 0.2819 },
-  "GC Shop Item 1": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 2": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 3": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 4": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 5": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 6": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 7": { place: "GoronCity", u: 0.4284, v: 0.3203 },
-  "GC Shop Item 8": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Right Side Top Left": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Right Side Top Right": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Right Side Bottom Left": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Right Side Bottom Right": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Left Side Bottom Right": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Left Side Top Left": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Left Side Top Right": { place: "GoronCity", u: 0.4284, v: 0.3203 },
+  "GC Shop Left Side Bottom Left": { place: "GoronCity", u: 0.4284, v: 0.3203 },
   // Death Mountain Crater, placed in game by the player (2026-11-16)
   "DMC Deku Scrub": { place: "DeathMountainCrater", u: 0.4495, v: 0.6642 },
   "DMC Great Fairy Reward": { place: "DeathMountainCrater", u: 0.368, v: 0.5896 },
@@ -1353,14 +1354,14 @@ const PIN_FIXES = {
   "ZD Diving Minigame": { place: "ZoraDomain", u: 0.4781, v: 0.5783 },
   "ZD GS Frozen Waterfall": { place: "ZoraDomain", u: 0.4598, v: 0.6653 }, // placed by the user in game 2026-11-22
   "ZD King Zora Thawed": { place: "ZoraDomain", u: 0.7436, v: 0.7683 },
-  "ZD Shop Item 1": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 2": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 3": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 4": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 5": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 6": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 7": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
-  "ZD Shop Item 8": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Left Side Bottom Right": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Right Side Top Left": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Left Side Top Right": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Right Side Top Right": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Left Side Bottom Left": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Right Side Bottom Right": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Right Side Bottom Left": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
+  "ZD Shop Left Side Top Left": { place: "ZoraDomain", u: 0.1176, v: 0.8 },
   "ZD Trade Prescription": { place: "ZoraDomain", u: 0.7436, v: 0.7706 },
   // Zora's Fountain, placed in game by the player (2026-11-16)
   "ZF GS Hidden Cave": { place: "ZoraFountain", u: 0.7376, v: 0.6054 },
@@ -1525,23 +1526,26 @@ function ageOf(n) {
 }
 // Edit pins: moving or placing one shelf of a shop moves every shelf of that shop with it (they're all on the
 // same counter, and share one pin that lists each shelf)
+// a shop shelf's shop and its other shelves ("KF Shop Item 3" before 0.8.3-nightly.20261123.5, "KF Shop Left Side
+// Top Right" since)
+const SHELF = / (?:Item \d+|(?:Left|Right) Side (?:Top|Bottom) (?:Left|Right))$/;
+function otherShelves(n) {
+  const m = SHELF.exec(n);
+  if (!m || !DATA.checks[n] || DATA.checks[n][1] !== "shop") return [];
+  const shop = n.slice(0, m.index);
+  return Object.keys(DATA.checks).filter((o) => o !== n && DATA.checks[o][1] === "shop" && o.slice(0, shop.length + 1) === `${shop} ` && SHELF.test(o) && SHELF.exec(o).index === shop.length);
+}
 function setPin(n, f) {
   S.pinFix[n] = f;
-  const m = / Item \d+$/.exec(n);
-  if (m && DATA.checks[n] && DATA.checks[n][1] === "shop") {
-    const shop = n.slice(0, m.index);
-    for (let i = 1; i <= 8; i++) { const o = `${shop} Item ${i}`; if (o !== n && DATA.checks[o]) S.pinFix[o] = { ...f }; }
-  }
+  for (const o of otherShelves(n)) S.pinFix[o] = { ...f };
 }
 // A shop shelf without a spot of its own goes where another shelf of the same shop is pinned: they're all
 // on the same counter.
 function pinOf(n, mapKey, shelf = true) {
   const own = pinOwn(n, mapKey);
   if (own || !shelf) return own;
-  const m = / Item \d+$/.exec(n);
-  if (!m || !DATA.checks[n] || DATA.checks[n][1] !== "shop" || fixOf(n) !== undefined) return null;
-  const shop = n.slice(0, m.index);
-  for (let i = 1; i <= 8; i++) { const o = `${shop} Item ${i}`; if (o !== n && DATA.checks[o]) { const p = pinOwn(o, mapKey); if (p) return p; } }
+  if (fixOf(n) !== undefined) return null;
+  for (const o of otherShelves(n)) { const p = pinOwn(o, mapKey); if (p) return p; }
   return null;
 }
 // the floor a dungeon check is pinned on (OOTRR's floor label, or a hand-placed pin's floor)
@@ -2058,7 +2062,7 @@ function openStones() {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261122.3 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261123.5 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2489,7 +2493,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261122.3 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261123.5 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
@@ -2537,7 +2541,7 @@ function paintSeed() {
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
-    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261122.3's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
+    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261123.5's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
   // the X closes the notes for this seed; another seed (or other notes) brings them back
   const b = $("#banner");
@@ -2577,6 +2581,10 @@ const OWN_FLAGS = {
   // the child one, and touching the bottom
   "LH Lab Dive": ["HavePlayedEvent.Npc_Hylia_045_AdultDivingChallenge", "HavePlayedEvent.Npc_Hylia_045_ChildDivingChallenge",
     "Npc_Hylia_045_DivingChallenge_IsOncedTouchtheBottom_Adult", "Npc_Hylia_045_DivingChallenge_IsOncedTouchtheBottom_Child"],
+  // 0.8.3-nightly.20261123.5 shuffles both (flow_extra/sun.rs, goron_pot.rs), and OOTRR's data has no tracker
+  // target for either: the sun shot's sub event finishing, and the Goron pot's own Heart Piece flag (its TAKEN)
+  "LH Sun": ["SubEvent_GetFireArrow_IsCompleted_Exp", "HavePlayedEvent.GetFireArrow_FireArrowAppear"],
+  "GC Pot Freestanding PoH": ["GoronLargePot_IsGetHeartPiece"],
   "LH Child Fishing": ["MiniGame_Fishing_GetHeartPiece"],
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
@@ -2653,6 +2661,7 @@ const BOSS_FLAGS = {
   "Bongo Bongo": ["HavePlayedEvent.Dm_ShadowTemple_0020"],
 };
 const EXTRA_FLAGS = {
+  "Graveyard Dampe Race Freestanding PoH": ["IsTreasureBoxOpen.5534919361313859554"],
   // confirmed in a real save: opening it sets the Lost Woods chest object's flag (OOTRR's "LW Near Shortcuts
   // Grotto Chest" object), not the Kokiri Forest one OOTRR's data names
   "KF West Ledge Chest": ["IsTreasureBoxOpen.17479747339356189279"],
@@ -2731,6 +2740,9 @@ const OWN_KEYS = {
   // confirmed 2026-11-22: picking up Bongo Bongo's Heart (a Gold Skulltula Token there) set this key, which OOTRR's
   // data doesn't know; its tracker target (17599164808183510748) stayed unset. Both are kept.
   "Shadow Temple Bongo Bongo Heart": ["9305840402089458269", "17599164808183510748"],
+  // 0.8.3-nightly.20261123.5 moved the Dampe race Heart Piece to the ground (locations.json: a heart actor,
+  // 7277816997830770001); OOTRR's tracker target is still the old chest (kept in EXTRA_FLAGS)
+  "Graveyard Dampe Race Freestanding PoH": ["7277816997830770001"],
 };
 function detectMap() {
   const out = detectMapBase();

@@ -1,0 +1,16 @@
+{
+ "id": "night2",
+ "name": "nightly test 2",
+ "tip": "test (0.8.3-nightly.20261123.5 settings)",
+ "order": 99,
+ "settings": {
+  "night_skulls_suns_song": true,
+  "free_scarecrow": true,
+  "skip_tower_escape": true,
+  "shuffle_ganon_bosskey": "lacs_medallions",
+  "lacs_medallions": 4,
+  "shuffle_gerudo_card": false,
+  "shuffle_shops": "deals_4",
+  "shuffle_trade_checks": true
+ }
+}
