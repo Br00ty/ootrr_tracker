@@ -5054,13 +5054,38 @@ function recheckHeartDrops() {
     if ((it === "Piece of Heart" || it === "Heart Container") && dropItem(n) && !S.done[n]) { delete S.auto.done[n]; pend[n] = -1; }
   }
 }
+// one-time (2026-11-24): boss Hearts with nothing to count that ticked at the kill come off; the next save read
+// ticks them again if they were picked up (heartsPicked)
+function recheckJunkHearts() {
+  if (S.fixes.junkHearts) return;
+  S.fixes.junkHearts = 1;
+  for (const n of BOSS_HEART_WAIT) if (S.auto && S.auto.done[n] && !S.done[n] && !dropItem(n)) delete S.auto.done[n];
+}
 // tick the checks a read found; `before(item)` is the item's count before this read's items came in
 // Boss Hearts whose own pickup mark is in the read (the heart's key, as OOTRR's data has it): taken for sure,
 // whatever the counts say (2026-11-24: Morpha's Heart set its key 14426685265732353862 when picked up, but was
 // left waiting because the count it waited from already had the piece in it)
+// A boss Heart holding junk (or any item, with no seed file) has no count to wait for, so it used to tick on the
+// kill counter (2026-11-24: Phantom Ganon's Heart, Rupee (1) there, ticked at the kill, before it was picked up).
+// It now ticks on its own pickup mark (any of its rules but the kill counter) or on the boss's reward scene
+// (BOSS_FLAGS) or the reward itself being ticked, which come with the blue warp after the Heart.
+const HEART_BOSS = { "Deku Tree Queen Gohma Heart": "Queen Gohma", "Dodongos Cavern King Dodongo Heart": "King Dodongo",
+  "Jabu Jabus Belly Barinade Heart": "Barinade", "Forest Temple Phantom Ganon Heart": "Phantom Ganon", "Fire Temple Volvagia Heart": "Volvagia",
+  "Water Temple Morpha Heart": "Morpha", "Spirit Temple Twinrova Heart": "Twinrova" };
+const KILL_FLAG = /^DefeatedEnemyNum\.(Dm_)?Enemy_DungeonBoss_|^Gohma_DefeatBoss$/;
 function heartsPicked(p) {
   const out = new Set();
   for (const n of BOSS_HEART_WAIT) if (DATA.detect[n] && Auto.checks(p, { [n]: DATA.detect[n] }).has(n)) out.add(n);
+  const map = detectMap();
+  for (const n of BOSS_HEART_WAIT) {
+    if (out.has(n) || dropItem(n)) continue;
+    // the boss's reward already ticked: it's taken with the blue warp, after the Heart
+    if (isDone(HEART_BOSS[n])) { out.add(n); continue; }
+    const rules = (map[n] || []).map((r) => (r.f ? { ...r, f: r.f.filter((x) => !KILL_FLAG.test(x)) } : r)).filter((r) => !r.f || r.f.length || r.k || r.g);
+    const boss = BOSS_FLAGS[HEART_BOSS[n]];
+    if (boss) rules.push({ f: boss });
+    if (rules.length && Auto.checks(p, { [n]: rules }).has(n)) out.add(n);
+  }
   return out;
 }
 function autoTick(found, before, sure) {
@@ -5071,7 +5096,8 @@ function autoTick(found, before, sure) {
   for (const n of found) {
     if (S.auto.done[n]) continue;
     const it = dropItem(n);
-    if (!it) { tick(n); continue; }
+    // a boss Heart with nothing to count waits for heartsPicked (its pickup mark or the reward scene), not the kill
+    if (!it) { if (!BOSS_HEART_WAIT.has(n)) tick(n); continue; }
     const now = have(it);
     if (pend[n] === -1) continue;   // waiting for the next save read's count (recheckHeartDrops)
     if (pend[n] !== undefined) { if (now > pend[n] || now >= MAX[it]) tick(n); continue; }
@@ -5110,7 +5136,7 @@ function applyPeek(p, label) {
     if (MAX[n] != null) got = Math.min(got, MAX[n]);
     S.auto.items[n] = got;
   }
-  recheckHeartDrops();
+  recheckHeartDrops(); recheckJunkHearts();
   for (const [n, c] of Object.entries(S.auto.pend || {})) if (c === -1) { const it = dropItem(n); if (it) S.auto.pend[n] = have(it); else delete S.auto.pend[n]; }
   autoTick(Auto.checks(p, detectMap()), before, heartsPicked(p));
   LAST_PEEK = p; reviewIgnored(p);
