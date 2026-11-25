@@ -4595,11 +4595,12 @@ $("#aboutBtn").onclick = () => {
     h("div", { style: "max-width:560px;line-height:1.55" },
       h("p", {}, "A location and item tracker for ", h("b", {}, "OOTRR"), ", the ", a("https://github.com/ootrando/ootrr", "Ocarina of Time remake randomizer"),
         " by REALAZK. It is built for that randomizer only: it doesn't track the original Ocarina of Time Randomizer (OoTR) or other randomizers."),
-      h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
+      h("p", {}, `It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. ${APP ? "This is the desktop app: it reads Longshot and your saves by itself, with nothing else to run." : "It runs in your browser with nothing to install; there's also a desktop app that reads Longshot without a helper window."}`),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
       h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
-        a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
+        a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), "."),
+      APP ? h("p", { style: "color:var(--faint);font-size:12px" }, `OOTRR Tracker app ${APP.version}`) : null),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
 };
@@ -5335,6 +5336,31 @@ const LIVE_SCRIPT = "https://raw.githubusercontent.com/Br00ty/ootrr_tracker/main
 // pasted into a PowerShell window (Windows + R can be blocked on some PCs; this works everywhere)
 const LIVE_CMD = `irm ${LIVE_SCRIPT} | iex`;
 const LIVE = { on: false, timer: 0, state: null, err: "", saveSig: "", read: null, busy: false, where: false, whereKey: "" };
+// In the desktop app (app/, which sets window.OOTRR_APP) the helper is built in: live tracking is always on
+// and there's nothing to start. Extra save folders (a portable Longshot) go to the app's helper by message.
+const APP = window.OOTRR_APP || null;
+const APP_SAVES_KEY = "ootrr-app-saves";
+let appSaves = "";
+try { appSaves = localStorage.getItem(APP_SAVES_KEY) || ""; } catch (e) {}
+// The app ships both trackers, the stable one (web/index.html) and the nightly one (web/nightly/index.html), and
+// switches between them in the same window; each keeps its own progress (KEY). The app opens the one used last.
+if (APP && APP.channels) {
+  const nightly = KEY.includes("nightly");
+  const b = document.createElement("button");
+  b.className = "btn"; b.id = "chanBtn";
+  b.textContent = nightly ? "Switch to Stable" : "Switch to Nightly";
+  b.title = nightly ? "Open the stable tracker (OOTRR's latest release). Each keeps its own progress and seed."
+    : "Open the nightly tracker (OOTRR's nightly builds). Each keeps its own progress and seed.";
+  b.onclick = () => { save(); location.href = nightly ? "/index.html" : "/nightly/index.html"; };
+  const bug = document.getElementById("bugBtn");
+  bug.parentNode.insertBefore(b, bug);
+}
+function appSetSaves(dir) {
+  appSaves = dir.trim();
+  try { localStorage.setItem(APP_SAVES_KEY, appSaves); } catch (e) {}
+  try { window.chrome.webview.postMessage("saves:" + appSaves); } catch (e) {}
+  LIVE.saveSig = "";
+}
 async function livePoll() {
   if (!LIVE.on || LIVE.busy) return;
   LIVE.busy = true;
@@ -5375,7 +5401,7 @@ async function livePoll() {
     if (changed) render(); else paintAuto();
   } catch (e) {
     LIVE.state = null;
-    LIVE.err = "Waiting for the Longshot helper: start it from the Longshot button.";
+    LIVE.err = APP ? "Starting the built-in helper…" : "Waiting for the Longshot helper: start it from the Longshot button.";
     paintAuto();
   } finally {
     LIVE.busy = false;
@@ -5399,7 +5425,7 @@ function liveStatus() {
   const st = LIVE.state, noSave = LIVE.on && st && st.ok && !st.save;
   return h("div", { id: "liveStatus" },
     h("p", { style: `margin-bottom:2px;color:var(--${!LIVE.on ? "dim" : noSave ? "gold" : st && st.ok ? "green" : st ? "gold" : "dim"})` },
-      !LIVE.on ? "Not connected." : noSave ? `Connected: reading ${liveGame(st)} live, but the helper hasn't found your save, so items and equipment aren't tracked. See "Portable Longshot" below.`
+      !LIVE.on ? "Not connected." : noSave ? `Connected: reading ${liveGame(st)} live, but ${APP ? "the app" : "the helper"} hasn't found your save, so items and equipment aren't tracked. See "Portable Longshot" below.`
         : st && st.ok ? `Connected: reading ${liveGame(st)} live.` : st ? `The helper is running. ${st.why || ""}` : "Waiting for the helper…"),
     LIVE.on && st && st.save && st.save.path ? h("p", { style: "color:var(--faint);font-size:11px;margin-top:0;word-break:break-all" }, "Save: ", st.save.path) : null);
 }
@@ -5407,7 +5433,34 @@ function liveStatus() {
 // folder the player names is passed in OOTRR_SAVES with the start command
 let liveSaveDir = "";
 const liveCmdWith = (dir) => (dir.trim() ? `$env:OOTRR_SAVES='${dir.trim().replace(/'/g, "''")}'; ${LIVE_CMD}` : LIVE_CMD);
+// the Longshot window in the desktop app: no helper to start, just the connection and the save folder
+function openLongshotApp() {
+  const st = LIVE.state, noSave = LIVE.on && st && st.ok && !st.save;
+  const box = h("input", { type: "text", value: appSaves, placeholder: "e.g. D:\\Games\\Longshot\\user", style: "width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px" });
+  $("#dlgBody").replaceChildren(...K(
+    h("h3", {}, "Longshot: live tracking"),
+    h("div", { style: "max-width:600px;line-height:1.55" },
+      h("p", {}, "The app reads the game's memory while you play, so checks tick the moment you get them and the map follows Link from area to area and floor to floor. Items come from your newest save, which the app finds by itself. Works with ", h("b", {}, "Longshot"), " (and Hookshot) and with emulators like ", h("b", {}, "Lichii"), ". It only reads: it never changes the game or your files."),
+      liveStatus(),
+      h("div", { style: "margin-top:8px" },
+        LIVE.on ? h("button", { class: "btn", onclick: () => { liveStop(); openLongshotApp(); } }, "Pause live tracking")
+          : h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => { liveStart(); openLongshotApp(); } }, "Resume live tracking")),
+      h("details", { open: noSave || !!appSaves, style: "margin-top:10px" },
+        h("summary", { style: "cursor:pointer" }, h("b", {}, "Portable Longshot, or saves somewhere else?")),
+        h("div", { style: "color:var(--dim);margin-top:6px" },
+          h("p", { style: "margin:0 0 6px" }, "The app looks in ", h("code", { class: "q" }, "%APPDATA%\\Longshot\\save"), " and, for a portable Longshot, beside the running game (its ", h("code", { class: "q" }, "user"), " folder or the launcher's ", h("code", { class: "q" }, "LongshotLauncher-data"), "). If it still says no save was found, find the folder that holds ", h("code", { class: "q" }, "slot_00"), ", ", h("code", { class: "q" }, "slot_01"), " … (search your Longshot folder for ", h("code", { class: "q" }, "progress.sav"), ") and paste it, or any folder above it, here:"),
+          box,
+          h("div", { style: "display:flex;gap:8px;margin-top:6px" },
+            h("button", { class: "btn", onclick: () => { appSetSaves(box.value); openLongshotApp(); } }, "Use this folder"),
+            appSaves ? h("button", { class: "btn", onclick: () => { appSetSaves(""); openLongshotApp(); } }, "Forget it") : null),
+          st && st.looked && st.looked.length ? h("details", {}, h("summary", { style: "cursor:pointer" }, "Where the app looked"),
+            h("div", { style: "font-size:11px;word-break:break-all;color:var(--faint)" }, st.looked.map((x) => h("div", {}, x)))) : null)),
+      h("p", { class: "hint", style: "padding:10px 0 0" }, `OOTRR Tracker app ${APP.version}. The memory layout comes from OotrR (MIT License).`)),
+    h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
+  if (!$("#dlg").open) $("#dlg").showModal();
+}
 function openLongshot() {
+  if (APP) return openLongshotApp();
   const status = liveStatus();
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Longshot: live tracking"),
@@ -5449,7 +5502,7 @@ function openLongshot() {
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 
-try { render(); if (S.live) liveStart(); else restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
+try { render(); if (APP) { if (appSaves) appSetSaves(appSaves); if (S.live !== false) liveStart(); } else if (S.live) liveStart(); else restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
 </script>
 </body>
 </html>
