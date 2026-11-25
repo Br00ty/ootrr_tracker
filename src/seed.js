@@ -295,6 +295,7 @@ const Seed = (() => {
     "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
     "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
+    "Graveyard Heart Piece Grave Chest needs no Sun's Song: the chest is already there. OOTRR asks for Sun's Song.",
     "HF GS Tree By KF (OOTRR: LLR GS Rain Shed) can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
     "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
@@ -320,6 +321,9 @@ const Seed = (() => {
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
+    // confirmed by the user 2026-11-25: the chest in the Heart Piece grave is there without Sun's Song (OOTRR:
+    // can_play(Suns_Song)); getting into the grave keeps OOTRR's rule (adult, or child at night)
+    "Graveyard Heart Piece Grave Chest": "True",
     // the user 2026-11-22: shown as HF GS Tree By KF, a Hyrule Field tree either age can bonk (OOTRR: is_child and can_bonk)
     "LLR GS Rain Shed": "can_bonk",
     // an OOTRR developer told the user (2026-11-23) these two now need the Boomerang; not in OOTRR's pushed code
