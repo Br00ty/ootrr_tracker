@@ -523,7 +523,10 @@ const startTable = () => (S.seed ? S.seed.start : manualVals().__start) || {};
 const skippedList = () => (S.seed ? S.seed.skipped : manualVals().__skipped) || [];
 const startOf = (n) => startTable()[n] || 0;
 const silverShuffled = () => (S.seed ? S.seed.vals : manualVals()).shuffle_silver_rupees === true;
-const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, S.auto.items[n] || 0, startOf(n), keysFound(n), n === "Progressive Shield" ? shieldStart() : 0);
+// Bomb Bag: a user's report (2026-11-25): picking up a bomb in game ticked the Bomb Bag. With a seed, the save's bag
+// counts only as far as the Bomb Bags in done checks (and starting items) go; the three bags are all that raise it
+const autoItem = (n) => (n === "Bomb Bag" && S.seed ? Math.min(S.auto.items[n] || 0, startOf(n) + gotFromChecks(n)) : S.auto.items[n] || 0);
+const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, autoItem(n), startOf(n), keysFound(n), n === "Progressive Shield" ? shieldStart() : 0);
 // The shields are one tracker item that goes Deku Shield -> Hylian Shield -> Mirror Shield (the user's choice,
 // 2026-11-22): its tier counts as having that shield and the ones before it, in the logic and for drop checks.
 const SHIELDS = ["Deku Shield", "Hylian Shield", "Mirror Shield"];
@@ -2002,7 +2005,7 @@ function mapSide(area, key, list) {
     h("div", { class: "hint" }, "Click a pin to list its checks; double-click a single pin, or a check in a list, to mark it done."));
 }
 function tile([name, label, max, cls]) {
-  const v = have(name), fromSave = (S.auto.items[name] || 0) > (S.items[name] || 0);
+  const v = have(name), fromSave = autoItem(name) > (S.items[name] || 0);
   const tiers = TIERS[name];
   const text = tiers ? tiers[Math.max(0, Math.min(v, tiers.length) - 1)] : label.replace("-", "­");
   const tip = tiers ? `${tiers.join(" → ")}${v ? `\nYou have: ${tiers[Math.min(v, tiers.length) - 1]}` : ""}` : `${label.replace("-", "")}${max > 1 ? ` (${v}/${max})` : ""}`;
