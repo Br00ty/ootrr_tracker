@@ -434,9 +434,30 @@ const Seed = (() => {
     for (const [o, nw] of Object.entries(OLD_DATA_RENAMES)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
     return out;
   }
+  // An Archipelago (multiworld) player's .apootrr patch (OOTRR ap/patch.rs Patch): the same seed text, settings string
+  // and placements as a seed file (ap::check builds its SeedFile from them), plus the multiworld parts. Locations that
+  // hold another player's item are "AP: <key>" in placements and described in "foreign"; the tracker shows them as
+  // "Archipelago: <item> (<player>)", which no logic item matches. Items from other worlds ("remote") and AP starting
+  // items ("start") reach the game through the AP client, so the tracker counts them from the save like any item.
+  // There's no generator line: Archipelago support came with OOTRR 0.9.0-nightly.20261125.9, so it reads as that.
+  function fromApPatch(j) {
+    if (j.version !== 1) throw new Error(`Archipelago patch version ${j.version} is newer than this tracker understands`);
+    if (j.game !== "OOTRR") throw new Error("this Archipelago patch is for another game");
+    if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the Archipelago patch has no settings or placements");
+    const placements = {}, foreign = j.foreign || {};
+    for (const [loc, it] of Object.entries(j.placements)) {
+      const f = foreign[loc];
+      placements[loc] = f && typeof it === "string" && it.startsWith("AP: ") ? `Archipelago: ${f.item || "an item"} (${f.player || "another player"})` : it;
+    }
+    return {
+      format: "ootrr-seed", version: 1, generator: `ootrr-core ${NIGHTLY9} (Archipelago)`, seed: j.seed, settings: j.settings, game: "",
+      placements, ap: { slot: String(j.slot || ""), player: j.player, seedName: String(j.seed_name || ""), foreign: Object.keys(foreign).length, remote: (j.remote || []).length },
+    };
+  }
   function parseFile(text, data) {
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
+    if (j && j.format === "ootrr-ap-patch") j = fromApPatch(j);
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
@@ -445,7 +466,7 @@ const Seed = (() => {
     const { vals, warn } = decodeSettings(j.settings, data.schema, legacy, j.generator);
     const sw = withPlacedPatches(logicSwitches(vals, legacy, j.generator), j.placements, data);
     return {
-      seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""),
+      seed: String(j.seed || ""), generator: String(j.generator || ""), settingsString: j.settings, game: String(j.game || ""), ap: j.ap || null,
       placements: j.placements, shops: j.shops || {}, entrances: j.entrances || {},
       hints: hintsOf(String(j.seed || ""), generatorNames(j.placements, String(j.generator || "")), vals, data, String(j.generator || "")),
       vals, warn: retiredNote(warn, String(j.generator || "")), switches: sw, start: withSkipped(startItems(vals, data.start_items), vals, j.placements), skipped: kakarikoSkip(vals) ? KAKARIKO_LOCATIONS.filter((l) => l in j.placements) : [],
