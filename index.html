@@ -168,13 +168,14 @@ dialog.wide{width:min(860px,94vw)}
 .auto b{color:var(--ink);font-weight:600}
 .it.auto{box-shadow:inset 0 -2px 0 var(--green)}
 /* an item a gossip stone you've heard named: a blue hue (the hover tells what the stone said) */
-.it.hinted{border-color:#4a8fd6;background:#1c2a3c;box-shadow:0 0 8px rgba(74,163,255,.45)}
-.it.hinted.on{background:#22354d;border-color:#5aa6f0}
-.it.hinted img{filter:grayscale(.4) sepia(1) hue-rotate(175deg) saturate(2.2) brightness(1.05);opacity:.75}
-.it.hinted.on img{filter:sepia(.35) hue-rotate(175deg) saturate(1.6);opacity:1}
-.it.hinted.auto{box-shadow:inset 0 -2px 0 var(--green),0 0 8px rgba(74,163,255,.45)}
-.dtab tr.hinted td{color:#8cc4ff}
-.dtab tr.hinted td:first-child{box-shadow:inset 2px 0 0 #4a8fd6}
+/* hinted items: 30% of the first blue (the user, 2026-11-25) */
+.it.hinted{border-color:#3f505c;background:#1d2021;box-shadow:0 0 6px rgba(74,163,255,.14)}
+.it.hinted.on{background:#2e322d;border-color:#65726b}
+.it.hinted img{filter:grayscale(.82) sepia(.3) hue-rotate(175deg) saturate(1.36) brightness(1.09);opacity:.49}
+.it.hinted.on img{filter:sepia(.1) hue-rotate(175deg) saturate(1.18);opacity:1}
+.it.hinted.auto{box-shadow:inset 0 -2px 0 var(--green),0 0 6px rgba(74,163,255,.14)}
+.dtab tr.hinted td{color:#96a0a3}
+.dtab tr.hinted td:first-child{box-shadow:inset 2px 0 0 #3f505c}
 .stones{max-width:620px;max-height:65vh;overflow:auto;font-size:12.5px}
 .stones label{display:flex;gap:8px;align-items:flex-start;padding:4px 2px;border-bottom:1px solid var(--line);cursor:pointer}
 .stones .st{min-width:180px;color:var(--faint)}
