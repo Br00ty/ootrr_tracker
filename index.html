@@ -241,7 +241,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <div class="spacer"></div>
   <div class="auto" id="autoBox"></div>
   <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
-  <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
+  <input type="file" id="seedFile" accept=".ootrr,.apootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
   <button class="btn" id="castBtn" title="Open a clean item tracker in its own window, for streaming (for example as an OBS window capture)">Broadcast view</button>
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
@@ -1298,6 +1298,8 @@ const Seed = (() => {
   function parseFile(text, data) {
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
+    // an Archipelago .apootrr comes from OOTRR's nightly builds (0.9.0 on), whose check names this tracker doesn't have
+    if (j && j.format === "ootrr-ap-patch") throw new Error("Archipelago seeds are made with OOTRR's nightly builds, so they load on the Nightly tracker (br00ty.github.io/ootrr_tracker/nightly, or Switch to Nightly in the app)");
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
@@ -4641,9 +4643,9 @@ function paintSeed() {
   const box = $("#seedBox");
   if (S.seed) {
     box.replaceChildren(h("span", { class: "seed", title: `${S.seed.settingsString}\nClick to see the seed's settings`, onclick: openSettings }, `Seed ${S.seed.seed}`),
-      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file" }, "Load seed"));
+      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file (or an Archipelago .apootrr)" }, "Load seed"));
   } else {
-    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file ootrr generated: the tracker takes its settings and shuffled locations" }, "Load seed"));
+    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file OOTRR generated, or your Archipelago .apootrr: the tracker takes its settings and shuffled locations" }, "Load seed"));
   }
   // what a seed asks for that the tracker cannot model yet
   const notes = [];
@@ -5283,7 +5285,7 @@ document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.b
 document.addEventListener("drop", (e) => {
   e.preventDefault(); document.body.classList.remove("drag");
   const files = [...e.dataTransfer.files];
-  const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
+  const seed = files.find((f) => /\.(ootrr|apootrr|json)$/i.test(f.name));
   // entries must be taken now: the drop's items are gone once anything is awaited
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);

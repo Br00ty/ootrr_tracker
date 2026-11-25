@@ -241,7 +241,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <div class="spacer"></div>
   <div class="auto" id="autoBox"></div>
   <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
-  <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
+  <input type="file" id="seedFile" accept=".ootrr,.apootrr,.json" hidden>
   <div class="seedbox" id="seedBox"></div>
   <button class="btn" id="castBtn" title="Open a clean item tracker in its own window, for streaming (for example as an OBS window capture)">Broadcast view</button>
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
@@ -2612,9 +2612,9 @@ function paintSeed() {
   const box = $("#seedBox");
   if (S.seed) {
     box.replaceChildren(h("span", { class: "seed", title: `${S.seed.settingsString}\nClick to see the seed's settings`, onclick: openSettings }, `Seed ${S.seed.seed}`),
-      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file" }, "Load seed"));
+      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file (or an Archipelago .apootrr)" }, "Load seed"));
   } else {
-    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file ootrr generated: the tracker takes its settings and shuffled locations" }, "Load seed"));
+    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file OOTRR generated, or your Archipelago .apootrr: the tracker takes its settings and shuffled locations" }, "Load seed"));
   }
   // what a seed asks for that the tracker cannot model yet
   const notes = [];
@@ -3254,7 +3254,7 @@ document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.b
 document.addEventListener("drop", (e) => {
   e.preventDefault(); document.body.classList.remove("drag");
   const files = [...e.dataTransfer.files];
-  const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
+  const seed = files.find((f) => /\.(ootrr|apootrr|json)$/i.test(f.name));
   // entries must be taken now: the drop's items are gone once anything is awaited
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);

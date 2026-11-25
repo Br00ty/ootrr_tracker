@@ -236,6 +236,8 @@ const Seed = (() => {
   function parseFile(text, data) {
     let j;
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
+    // an Archipelago .apootrr comes from OOTRR's nightly builds (0.9.0 on), whose check names this tracker doesn't have
+    if (j && j.format === "ootrr-ap-patch") throw new Error("Archipelago seeds are made with OOTRR's nightly builds, so they load on the Nightly tracker (br00ty.github.io/ootrr_tracker/nightly, or Switch to Nightly in the app)");
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
