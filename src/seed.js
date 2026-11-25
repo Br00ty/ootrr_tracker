@@ -439,6 +439,47 @@ const Seed = (() => {
     try { j = JSON.parse(text); } catch (e) { throw new Error("this is not a seed file (not JSON)"); }
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
+    return fromSeed(j, data);
+  }
+  // OOTRR's spoiler logs, as a stand-in for the seed file:
+  //  - the app's Spoiler.txt (web/assets/js/spoiler.js full_text): "OOTRR spoiler log", then "Seed:", "Settings string:",
+  //    "Made by: ootrr-core <version>", and "Locations (n)" with every placement ("  Location: Item");
+  //  - the app's short download (spoiler.js text): "OOTRR spoiler", "Seed:", then "Placements"; no settings string;
+  //  - the command line's --spoiler file (slice/generate.rs spoiler_text): "Randomized chests" with
+  //    "  Location: Item (vanilla X)"; no seed or settings string.
+  // Items read as the spoiler shows them, so the tiered ones go back to their logic names (logic/spoiler.rs SHOWN;
+  // an Ice Trap shows as Rupee (1), which makes no difference to the tracker). A spoiler has no shop prices or
+  // dungeon entrances; the tracker then treats shelves as having no price rule and uncovers dungeon doors as you
+  // find them. Returns { needSettings: true } when the log has no settings string and none was given.
+  const UNSHOWN = { "Progressive Bow": "Bow", "Progressive Bomb Bag": "Bomb Bag", "Progressive Slingshot": "Slingshot", "Progressive Magic Meter": "Magic Meter", "Progressive Ocarina": "Ocarina" };
+  function isSpoiler(text) { return /^\s*(OOTRR spoiler|Progressive items, in the order)/.test(text) || /^Randomized chests$/m.test(text); }
+  function parseSpoiler(text, data, settings) {
+    const lines = String(text).replace(/\r/g, "").split("\n");
+    const head = (k) => { const l = lines.find((x) => x.startsWith(k + ":")); return l ? l.slice(k.length + 1).trim() : ""; };
+    const placements = {};
+    // the section that lists every placement: "Locations (n)" or "Placements" (app), "Randomized chests" (command line)
+    let at = lines.findIndex((l) => /^Locations \(\d+\)$/.test(l));
+    if (at < 0) at = lines.findIndex((l) => l === "Placements");
+    if (at < 0) at = lines.findIndex((l) => l === "Randomized chests");
+    if (at < 0) throw new Error("this spoiler log has no list of locations");
+    for (let i = at + 1; i < lines.length; i++) {
+      const l = lines[i];
+      if (/^[-─=]{3,}\s*$/.test(l)) continue;   // the rule under a heading
+      const m = /^  (.+?): (.+?)(?: \(vanilla .*\))?$/.exec(l);
+      if (!m) { if (l.trim() === "" && !Object.keys(placements).length) continue; break; }
+      placements[m[1]] = UNSHOWN[m[2]] || m[2];
+    }
+    if (!Object.keys(placements).length) throw new Error("this spoiler log lists no locations");
+    const str = head("Settings string") || String(settings || "").trim();
+    if (!str) return { needSettings: true };
+    const version = head("OOTRR version");
+    let generator = head("Made by");
+    if (!/ootrr-core/.test(generator) && version && version !== "unknown") generator = `ootrr-core ${version}`;
+    const sd = fromSeed({ seed: head("Seed"), generator, settings: str, game: "", placements }, data);
+    sd.fromSpoiler = true;
+    return sd;
+  }
+  function fromSeed(j, data) {
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
     const legacy = isLegacy(j.generator);
     j.placements = upgradePlacements(j.placements, data);
@@ -723,6 +764,6 @@ const Seed = (() => {
     hintRng(`${seedId}/hints`).shuffle(all);
     return H.stones.map((stone, i) => ({ stone, ...all[i % all.length] }));
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf, olderThan, NIGHTLY5, NIGHTLY9, SHOP_RENAMES, RENAMES9 };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf, olderThan, NIGHTLY5, NIGHTLY9, SHOP_RENAMES, RENAMES9, isSpoiler, parseSpoiler };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

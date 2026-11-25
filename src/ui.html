@@ -229,7 +229,7 @@ main.mapmode #mapview{display:flex}
 .vsong{color:var(--faint);font-size:11px}
 .pinpop .desc{padding:4px 10px 8px 26px}
 .pinpop{max-width:440px}
-body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
+body.drag::after{content:"Drop a .ootrr seed or spoiler log, a save folder or progress.sav";position:fixed;inset:12px;border:2px dashed var(--gold);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--gold);background:#000a;pointer-events:none}
 </style>
 </head>
 <body>
@@ -240,7 +240,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <div class="spacer"></div>
   <div class="auto" id="autoBox"></div>
   <input type="file" id="saveFile" webkitdirectory directory multiple hidden>
-  <input type="file" id="seedFile" accept=".ootrr,.json" hidden>
+  <input type="file" id="seedFile" accept=".ootrr,.json,.txt,.log" hidden>
   <div class="seedbox" id="seedBox"></div>
   <button class="btn" id="castBtn" title="Open a clean item tracker in its own window, for streaming (for example as an OBS window capture)">Broadcast view</button>
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
@@ -2454,7 +2454,7 @@ function manualSettings() {
     oninput: (e) => { setQuery = e.target.value; openSettings(); const el = $("#dlgBody input[type=search]"); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } } });
   return [
     h("h3", {}, "Seed settings"),
-    h("div", { style: "color:var(--dim);font-size:12px;margin-bottom:8px" }, "Set these like the settings your seed was made with: laid out like OOTRR's own settings menu, with its presets. The tracker lists exactly the locations OOTRR would shuffle with them. Or load your .ootrr seed file and every setting is taken from it."),
+    h("div", { style: "color:var(--dim);font-size:12px;margin-bottom:8px" }, "Set these like the settings your seed was made with: laid out like OOTRR's own settings menu, with its presets. The tracker lists exactly the locations OOTRR would shuffle with them. Or load your .ootrr seed file (or its spoiler log) and every setting is taken from it."),
     DATA.presets ? h("div", { class: "presets" }, [...DATA.presets].sort((a, b) => a.order - b.order).map((p) => h("button", {
       class: `preset ${sameVals(manualVals(), (() => { const pv = presetVals(p); for (const x of DATA.schema) if (!Seed.enabled(x, pv)) pv[x.id] = "disabled" in x ? x.disabled : x.default; return pv; })()) ? "on" : ""}`,
       title: p.tip, onclick: () => { S.settings = presetVals(p); setStrMsg = ""; render(); openSettings(); } }, h("b", {}, p.name), h("span", {}, p.tip.split(". ")[0])))) : null,
@@ -2552,11 +2552,24 @@ $("#resetBtn").onclick = (e) => {
 
 
 // ---------- seed file ----------
-function seedId(sd) { return `${sd.seed}|${sd.settingsString}|${sd.game}`; }
+// the same seed loaded from its .ootrr file or from its spoiler log is the same run (a spoiler has no game id)
+function seedId(sd) { return `${sd.seed}|${sd.settingsString}`; }
+// A .ootrr seed file, or OOTRR's spoiler log (Spoiler.txt): the spoiler lists every placement too, so it does the
+// same job (Seed.parseSpoiler). A spoiler without a settings string asks for one.
 async function loadSeedFile(f) {
   if (!f) return;
   let sd;
-  try { sd = Seed.parseFile(await f.text(), DATA); }
+  try {
+    const text = await f.text();
+    if (Seed.isSpoiler(text)) {
+      sd = Seed.parseSpoiler(text, DATA);
+      if (sd.needSettings) {
+        const str = window.prompt("This spoiler log has no settings string. Paste the settings string the seed was made with (OOTRR1-…):", "");
+        if (!str) return;
+        sd = Seed.parseSpoiler(text, DATA, str);
+      }
+    } else sd = Seed.parseFile(text, DATA);
+  }
   catch (e) { W.err = `Couldn't read ${f.name}: ${e.message}`; paintAuto(); return; }
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
@@ -2572,9 +2585,9 @@ function paintSeed() {
   const box = $("#seedBox");
   if (S.seed) {
     box.replaceChildren(h("span", { class: "seed", title: `${S.seed.settingsString}\nClick to see the seed's settings`, onclick: openSettings }, `Seed ${S.seed.seed}`),
-      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file" }, "Load seed"));
+      h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load a different .ootrr seed file or spoiler log" }, "Load seed"));
   } else {
-    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file ootrr generated: the tracker takes its settings and shuffled locations" }, "Load seed"));
+    box.replaceChildren(h("button", { class: "btn", onclick: () => $("#seedFile").click(), title: "Load the .ootrr file OOTRR generated, or its spoiler log (Spoiler.txt): the tracker takes its settings and shuffled locations" }, "Load seed"));
   }
   // what a seed asks for that the tracker cannot model yet
   const notes = [];
@@ -2585,6 +2598,8 @@ function paintSeed() {
     else if (entrancesShuffled()) notes.push(h("span", {}, "Dungeon entrances are shuffled in this seed, and the logic follows them. Under each dungeon, click ", h("b", {}, "door: ?"), " to show which door leads to it, or ",
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
+    // a spoiler log has the placements but not the dungeon doors or the shop prices
+    if (S.seed.fromSpoiler && v.shuffle_entrances === "dungeons") notes.push("This seed was loaded from its spoiler log, which doesn't say which dungeon is behind each door. Load the .ootrr seed file to have the logic follow the shuffled dungeon entrances.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
     if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.9.0-nightly.20261125.9's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
@@ -3225,7 +3240,7 @@ document.addEventListener("dragleave", (e) => { if (!e.relatedTarget) document.b
 document.addEventListener("drop", (e) => {
   e.preventDefault(); document.body.classList.remove("drag");
   const files = [...e.dataTransfer.files];
-  const seed = files.find((f) => /\.(ootrr|json)$/i.test(f.name));
+  const seed = files.find((f) => /\.(ootrr|json|txt|log)$/i.test(f.name));
   // entries must be taken now: the drop's items are gone once anything is awaited
   const entries = [...e.dataTransfer.items].map((it) => it.webkitGetAsEntry && it.webkitGetAsEntry()).filter(Boolean);
   const folder = entries.some((x) => x.isDirectory);
