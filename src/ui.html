@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/ootrando/ootrr),
-  and its data files are embedded (0.8.3-nightly.20261123.5). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.8.3-nightly.20261124.7). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -234,7 +234,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 </head>
 <body>
 <header>
-  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.8.3-nightly.20261123.5">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.8.3-nightly.20261123.5</small></h1>
+  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.8.3-nightly.20261124.7">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.8.3-nightly.20261124.7</small></h1>
   <div class="stats" id="stats"></div>
   <div class="mode" id="modeBox" title="Switch between the list of locations and the game's maps"></div>
   <div class="spacer"></div>
@@ -2156,7 +2156,7 @@ function openStones() {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261123.5 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261124.7 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2587,7 +2587,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, "It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. It runs in your browser with nothing to install."),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261123.5 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261124.7 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), ".")),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
@@ -2635,7 +2635,7 @@ function paintSeed() {
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
-    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261123.5's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
+    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261124.7's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
   // the X closes the notes for this seed; another seed (or other notes) brings them back
   const b = $("#banner");
@@ -2884,6 +2884,10 @@ function detectMap() {
 // hand in still gives its vanilla trade item and then the shuffled item once. The vanilla item's get event is the
 // tracker target and still fires (seen 2026-11-21: Anju as Adult gave the Pocket Egg and the seed's Rupees (5)),
 // so these keep OOTRR's rule instead of looking for the placed item.
+// nightly 20261124.7 "Shuffle adult trade items" (open_world/trade_shuffle.rs): the trade items are found anywhere and
+// the ten hand ins give only their shuffled item, so the vanilla trade item's event no longer fires there; they go by
+// the placed item like any gift
+const tradeItemsShuffled = () => !!(S.seed && S.seed.vals && S.seed.vals.shuffle_rewards === "supported" && S.seed.vals.shuffle_trade_checks === true && S.seed.vals.adult_trade_shuffle === true);
 const TRADE_KEEP = new Set(["Kak Anju as Adult", "Kak Anju Trade Pocket Cucco", "LW Trade Cojiro", "Kak Granny Trade Odd Mushroom",
   "LW Trade Odd Potion", "GV Trade Poachers Saw", "DMT Trade Broken Sword", "ZD Trade Prescription", "LH Trade Eyeball Frog", "DMT Trade Eyedrops"]);
 function detectMapBase() {
@@ -2901,7 +2905,7 @@ function detectMapBase() {
   for (const [n, rules] of Object.entries(DATA.detect)) {
     out[n] = rules.map((r) => {
       const item = placed[n];
-      if (!item || !(r.g || r.c) || TRADE_KEEP.has(n)) return r;
+      if (!item || !(r.g || r.c) || (TRADE_KEEP.has(n) && !tradeItemsShuffled())) return r;
       // a shuffled cow: its own one-time event, unless it still gives Milk (tracker/seed.rs cow_rule)
       if (DATA.cow_flags[n]) return item === "Milk" ? r : { f: [DATA.cow_flags[n]] };
       if (!r.g) return r;

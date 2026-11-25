@@ -185,6 +185,9 @@ const Seed = (() => {
     if (before(gen, [0, 8, 3])) return out;
     // 0.8.3 nightly (20261122.3) open_world/trade.rs LOGIC: the adult trade items never spoil or revert, always
     out.push(["disable_trade_revert", "true"]);
+    // 20261124.7 open_world/trade_shuffle.rs LOGIC: the adult trade items are their own items, found anywhere
+    // (flow_extra.rs: needs the rewards and the trade checks shuffled)
+    if (rewards && v.shuffle_trade_checks === true && v.adult_trade_shuffle === true) out.push(["adult_trade_shuffle", "true"]);
     if (pre5) return out;
     // 20261123.5 qol.rs Qol::logic: night Skulltulas wait for Sun's Song, the free scarecrow, no tower escape
     if (v.night_skulls_suns_song === true) out.push(["night_skulls_suns_song", "true"]);

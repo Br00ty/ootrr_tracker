@@ -1,0 +1,586 @@
+{
+  "format": "ootrr-seed",
+  "version": 1,
+  "generator": "ootrr-core 0.8.3-nightly.20261123.5",
+  "seed": "7",
+  "settings": "OOTRR1-AMAQADQBAUJACAAYAECBWAIMEYAQCJYBAEUACARTAEATUAIDJIAQCTABAFHACATHAEEGSAIAQ4AQCADC7Q",
+  "game": "oot-remake:4d51612e6228acca",
+  "placements": {
+    "Barinade": "Farores Wind",
+    "Bongo Bongo": "Rupee (1)",
+    "Bottom of the Well Back Left Bombable Chest": "Map (Bottom of the Well)",
+    "Bottom of the Well Center Skulltula Chest": "Slingshot",
+    "Bottom of the Well Compass Chest": "Rupees (5)",
+    "Bottom of the Well Fire Keese Chest": "Small Key (Forest Temple)",
+    "Bottom of the Well Freestanding Key": "Bombchus (5)",
+    "Bottom of the Well Front Center Bombable Chest": "Small Key (Forest Temple)",
+    "Bottom of the Well Front Left Fake Wall Chest": "Small Key (Fire Temple)",
+    "Bottom of the Well Invisible Chest": "Bombchus (10)",
+    "Bottom of the Well Lens of Truth Chest": "Suns Song",
+    "Bottom of the Well Map Chest": "Progressive Scale",
+    "Bottom of the Well Right Bottom Fake Wall Chest": "Compass (Bottom of the Well)",
+    "Colossus Freestanding PoH": "Business Scrub Seed",
+    "Colossus Great Fairy Reward": "Bombchus (10)",
+    "Colossus Grotto Beamos Chest": "Deku Stick (1)",
+    "DMC Great Fairy Reward": "Bolero of Fire",
+    "DMC Hammer Grotto Chest": "Bow",
+    "DMC Upper Grotto Chest": "Piece of Heart",
+    "DMC Volcano Freestanding PoH": "Progressive Hookshot",
+    "DMC Wall Freestanding PoH": "Progressive Wallet",
+    "DMT Biggoron": "Biggoron Sword",
+    "DMT Chest": "Deku Sticks (3)",
+    "DMT Freestanding PoH": "Heart Container",
+    "DMT Great Fairy Reward": "Piece of Heart",
+    "Deku Theater Mask of Truth": "Water Medallion",
+    "Deku Theater Skull Mask": "Rutos Letter",
+    "Deku Tree Basement Chest": "Small Key (Gerudo Training Ground)",
+    "Deku Tree Compass Chest": "Small Key (Bottom of the Well)",
+    "Deku Tree Compass Room Side Chest": "Song of Storms",
+    "Deku Tree Map Chest": "Compass (Deku Tree)",
+    "Deku Tree Queen Gohma Heart": "Bombs (5)",
+    "Deku Tree Slingshot Chest": "Map (Deku Tree)",
+    "Deku Tree Slingshot Room Side Chest": "Small Key (Fire Temple)",
+    "Dodongos Cavern Bomb Bag Chest": "Piece of Heart",
+    "Dodongos Cavern Bomb Flower Platform Chest": "Piece of Heart",
+    "Dodongos Cavern Compass Chest": "Zeldas Letter",
+    "Dodongos Cavern End of Bridge Chest": "Small Key (Shadow Temple)",
+    "Dodongos Cavern King Dodongo Heart": "Piece of Heart",
+    "Dodongos Cavern Lobby Bombable Chest": "Bombs (5)",
+    "Dodongos Cavern Lower Lizalfos Chest": "Small Key (Gerudo Training Ground)",
+    "Dodongos Cavern Map Chest": "Map (Dodongos Cavern)",
+    "Dodongos Cavern Staircase Top Bombable Chest": "Compass (Dodongos Cavern)",
+    "Dodongos Cavern Upper Lizalfos Chest": "Prelude of Light",
+    "Fire Temple Big Lava Room Blocked Door Chest": "Piece of Heart",
+    "Fire Temple Big Lava Room Lower Open Door Chest": "Small Key (Spirit Temple)",
+    "Fire Temple Boss Key Chest": "Bombs (5)",
+    "Fire Temple Boulder Maze Lower Chest": "Arrows (30)",
+    "Fire Temple Boulder Maze Shortcut Chest": "Small Key (Forest Temple)",
+    "Fire Temple Boulder Maze Side Room Chest": "Boss Key (Fire Temple)",
+    "Fire Temple Boulder Maze Upper Chest": "Requiem of Spirit",
+    "Fire Temple Compass Chest": "Piece of Heart",
+    "Fire Temple Flare Dancer Chest": "Heart Container",
+    "Fire Temple Highest Goron Chest": "Rupees (20)",
+    "Fire Temple Map Chest": "Kokiri Emerald",
+    "Fire Temple Megaton Hammer Chest": "Arrows (5)",
+    "Fire Temple Near Boss Chest": "Compass (Fire Temple)",
+    "Fire Temple Scarecrow Chest": "Map (Fire Temple)",
+    "Fire Temple Scarecrow Ledge Second Chest": "Rupees (50)",
+    "Fire Temple Scarecrow Ledge Third Chest": "Slingshot",
+    "Fire Temple Volvagia Heart": "Rupees (20)",
+    "Forest Temple Basement Chest": "Boss Key (Forest Temple)",
+    "Forest Temple Blue Poe Chest": "Rupees (20)",
+    "Forest Temple Boss Key Chest": "Rupees (5)",
+    "Forest Temple Bow Chest": "Map (Forest Temple)",
+    "Forest Temple Eye Switch Chest": "Rupees (5)",
+    "Forest Temple Falling Ceiling Room Chest": "Rupees (20)",
+    "Forest Temple First Room Chest": "Compass (Forest Temple)",
+    "Forest Temple First Stalfos Chest": "Light Arrows",
+    "Forest Temple Floormaster Chest": "Arrows (10)",
+    "Forest Temple Map Chest": "Rupees (5)",
+    "Forest Temple Phantom Ganon Heart": "Rupees (20)",
+    "Forest Temple Red Poe Chest": "Small Key (Fire Temple)",
+    "Forest Temple Well Chest": "Rupees (20)",
+    "GC Darunias Joy": "Hylian Shield",
+    "GC Maze Center Chest": "Rupees (20)",
+    "GC Maze Left Chest": "Piece of Heart",
+    "GC Maze Right Chest": "Weird Egg",
+    "GC Maze Silver Chest": "Bottle",
+    "GC Pot Freestanding PoH": "Bow",
+    "GC Rolling Goron as Adult": "Deku Shield",
+    "GC Rolling Goron as Child": "Boomerang",
+    "GC Shop Right Side Top Left": "Rupees (20)",
+    "GC Shop Right Side Top Right": "Progressive Strength Upgrade",
+    "GF Chest": "Bombs (5)",
+    "GF HBA 1000 Points": "Magic Meter",
+    "GF HBA 1500 Points": "Bombs (5)",
+    "GF Hideout Hole Chest": "Heart Container",
+    "GV Chest": "Minuet of Forest",
+    "GV Crate Freestanding PoH": "Bombs (5)",
+    "GV Octorok Grotto Chest": "Gerudo Membership Card",
+    "GV Storms Grotto Chest": "Rupees (20)",
+    "GV Storms Grotto Lens Chest": "Rupees (5)",
+    "GV Waterfall Freestanding PoH": "Business Scrub Seed",
+    "Ganons Castle Forest Trial Chest": "Bombchus (5)",
+    "Ganons Castle Light Trial First Left Chest": "Piece of Heart",
+    "Ganons Castle Light Trial Invisible Enemies Chest": "Piece of Heart",
+    "Ganons Castle Light Trial Lullaby Chest": "Small Key (Shadow Temple)",
+    "Ganons Castle Light Trial Lullaby Room Invisible Chest": "Piece of Heart",
+    "Ganons Castle Light Trial Second Right Chest": "Rupees (50)",
+    "Ganons Castle Light Trial Third Left Chest": "Rupee (1)",
+    "Ganons Castle Shadow Trial Front Chest": "Small Key (Forest Temple)",
+    "Ganons Castle Shadow Trial Golden Gauntlets Chest": "Small Key (Gerudo Training Ground)",
+    "Ganons Castle Spirit Trial Crystal Switch Chest": "Small Key (Spirit Temple)",
+    "Ganons Castle Water Trial Right Chest": "Rupees (20)",
+    "Ganons Tower Boss Key Chest": "Zora Tunic",
+    "Gerudo Training Ground Beamos Chest": "Piece of Heart",
+    "Gerudo Training Ground Before Heavy Block Chest": "Rupee (1)",
+    "Gerudo Training Ground Eye Statue Chest": "Deku Nut Capacity",
+    "Gerudo Training Ground Freestanding Key": "Small Key (Ganons Castle)",
+    "Gerudo Training Ground Hammer Room Clear Chest": "Piece of Heart",
+    "Gerudo Training Ground Hammer Room Switch Chest": "Small Key (Shadow Temple)",
+    "Gerudo Training Ground Heavy Block Fifth Chest": "Small Key (Fire Temple)",
+    "Gerudo Training Ground Heavy Block First Chest": "Small Key (Fire Temple)",
+    "Gerudo Training Ground Heavy Block Second Chest": "Small Key (Gerudo Training Ground)",
+    "Gerudo Training Ground Heavy Block Third Chest": "Small Key (Water Temple)",
+    "Gerudo Training Ground Hidden Ceiling Chest": "Small Key (Water Temple)",
+    "Gerudo Training Ground Lobby Left Chest": "Bomb Bag",
+    "Gerudo Training Ground Lobby Right Chest": "Fire Arrows",
+    "Gerudo Training Ground Maze Path Final Chest": "Small Key (Spirit Temple)",
+    "Gerudo Training Ground Maze Path First Chest": "Small Key (Fire Temple)",
+    "Gerudo Training Ground Maze Path Second Chest": "Small Key (Water Temple)",
+    "Gerudo Training Ground Maze Path Third Chest": "Small Key (Spirit Temple)",
+    "Gerudo Training Ground Maze Right Central Chest": "Small Key (Gerudo Training Ground)",
+    "Gerudo Training Ground Maze Right Side Chest": "Dins Fire",
+    "Gerudo Training Ground Near Scarecrow Chest": "Rupees (5)",
+    "Gerudo Training Ground Stalfos Chest": "Zora Sapphire",
+    "Gerudo Training Ground Underwater Silver Rupee Chest": "Nocturne of Shadow",
+    "Graveyard Dampe Gravedigging Tour": "Deku Shield",
+    "Graveyard Dampe Race Freestanding PoH": "Business Scrub Seed",
+    "Graveyard Dampe Race High Rupee Chest": "Lens of Truth",
+    "Graveyard Dampe Race Hookshot Chest": "Progressive Strength Upgrade",
+    "Graveyard Dampe Race Low Rupee Chest": "Rupees (20)",
+    "Graveyard Freestanding PoH": "Rupees (50)",
+    "Graveyard Heart Piece Grave Chest": "Stone of Agony",
+    "Graveyard Shield Grave Chest": "Rupees (20)",
+    "HC Great Fairy Reward": "Rupees (50)",
+    "HC Malon Egg": "Piece of Heart",
+    "HC Zeldas Letter": "Bombs (5)",
+    "HF Deku Scrub Grotto": "Rupees (50)",
+    "HF East Poe Chest": "Bombs (5)",
+    "HF Open Grotto Chest": "Bombs (20)",
+    "HF Redead Grotto Chest": "Progressive Hookshot",
+    "HF South Poe Chest": "Bottle",
+    "HF Tektite Grotto Freestanding PoH": "Zeldas Lullaby",
+    "Hideout Gerudo Membership Card": "Piece of Heart",
+    "Ice Cavern Compass Chest": "Map (Ice Cavern)",
+    "Ice Cavern Iron Boots Chest": "Piece of Heart",
+    "Ice Cavern Map Chest": "Rupees (20)",
+    "Ice Cavern Push Block Room Chest": "Compass (Ice Cavern)",
+    "Jabu Jabus Belly Barinade Heart": "Bottle with Milk",
+    "Jabu Jabus Belly Basement 2 Octoroks Chest": "Map (Jabu Jabus Belly)",
+    "Jabu Jabus Belly Boomerang Chest": "Compass (Jabu Jabus Belly)",
+    "Jabu Jabus Belly Compass Chest": "Deku Shield",
+    "Jabu Jabus Belly Map Chest": "Small Key (Shadow Temple)",
+    "KF Midos Bottom Left Chest": "Rupees (20)",
+    "KF Midos Bottom Right Chest": "Piece of Heart",
+    "KF Midos Top Left Chest": "Rupees (5)",
+    "KF Midos Top Right Chest": "Piece of Heart",
+    "KF Shop Right Side Top Left": "Bombs (20)",
+    "KF Shop Right Side Top Right": "Goron Tunic",
+    "KF Storms Grotto Chest": "Double Defense",
+    "KF West Ledge Chest": "Rupees (5)",
+    "Kak 10 Gold Skulltula Reward": "Deku Nuts (5)",
+    "Kak 100 Gold Skulltula Reward": "Rupees (20)",
+    "Kak 20 Gold Skulltula Reward": "Bow",
+    "Kak 30 Gold Skulltula Reward": "Rupees (200)",
+    "Kak 40 Gold Skulltula Reward": "Arrows (5)",
+    "Kak 50 Gold Skulltula Reward": "Business Scrub Seed",
+    "Kak Anju as Child": "Nayrus Love",
+    "Kak Bazaar Right Side Top Left": "Heart Container",
+    "Kak Bazaar Right Side Top Right": "Magic Jar (Large)",
+    "Kak Impas House Freestanding PoH": "Bombchus (5)",
+    "Kak Man on Roof": "Piece of Heart",
+    "Kak Open Grotto Chest": "Rupees (5)",
+    "Kak Potion Shop Right Side Top Left": "Hover Boots",
+    "Kak Potion Shop Right Side Top Right": "Heart Container",
+    "Kak Shooting Gallery Reward": "Progressive Strength Upgrade",
+    "Kak Windmill Freestanding PoH": "Shadow Medallion",
+    "Kak Windmill Roof Chest": "Rupees (5)",
+    "King Dodongo": "Rupees (20)",
+    "LH Adult Fishing": "Rupees (50)",
+    "LH Child Fishing": "Song of Time",
+    "LH Freestanding PoH": "Deku Nuts (5)",
+    "LH Lab Dive": "Rupees (5)",
+    "LH Poe Chest": "Forest Medallion",
+    "LH Sun": "Rupees (20)",
+    "LH Underwater Item": "Rupees (20)",
+    "LLR Freestanding PoH": "Rupees (5)",
+    "LLR Talons Chickens": "Progressive Wallet",
+    "LLR Tunnel Ledge Chest": "Light Medallion",
+    "LW Ocarina Memory Game": "Deku Stick Capacity",
+    "LW Skull Kid": "Rupees (50)",
+    "LW Target in Woods": "Deku Nuts (5)",
+    "Market 5 Big Poes": "Arrows (10)",
+    "Market Bazaar Right Side Top Left": "Bombchus (20)",
+    "Market Bazaar Right Side Top Right": "Slingshot",
+    "Market Bombchu Bowling Bombchus": "Deku Shield",
+    "Market Bombchu Bowling First Prize": "Business Scrub Seed",
+    "Market Bombchu Bowling Second Prize": "Goron Ruby",
+    "Market Bombchu Shop Right Side Top Left": "Bomb Bag",
+    "Market Bombchu Shop Right Side Top Right": "Rupee (1)",
+    "Market Lost Dog": "Business Scrub Seed",
+    "Market Potion Shop Right Side Top Left": "Mirror Shield",
+    "Market Potion Shop Right Side Top Right": "Piece of Heart",
+    "Market Shooting Gallery Reward": "Heart Container",
+    "Morpha": "Piece of Heart",
+    "OGC Great Fairy Reward": "Business Scrub Seed",
+    "Phantom Ganon": "Bomb Bag",
+    "Queen Gohma": "Deku Nuts (5)",
+    "SFM Time Block Grotto Chest": "Business Scrub Seed",
+    "SFM Wolfos Grotto Chest": "Piece of Heart",
+    "Shadow Temple After Wind Enemy Chest": "Map (Shadow Temple)",
+    "Shadow Temple After Wind Hidden Chest": "Rupees (5)",
+    "Shadow Temple Bongo Bongo Heart": "Serenade of Water",
+    "Shadow Temple Boss Key Chest": "Small Key (Bottom of the Well)",
+    "Shadow Temple Compass Chest": "Boss Key (Shadow Temple)",
+    "Shadow Temple Early Silver Rupee Chest": "Rupees (50)",
+    "Shadow Temple Falling Spikes Lower Chest": "Piece of Heart",
+    "Shadow Temple Falling Spikes Switch Chest": "Rupees (20)",
+    "Shadow Temple Freestanding Key": "Magic Jar (Large)",
+    "Shadow Temple Hover Boots Chest": "Rupees (20)",
+    "Shadow Temple Invisible Blades Invisible Chest": "Compass (Shadow Temple)",
+    "Shadow Temple Invisible Blades Visible Chest": "Piece of Heart",
+    "Shadow Temple Invisible Floormaster Chest": "Small Key (Gerudo Training Ground)",
+    "Shadow Temple Map Chest": "Small Key (Spirit Temple)",
+    "Shadow Temple Spike Walls Left Chest": "Rupees (20)",
+    "Shadow Temple Wind Hint Chest": "Small Key (Forest Temple)",
+    "Sheik at Colossus": "Piece of Heart",
+    "Sheik at Temple": "Rupees (50)",
+    "Sheik in Crater": "Piece of Heart",
+    "Sheik in Forest": "Business Scrub Seed",
+    "Sheik in Ice Cavern": "Magic Meter",
+    "Sheik in Kakariko": "Eponas Song",
+    "Song from Impa": "Piece of Heart",
+    "Song from Malon": "Rupees (20)",
+    "Song from Ocarina of Time": "Deku Seeds (30)",
+    "Song from Royal Familys Tomb": "Business Scrub Seed",
+    "Song from Saria": "Piece of Heart",
+    "Song from Windmill": "Rupees (20)",
+    "Spirit Temple Boss Key Chest": "Small Key (Fire Temple)",
+    "Spirit Temple Child Bridge Chest": "Progressive Scale",
+    "Spirit Temple Child Climb North Chest": "Bombs (5)",
+    "Spirit Temple Child Early Torches Chest": "Small Key (Gerudo Training Ground)",
+    "Spirit Temple Compass Chest": "Sarias Song",
+    "Spirit Temple Early Adult Right Chest": "Rupees (20)",
+    "Spirit Temple First Mirror Right Chest": "Boss Key (Spirit Temple)",
+    "Spirit Temple Hallway Left Invisible Chest": "Small Key (Fire Temple)",
+    "Spirit Temple Hallway Right Invisible Chest": "Small Key (Gerudo Training Ground)",
+    "Spirit Temple Map Chest": "Small Key (Shadow Temple)",
+    "Spirit Temple Mirror Shield Chest": "Business Scrub Seed",
+    "Spirit Temple Near Four Armos Chest": "Map (Spirit Temple)",
+    "Spirit Temple Silver Gauntlets Chest": "Rupees (20)",
+    "Spirit Temple Statue Room Hand Chest": "Small Key (Water Temple)",
+    "Spirit Temple Sun Block Room Chest": "Compass (Spirit Temple)",
+    "Spirit Temple Topmost Chest": "Rupees (50)",
+    "Spirit Temple Twinrova Heart": "Bombchus (20)",
+    "ToT Light Arrows Cutscene": "Boss Key (Ganons Castle)",
+    "ToT Reward from Rauru": "Piece of Heart",
+    "Twinrova": "Fire Medallion",
+    "Volvagia": "Piece of Heart",
+    "Wasteland Chest": "Rupees (50)",
+    "Water Temple Boss Key Chest": "Map (Water Temple)",
+    "Water Temple Central Bow Target Chest": "Rupee (1)",
+    "Water Temple Central Pillar Chest": "Compass (Water Temple)",
+    "Water Temple Compass Chest": "Rupees (5)",
+    "Water Temple Compass Room Chest": "Boss Key (Water Temple)",
+    "Water Temple Dragon Chest": "Small Key (Gerudo Training Ground)",
+    "Water Temple Longshot Chest": "Rupees (20)",
+    "Water Temple Map Chest": "Piece of Heart",
+    "Water Temple Morpha Heart": "Heart Container",
+    "Water Temple Torches Chest": "Arrows (5)",
+    "ZD Chest": "Rupees (20)",
+    "ZD Diving Minigame": "Iron Boots",
+    "ZD King Zora Thawed": "Rupees (5)",
+    "ZD Shop Right Side Top Left": "Piece of Heart",
+    "ZD Shop Right Side Top Right": "Rupees (50)",
+    "ZF Bottom Freestanding PoH": "Bombs (10)",
+    "ZF Great Fairy Reward": "Spirit Medallion",
+    "ZF Iceberg Freestanding PoH": "Piece of Heart",
+    "ZF Scarecrow Ledge Chest": "Rupees (20)",
+    "ZR Frogs Ocarina Game": "Business Scrub Seed",
+    "ZR Near Domain Freestanding PoH": "Heart Container",
+    "ZR Near Open Grotto Freestanding PoH": "Ice Arrows",
+    "ZR Open Grotto Chest": "Megaton Hammer"
+  },
+  "shops": {
+    "GC Shop Left Side Bottom Left": {
+      "item": "Buy Deku Seeds (10)",
+      "price": 15
+    },
+    "GC Shop Left Side Bottom Right": {
+      "item": "Buy Zora Tunic",
+      "price": 600
+    },
+    "GC Shop Left Side Top Left": {
+      "item": "Buy Heart",
+      "price": 5
+    },
+    "GC Shop Left Side Top Right": {
+      "item": "Buy Green Potion",
+      "price": 30
+    },
+    "GC Shop Right Side Bottom Left": {
+      "item": "Buy Bottle Bug",
+      "price": 30
+    },
+    "GC Shop Right Side Bottom Right": {
+      "item": "Buy Fish",
+      "price": 50
+    },
+    "GC Shop Right Side Top Left": {
+      "item": "Rupees (20)",
+      "price": 15,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "GC Shop Right Side Top Right": {
+      "item": "Progressive Strength Upgrade",
+      "price": 15,
+      "deal": true,
+      "pool": "Bombs (10)"
+    },
+    "KF Shop Left Side Bottom Left": {
+      "item": "Buy Deku Nut (5)",
+      "price": 20
+    },
+    "KF Shop Left Side Bottom Right": {
+      "item": "Buy Bombchu (8)",
+      "price": 120
+    },
+    "KF Shop Left Side Top Left": {
+      "item": "Buy Heart",
+      "price": 5
+    },
+    "KF Shop Left Side Top Right": {
+      "item": "Buy Magic Jar",
+      "price": 10
+    },
+    "KF Shop Right Side Bottom Left": {
+      "item": "Buy Deku Shield",
+      "price": 40
+    },
+    "KF Shop Right Side Bottom Right": {
+      "item": "Buy Arrows (50)",
+      "price": 70
+    },
+    "KF Shop Right Side Top Left": {
+      "item": "Bombs (20)",
+      "price": 85,
+      "deal": true,
+      "pool": "Deku Seeds (30)"
+    },
+    "KF Shop Right Side Top Right": {
+      "item": "Goron Tunic",
+      "price": 75,
+      "deal": true,
+      "pool": "Deku Stick (1)"
+    },
+    "Kak Bazaar Left Side Bottom Left": {
+      "item": "Buy Half Milk",
+      "price": 20
+    },
+    "Kak Bazaar Left Side Bottom Right": {
+      "item": "Buy Arrows (10)",
+      "price": 20
+    },
+    "Kak Bazaar Left Side Top Left": {
+      "item": "Buy Heart",
+      "price": 5
+    },
+    "Kak Bazaar Left Side Top Right": {
+      "item": "Buy Green Potion",
+      "price": 30
+    },
+    "Kak Bazaar Right Side Bottom Left": {
+      "item": "Buy Hylian Shield",
+      "price": 80
+    },
+    "Kak Bazaar Right Side Bottom Right": {
+      "item": "Buy Deku Stick (1)",
+      "price": 10
+    },
+    "Kak Bazaar Right Side Top Left": {
+      "item": "Heart Container",
+      "price": 80,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "Kak Bazaar Right Side Top Right": {
+      "item": "Magic Jar (Large)",
+      "price": 45,
+      "deal": true,
+      "pool": "Deku Nuts (5)"
+    },
+    "Kak Potion Shop Left Side Bottom Left": {
+      "item": "Buy Bottle Bug",
+      "price": 30
+    },
+    "Kak Potion Shop Left Side Bottom Right": {
+      "item": "Buy Arrows (10)",
+      "price": 20
+    },
+    "Kak Potion Shop Left Side Top Left": {
+      "item": "Buy Red Potion for 30 Rupees",
+      "price": 30
+    },
+    "Kak Potion Shop Left Side Top Right": {
+      "item": "Buy Magic Jar",
+      "price": 10
+    },
+    "Kak Potion Shop Right Side Bottom Left": {
+      "item": "Buy Bottle Bug",
+      "price": 30
+    },
+    "Kak Potion Shop Right Side Bottom Right": {
+      "item": "Buy Bombs (30)",
+      "price": 110
+    },
+    "Kak Potion Shop Right Side Top Left": {
+      "item": "Hover Boots",
+      "price": 30,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "Kak Potion Shop Right Side Top Right": {
+      "item": "Heart Container",
+      "price": 20,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "Market Bazaar Left Side Bottom Left": {
+      "item": "Buy Half Milk",
+      "price": 20
+    },
+    "Market Bazaar Left Side Bottom Right": {
+      "item": "Buy Deku Nut (10)",
+      "price": 30
+    },
+    "Market Bazaar Left Side Top Left": {
+      "item": "Buy Red Potion for 30 Rupees",
+      "price": 30
+    },
+    "Market Bazaar Left Side Top Right": {
+      "item": "Buy Green Potion",
+      "price": 30
+    },
+    "Market Bazaar Right Side Bottom Left": {
+      "item": "Buy Bombs (20)",
+      "price": 80
+    },
+    "Market Bazaar Right Side Bottom Right": {
+      "item": "Buy Deku Stick (1)",
+      "price": 10
+    },
+    "Market Bazaar Right Side Top Left": {
+      "item": "Bombchus (20)",
+      "price": 45,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "Market Bazaar Right Side Top Right": {
+      "item": "Slingshot",
+      "price": 15,
+      "deal": true,
+      "pool": "Deku Nuts (5)"
+    },
+    "Market Bombchu Shop Left Side Bottom Left": {
+      "item": "Buy Deku Seeds (10)",
+      "price": 15
+    },
+    "Market Bombchu Shop Left Side Bottom Right": {
+      "item": "Buy Fairy's Spirit",
+      "price": 50
+    },
+    "Market Bombchu Shop Left Side Top Left": {
+      "item": "Buy Blue Fire",
+      "price": 200
+    },
+    "Market Bombchu Shop Left Side Top Right": {
+      "item": "Buy Deku Seeds (10)",
+      "price": 15
+    },
+    "Market Bombchu Shop Right Side Bottom Left": {
+      "item": "Buy Hylian Shield",
+      "price": 80
+    },
+    "Market Bombchu Shop Right Side Bottom Right": {
+      "item": "Buy Bombchu (30)",
+      "price": 300
+    },
+    "Market Bombchu Shop Right Side Top Left": {
+      "item": "Bomb Bag",
+      "price": 55,
+      "deal": true,
+      "pool": "Bombchus (10)"
+    },
+    "Market Bombchu Shop Right Side Top Right": {
+      "item": "Rupee (1)",
+      "price": 25,
+      "deal": true,
+      "pool": "Bombchus (20)"
+    },
+    "Market Potion Shop Left Side Bottom Left": {
+      "item": "Buy Bottle Bug",
+      "price": 30
+    },
+    "Market Potion Shop Left Side Bottom Right": {
+      "item": "Buy Fairy's Spirit",
+      "price": 50
+    },
+    "Market Potion Shop Left Side Top Left": {
+      "item": "Buy Red Potion for 30 Rupees",
+      "price": 30
+    },
+    "Market Potion Shop Left Side Top Right": {
+      "item": "Buy Red Potion for 30 Rupees",
+      "price": 30
+    },
+    "Market Potion Shop Right Side Bottom Left": {
+      "item": "Buy Fish",
+      "price": 30
+    },
+    "Market Potion Shop Right Side Bottom Right": {
+      "item": "Buy Deku Stick (1)",
+      "price": 10
+    },
+    "Market Potion Shop Right Side Top Left": {
+      "item": "Mirror Shield",
+      "price": 50,
+      "deal": true,
+      "pool": "Bombs (5)"
+    },
+    "Market Potion Shop Right Side Top Right": {
+      "item": "Piece of Heart",
+      "price": 60,
+      "deal": true,
+      "pool": "Bombs (20)"
+    },
+    "ZD Shop Left Side Bottom Left": {
+      "item": "Buy Bombchu (5)",
+      "price": 75
+    },
+    "ZD Shop Left Side Bottom Right": {
+      "item": "Buy Goron Tunic",
+      "price": 600
+    },
+    "ZD Shop Left Side Top Left": {
+      "item": "Buy Heart",
+      "price": 5
+    },
+    "ZD Shop Left Side Top Right": {
+      "item": "Buy Bombchu (3)",
+      "price": 45
+    },
+    "ZD Shop Right Side Bottom Left": {
+      "item": "Buy Bombchu (20)",
+      "price": 240
+    },
+    "ZD Shop Right Side Bottom Right": {
+      "item": "Buy Fish",
+      "price": 50
+    },
+    "ZD Shop Right Side Top Left": {
+      "item": "Piece of Heart",
+      "price": 35,
+      "deal": true,
+      "pool": "Arrows (10)"
+    },
+    "ZD Shop Right Side Top Right": {
+      "item": "Rupees (50)",
+      "price": 65,
+      "deal": true,
+      "pool": "Arrows (30)"
+    }
+  },
+  "checksum": "51a9d62d2d4a2a43bc9aa6856ae13edc9b3979a77f8686579ee34381a17cc7a8"
+}

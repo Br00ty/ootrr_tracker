@@ -1,0 +1,14 @@
+{
+ "id": "night3",
+ "name": "nightly test 3",
+ "tip": "test (0.8.3-nightly.20261124.7 settings)",
+ "order": 99,
+ "settings": {
+  "shuffle_trade_checks": true,
+  "adult_trade_shuffle": true,
+  "gerudo_fortress": "fast",
+  "shuffle_gerudo_card": true,
+  "shuffle_potion_shop": true,
+  "shuffle_shops": "deals_2"
+ }
+}

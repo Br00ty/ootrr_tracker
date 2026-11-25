@@ -1,7 +1,7 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.8.3-nightly.20261123.5",
+  "generator": "ootrr-core 0.8.3-nightly.20261124.7",
   "seed": "7",
   "settings": "OOTRR1-AMAQAJQBAETQCAJTAEAUYAIBJYAQE2IBABWQCA4HAEAQBCIBAEAYUAIBAHSGW",
   "game": "oot-remake:4d51612e6228acca",
