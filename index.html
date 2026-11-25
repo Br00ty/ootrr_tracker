@@ -4600,7 +4600,8 @@ $("#aboutBtn").onclick = () => {
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
       h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), "."),
-      APP ? h("p", { style: "color:var(--faint);font-size:12px" }, `OOTRR Tracker app ${APP.version}`) : null),
+      APP ? h("p", { style: "color:var(--faint);font-size:12px" }, `OOTRR Tracker app ${APP.version} `,
+        h("button", { class: "btn", style: "margin-left:6px", onclick: () => { try { window.chrome.webview.postMessage("update:check"); } catch (e) {} } }, "Check for updates")) : null),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
 };
