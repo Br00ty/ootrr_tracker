@@ -8,6 +8,7 @@ on:
     paths:
       - 'app/**'
       - 'index.html'
+      - 'nightly/index.html'
       - 'tools/live/ootrr-live.ps1'
       - 'tools/app_sync.py'
       - '.github/workflows/app.yml'
@@ -27,8 +28,18 @@ jobs:
       - name: Copy the helper's C# out of the script
         run: python tools/app_sync.py
 
+      # a release's tag is the app version ("v0.2.0"): the exe is stamped with it, and the app's updater compares
+      # it with the newest release's tag to offer the update
       - name: Build
-        run: dotnet build app/OotrrTracker.csproj -c Release -o out
+        shell: pwsh
+        run: |
+          $ver = @()
+          if ('${{ github.event_name }}' -eq 'release') {
+            $tag = '${{ github.event.release.tag_name }}'
+            if ($tag -notmatch '^[vV]?(\d+\.\d+\.\d+)$') { throw "the release tag '$tag' isn't an app version like v0.2.0" }
+            $ver = @("-p:Version=$($Matches[1])")
+          }
+          dotnet build app/OotrrTracker.csproj -c Release -o out @ver
 
       - name: Package
         shell: pwsh
@@ -40,13 +51,16 @@ jobs:
           OOTRR Tracker (desktop app)
 
           Unzip this folder anywhere and run "OOTRR Tracker.exe". Keep the files together.
+          The app offers each new version when it starts and updates itself (keep it in a folder you can
+          write to, not in Program Files). The Switch to Nightly / Stable button picks OOTRR's release or
+          nightly builds; each keeps its own progress.
           Windows may warn that the app is from an unknown publisher (it isn't code-signed yet):
           choose "More info", then "Run anyway".
 
           The app reads Longshot/Hookshot and emulator memory and your saves; it never changes them.
           Your progress is kept in %LOCALAPPDATA%\OOTRR Tracker.
           "@ | Set-Content pkg\README.txt
-          foreach ($need in 'OOTRR Tracker.exe', 'web\index.html', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll') {
+          foreach ($need in 'OOTRR Tracker.exe', 'web\index.html', 'web\nightly\index.html', 'Microsoft.Web.WebView2.Core.dll', 'Microsoft.Web.WebView2.WinForms.dll', 'WebView2Loader.dll') {
             if (-not (Test-Path (Join-Path pkg $need))) { throw "the package is missing $need" }
           }
           Get-ChildItem pkg -Recurse -File | ForEach-Object { "{0,10}  {1}" -f $_.Length, $_.FullName.Substring((Resolve-Path pkg).Path.Length + 1) }

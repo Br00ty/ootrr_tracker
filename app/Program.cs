@@ -33,6 +33,7 @@ namespace OotrrTracker
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Directory.CreateDirectory(Data);
+            Updater.CleanUp();
 
             // the live helper (the same code as tools/live/ootrr-live.ps1). If the PowerShell helper is
             // already running, the port is taken and the page simply talks to that one instead.
@@ -48,6 +49,10 @@ namespace OotrrTracker
     {
         readonly WebView2 view = new WebView2();
         readonly string placeFile = Path.Combine(Program.Data, "window.txt");
+        // which tracker was open last: "stable" (web\index.html, OOTRR's latest release) or "nightly"
+        // (web\nightly\index.html, OOTRR's nightly builds); the page's Switch button moves between them
+        readonly string channelFile = Path.Combine(Program.Data, "channel.txt");
+        bool updateChecked;
 
         public MainForm()
         {
@@ -102,7 +107,8 @@ namespace OotrrTracker
 
             // tell the page it's in the app (it then connects to the built-in helper by itself)
             string version = typeof(Program).Assembly.GetName().Version.ToString(3);
-            await core.AddScriptToExecuteOnDocumentCreatedAsync("window.OOTRR_APP = { version: '" + version + "' };");
+            bool hasNightly = File.Exists(Path.Combine(web, "nightly", "index.html"));
+            await core.AddScriptToExecuteOnDocumentCreatedAsync("window.OOTRR_APP = { version: '" + version + "', channels: " + (hasNightly ? "true" : "false") + " };");
 
             // links out of the tracker (GitHub, bug reports) open in the normal browser; the tracker's own
             // pop-up windows (the stream overlay) stay in the app
@@ -144,6 +150,21 @@ namespace OotrrTracker
                 try { msg = e.TryGetWebMessageAsString(); } catch { return; }
                 if (msg != null && msg.StartsWith("saves:", StringComparison.Ordinal))
                     Environment.SetEnvironmentVariable("OOTRR_SAVES", msg.Substring(6));
+                else if (msg == "update:check")
+                    BeginInvoke(new Action(async () => await Updater.Check(this, false)));
+            };
+
+            // remember which tracker is open, and look for an update once the first page is up
+            core.NavigationCompleted += (s, e) =>
+            {
+                Uri u;
+                if (e.IsSuccess && Uri.TryCreate(core.Source, UriKind.Absolute, out u) && string.Equals(u.Host, Program.Host, StringComparison.OrdinalIgnoreCase))
+                    try { File.WriteAllText(channelFile, u.AbsolutePath.StartsWith("/nightly/", StringComparison.OrdinalIgnoreCase) ? "nightly" : "stable"); } catch { }
+                if (!updateChecked)
+                {
+                    updateChecked = true;
+                    BeginInvoke(new Action(async () => await Updater.Check(this, true)));
+                }
             };
 
             core.DocumentTitleChanged += (s, e) =>
@@ -152,7 +173,9 @@ namespace OotrrTracker
                 Text = string.IsNullOrEmpty(t) ? "OOTRR Tracker" : t;
             };
 
-            core.Navigate("https://" + Program.Host + "/index.html");
+            string channel = "stable";
+            try { channel = File.ReadAllText(channelFile).Trim(); } catch { }
+            core.Navigate("https://" + Program.Host + (channel == "nightly" && hasNightly ? "/nightly/index.html" : "/index.html"));
         }
 
         static bool IsOutside(string uri)

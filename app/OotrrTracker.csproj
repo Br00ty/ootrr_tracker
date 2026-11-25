@@ -15,7 +15,7 @@
     <RootNamespace>OotrrTracker</RootNamespace>
     <Product>OOTRR Tracker</Product>
     <Description>Map and item tracker for OOTRR, the Ocarina of Time remake randomizer by REALAZK</Description>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>art\icon.ico</ApplicationIcon>
     <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
@@ -30,6 +30,10 @@
   <ItemGroup>
     <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Drawing" />
+    <!-- the updater: GitHub's release list (JSON) and the release zip -->
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
   </ItemGroup>
 
   <ItemGroup>
@@ -37,6 +41,8 @@
     <Compile Include="obj\gen\OotrrLive.cs" />
     <!-- the tracker page, the same file the website serves -->
     <None Include="..\index.html" Link="web\index.html" CopyToOutputDirectory="PreserveNewest" />
+    <!-- the nightly tracker (OOTRR's nightly builds), the same file the website serves at /nightly/ -->
+    <None Include="..\nightly\index.html" Link="web\nightly\index.html" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <Target Name="NeedHelperSource" BeforeTargets="BeforeBuild" Condition="!Exists('obj\gen\OotrrLive.cs')">
