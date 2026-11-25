@@ -6,6 +6,8 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 **Nightly:** [br00ty.github.io/ootrr_tracker/nightly](https://br00ty.github.io/ootrr_tracker/nightly/) follows OOTRR's [nightly builds](https://github.com/ootrando/ootrr/releases/tag/nightly-build) (built from the `nightly` branch). Use it with seeds made by an OOTRR nightly. It keeps its own progress, separate from the main tracker.
 
+**Desktop app (Windows):** download `OOTRR-Tracker.zip` from the [latest release](https://github.com/Br00ty/ootrr_tracker/releases/latest), unzip it anywhere you can write to (not Program Files) and run `OOTRR Tracker.exe`. It's the same tracker in its own window, with the Longshot live helper built in (no PowerShell window), both the stable and nightly trackers (the Switch to Nightly / Stable button), and updates itself: it offers each new release when it starts. It isn't code-signed yet, so Windows may warn about an unknown publisher ("More info", then "Run anyway"). The source is in `app/`.
+
 > **Disclaimer:** this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use **Report a bug** on the tracker or [open an issue](https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml).
 
 - **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.8.2's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
