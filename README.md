@@ -12,7 +12,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 - **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.8.2's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
 - **Or set the settings by hand.** Without a seed file, Settings works like OOTRR's own settings page: the same groups, presets, labels and help text, settings that only count when another one is on, and a box for an OOTRR settings string. The tracker then lists exactly the locations OOTRR would shuffle with those settings.
-- **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
+- **Load your seed.** Load the `.ootrr` file OOTRR generated, or its spoiler log (`Spoiler.txt`), or drop either on the page. The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Dungeon entrance shuffle.** With Entrances set to Dungeons, the logic follows which dungeon is behind each door, exactly like OOTRR's. Each dungeon in the list shows **door: ?** until you click it (or until your save has Link inside it), so the layout isn't spoiled.
 - **Auto-tracking from your save.** Watch your save folder and the tracker reads the newest `progress.sav` of all your slots every 2 seconds: items, found checks, and where Link is. **Disconnect** stops watching and forgets the folder; what was already tracked stays.
 - **Longshot: live tracking (Windows).** The **Longshot** button starts a small helper (one command pasted into PowerShell) that reads the running game's memory, so checks tick the moment you get them and the map follows Link between areas and dungeon floors, instead of waiting for the game to save. It also hands the tracker your newest save (items), so there's no folder to pick. Works with Longshot and Hookshot and with Lichii, Eden and other yuzu-family emulators. The helper (`tools/live/ootrr-live.ps1`) only reads, and only answers this PC (`127.0.0.1:47811`); close its window to stop it. Its memory layout comes from [OotrR](https://github.com/Mozencaz/OotrR) (MIT).
@@ -25,7 +25,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 Open the tracker in Chrome or Edge: use **[the online version](https://br00ty.github.io/ootrr_tracker/)**, or download `index.html` from this repo and open it. Both work the same, and your progress is saved in whichever one you use (the two don't share it).
 
-1. **Load seed** → pick your `.ootrr` file.
+1. **Load seed** → pick your `.ootrr` file or your spoiler log.
 2. **Watch save folder** → the tracker rereads the newest save of all slots every 2 seconds by itself, also while the tracker is behind the game window. Chrome and Edge refuse folders inside AppData, where the games keep their saves (Longshot and Hookshot: `%APPDATA%\Longshot\save`, `%APPDATA%\Hookshot\save`; Lichii: `%APPDATA%\lichii\nand\user\save`), and a folder link doesn't get around it. So keep a live copy while you play: open PowerShell, paste the start command the Watch save folder guide copies for you, then watch `%USERPROFILE%\OOTRR save copy`. The command copies every game's save folder there every 2 seconds and only writes into that folder; close its window to stop it. With Lichii you can instead move its NAND folder out of AppData (copy `%APPDATA%\lichii\nand` elsewhere with Lichii closed, then set it in Lichii's Configure → Filesystem) and watch `…\nand\user\save` there. The **?** button next to Watch save folder walks you through both. Without watching, **Load saves** reads the save folder itself (all slots, newest wins) each time you click it; you can also drop the folder on the page. On Longshot, the **Longshot** button's live tracking is faster still.
 3. Play. Click an area to see its checks. Click a check to see its logic rule as OOTRR writes it, the logic region it belongs to, and, when getting there needs something (a grotto, a fountain, a locked room), the entrances into that region with their rules; double-click it to mark it done, or double-click again to undo. A **C→A** or **A→C** badge marks a check that needs something done as the other age first (a magic bean planted as a child, the adult visit before the HF Deku Scrub Grotto).
 
@@ -102,7 +102,7 @@ The page shows a banner when a loaded seed uses entrance or shop shuffle.
 | `index.html` | The tracker, built by `tools/assemble.py` |
 | `src/ui.html` | Page, styles and app code |
 | `src/engine.js` | OOTRR's rule parser, world builder and search, ported to JavaScript |
-| `src/seed.js` | `.ootrr` seed files and settings strings |
+| `src/seed.js` | `.ootrr` seed files, spoiler logs and settings strings |
 | `src/autotrack.js` | `progress.sav` reading and save-based detection |
 | `src/texdec.js` | Game texture reading for the map tracker: zstd, BNTX, block-linear swizzle and ASTC (ported from ootrr-core's `tex` module) |
 | `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.8.2 |
