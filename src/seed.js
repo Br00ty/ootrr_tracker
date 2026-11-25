@@ -494,6 +494,7 @@ const Seed = (() => {
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
     "DMC Fire Temple Entrance Green Rupee 1 needs the Longshot (adult Link); OOTRR has it with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
+    "Graveyard Heart Piece Grave Chest needs no Sun's Song: the chest is already there. OOTRR asks for Sun's Song.",
     "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
@@ -512,6 +513,9 @@ const Seed = (() => {
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
+    // confirmed by the user 2026-11-25: the chest in the Heart Piece grave is there without Sun's Song (OOTRR:
+    // can_play(Suns_Song)); getting into the grave keeps OOTRR's rule (adult, or child at night)
+    "Graveyard Heart Piece Grave Chest": "True",
     // the user 2026-11-22: shown as HF GS Tree By KF, a Hyrule Field tree either age can bonk (OOTRR: is_child and can_bonk)
     // (0.9.0-nightly.20261125.9 renamed it from LLR GS Rain Shed and moved it to Hyrule Field, still child only)
     "HF GS Lone Tree East of LLR": "can_bonk",
