@@ -135,7 +135,8 @@ const Seed = (() => {
       if (["dungeons", "all"].includes(v.shuffle_chests)) for (const k of ["water_key_layout", "spirit_key_layout"]) out.push([k, "shuffled"]);
       out.push(["fire_loop_door", "open"]);
     }
-    if (v.bombchus_in_logic === true) out.push(["free_bombchu_drops", "true"]);
+    // 0.9.0-nightly.20261125.9 slice/bombchus.rs: Bombchus in logic is forced off for everyone (old strings still load)
+    if (v.bombchus_in_logic === true && olderThan(gen, NIGHTLY9)) out.push(["free_bombchu_drops", "true"]);
     if (kakarikoSkip(v)) { out.push(["open_kakariko", "open"]); out.push(["skip_child_zelda", "true"]); }
     if (v.anju_one_cucco === true) out.push(["chicken_count", "1"]);
     if (v.big_poe_one === true) out.push(["big_poe_count", "1"]);
@@ -280,6 +281,124 @@ const Seed = (() => {
   // the placements follow the objects: renamed, and swapped where the names swapped.
   const OLD_DATA_RENAMES = { "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest" };
   const OLD_DATA_SWAPS = [["Dodongos Cavern GS Alcove Above Stairs", "Dodongos Cavern GS Back Room"], ["Kak GS Tree", "Kak GS House Under Construction"], ["GC Maze Center Chest", "GC Maze Right Chest"]];
+  // 0.9.0-nightly.20261125.9 gave the remake's rupees, hearts and several grotto checks real names (OOTRR f4e4ee4,
+  // "Names + Logic for a massive amount of checks"). Each old name is the same object (the same save key), so an older
+  // seed's placements, saved progress and pins move to the new name. Built from the two builds' data by save key.
+  const NIGHTLY9 = "0.9.0-nightly.20261125.9";
+  const RENAMES9 = {
+    "HF Redead Grotto Chest": "HF Storms Grotto Near Kakariko Redead Chest",
+    "HF Tektite Grotto Freestanding PoH": "HF Rocks Near Cow Grotto Chest",
+    "GV Crate Freestanding PoH": "GV Ledge Chest Near Octorok Grotto",
+    "DMT Rock Red Rupee": "DMT Storms Grotto Red Rupee",
+    "LLR GS Rain Shed": "HF GS Lone Tree East of LLR",
+    "LLR GS Back Wall": "LLR GS Tower",
+    "LLR Tunnel Ledge Chest": "LLR Tower Ledge Chest",
+    "HF Open Grotto Chest": "LH Gravestone Grotto Torches Chest",
+    "HF GS Cow Grotto": "HF GS Grotto South of LLR Tower",
+    "HF GS Near Kak Grotto": "HF GS South Gossip Stone Grotto Crate",
+    "Ice Cavern GS Heart Piece Room": "Ice Cavern GS Compass Room",
+    "Gerudo Training Ground Freestanding Key": "Gerudo Training Ground Maze Right Key Chest",
+    "Kokiri Forest Adult Remake Rupee 1": "KF Adult Ledge Near Deku Tree Path Green Rupee 1",
+    "Kokiri Forest Adult Remake Rupee 2": "KF Adult Ledge Near Deku Tree Path Green Rupee 2",
+    "Kokiri Forest Adult Remake Rupee 3": "KF Adult Ledge Near Deku Tree Path Green Rupee 3",
+    "Kokiri Forest Adult Remake Rupee 4": "KF Adult Ledge Near Deku Tree Path Green Rupee 4",
+    "Kokiri Forest Adult Remake Rupee 5": "KF Adult Ledge Near Deku Tree Path Green Rupee 5",
+    "Kokiri Forest Adult Remake Rupee 6": "KF Adult Ledge Near Deku Tree Path Green Rupee 6",
+    "Kokiri Forest Adult Remake Rupee 7": "KF Adult Ledge Near Deku Tree Path Green Rupee 7",
+    "Kokiri Forest Adult Remake Rupee 8": "KF Adult Ledge Near Deku Tree Path Green Rupee 8",
+    "Kokiri Forest Adult Remake Rupee 9": "KF Adult Ledge Near Deku Tree Path Purple Rupee",
+    "Kokiri Forest Remake Rupee 1": "KF Boulder Maze Blue Rupee",
+    "Kokiri Forest Child Remake Rupee 1": "KF Child Near Fado Blue Rupee",
+    "Kokiri Forest Child Remake Rupee 2": "KF Child Stream Blue Rupee 1",
+    "Kokiri Forest Child Remake Rupee 3": "KF Child Stream Blue Rupee 2",
+    "Kokiri Forest Child Remake Rupee 4": "KF Child Stream Blue Rupee 3",
+    "Kokiri Forest Child Remake Rupee 5": "KF Child Stream Green Rupee",
+    "Kokiri Forest Child Remake Rupee 6": "KF Child Shop Blue Rupee",
+    "Kokiri Forest Child Remake Rupee 7": "KF Child Boulder Maze Blue Rupee",
+    "Hyrule Field Adult Remake Rupee 1": "LH Adult Lakebed Water Temple Gate Blue Rupee",
+    "Lake Hylia Adult Remake Rupee 1": "LH Adult Lakebed Water Temple Gate Green Rupee 1",
+    "Lake Hylia Adult Remake Rupee 2": "LH Adult Lakebed Water Temple Gate Green Rupee 2",
+    "Lake Hylia Adult Remake Rupee 3": "LH Adult Lakebed Water Temple Gate Green Rupee 3",
+    "Lake Hylia Adult Remake Rupee 4": "LH Adult Lakebed Water Temple Gate Green Rupee 4",
+    "Lake Hylia Remake Rupee 1": "HF Grotto Near Zora River Green Rupee 1",
+    "Lake Hylia Remake Rupee 2": "HF Grotto Near Zora River Green Rupee 2",
+    "Lake Hylia Remake Rupee 3": "HF Grotto Near Zora River Green Rupee 3",
+    "Lake Hylia Child Remake Rupee 1": "HF Child Zora River Waterfall Green Rupee 1",
+    "Lake Hylia Child Remake Rupee 2": "HF Child Zora River Waterfall Blue Rupee",
+    "Lake Hylia Child Remake Rupee 3": "HF Child Zora River Waterfall Green Rupee 2",
+    "Lake Hylia Child Remake Rupee 4": "HF Child Zora River Waterfall Green Rupee 3",
+    "Lake Hylia Child Remake Rupee 5": "HF Child Zora River Waterfall Green Rupee 4",
+    "Lake Hylia Child Remake Rupee 6": "HF Child Zora River Waterfall Green Rupee 5",
+    "Lake Hylia Child Remake Rupee 7": "LH Child Underwater Near Rutos Letter Green Rupee 1",
+    "Lake Hylia Child Remake Rupee 8": "LH Child Underwater Near Rutos Letter Green Rupee 2",
+    "LH Lab Adult Remake Rupee 1": "LH Adult Scarecrow Island Red Rupee",
+    "LH Lab Remake Rupee 2": "LH Lab Pool Red Rupee",
+    "LH Lab Child Remake Rupee 1": "HF Child Zora River Waterfall Green Rupee 6",
+    "LH Lab Child Remake Rupee 2": "HF Child Zora River Waterfall Green Rupee 7",
+    "LH Lab Child Remake Rupee 3": "HF Child Zora River Waterfall Green Rupee 8",
+    "LH Lab Remake Rupee 1": "LH Lab Pool Blue Rupee",
+    "Death Mountain Remake Rupee 1": "DMT Storms Grotto Green Rupee 1",
+    "Death Mountain Remake Rupee 2": "DMT Storms Grotto Green Rupee 2",
+    "Death Mountain Remake Rupee 3": "DMT Storms Grotto Blue Rupee 1",
+    "Death Mountain Remake Rupee 4": "DMT Storms Grotto Blue Rupee 2",
+    "Death Mountain Remake Rupee 5": "DMT Storms Grotto Green Rupee 3",
+    "DMC Central Local Remake Rupee 1": "DMC Fire Temple Entrance Green Rupee 1",
+    "DMC Central Local Remake Rupee 2": "DMC Central Rock Green Rupee 1",
+    "DMC Central Local Remake Rupee 3": "DMC Central Rock Green Rupee 2",
+    "DMC Central Local Remake Rupee 4": "DMC Fire Temple Entrance Green Rupee 2",
+    "DMC Central Local Remake Rupee 5": "DMC Central Rock Green Rupee 3",
+    "DMC Central Local Remake Rupee 6": "DMC Central Rock Purple Rupee",
+    "DMC Central Local Remake Rupee 7": "DMC Fire Temple Entrance Red Rupee",
+    "DMC Central Local Remake Rupee 8": "DMC Central Rock Green Rupee 4",
+    "DMC Central Local Remake Rupee 9": "DMC Central Rock Green Rupee 5",
+    "DMC Central Local Remake Rupee 10": "DMC Central Rock Green Rupee 6",
+    "Zora River Remake Rupee 1": "ZR Riverbed Below Open Grotto Green Rupee 1",
+    "Zora River Remake Rupee 2": "ZR Riverbed Below Open Grotto Green Rupee 2",
+    "Zora River Remake Rupee 3": "ZR Middle Waterfall Green Rupee 1",
+    "Zora River Remake Rupee 4": "ZR Upper Ruins Green Rupee 1",
+    "Zora River Remake Rupee 5": "ZR Upper Ruins Green Rupee 2",
+    "Zora River Remake Rupee 6": "ZR Riverbank Near Bean Salesman Green Rupee 1",
+    "Zora River Remake Rupee 7": "ZR Riverbed Below Heart Piece Pillar Green Rupee 1",
+    "Zora River Remake Rupee 8": "ZR Upper Ruins Green Rupee 3",
+    "Zora River Remake Rupee 9": "ZR Riverbed Below Heart Piece Pillar Green Rupee 2",
+    "Zora River Remake Rupee 10": "ZR Riverbed Below Open Grotto Green Rupee 3",
+    "Zora River Remake Rupee 11": "ZR Upper Ruins Green Rupee 4",
+    "Zora River Remake Rupee 12": "ZR Riverbed Below Open Grotto Green Rupee 4",
+    "Zora River Remake Rupee 13": "ZR Middle Waterfall Green Rupee 2",
+    "Zora River Remake Rupee 14": "ZR Riverbed Below Heart Piece Pillar Green Rupee 3",
+    "Zora River Remake Rupee 15": "ZR Riverbed Below Open Grotto Blue Rupee 1",
+    "Zora River Remake Rupee 16": "ZR Riverbank Near Bean Salesman Green Rupee 2",
+    "Zora River Remake Rupee 17": "ZR Riverbed Below Open Grotto Blue Rupee 2",
+    "Zora River Remake Rupee 18": "ZR Upper Ruins Green Rupee 5",
+    "Zora River Remake Rupee 19": "ZR Riverbed Below Open Grotto Blue Rupee 3",
+    "Zora River Remake Rupee 20": "ZR Riverbed Below Open Grotto Green Rupee 5",
+    "ZF Underwater Adult Remake Rupee 1": "ZF Underwater Green Rupee 1",
+    "ZF Underwater Adult Remake Rupee 2": "ZF Underwater Green Rupee 2",
+    "ZF Underwater Adult Remake Rupee 3": "ZF Underwater Green Rupee 3",
+    "ZF Underwater Adult Remake Rupee 4": "ZF Underwater Green Rupee 4",
+    "ZF Underwater Adult Remake Rupee 5": "ZF Underwater Heart Piece Ring Green Rupee 1",
+    "ZF Underwater Adult Remake Rupee 6": "ZF Underwater Green Rupee 5",
+    "ZF Underwater Adult Remake Rupee 7": "ZF Underwater Heart Piece Ring Green Rupee 2",
+    "ZF Underwater Adult Remake Rupee 8": "ZF Underwater Heart Piece Ring Green Rupee 3",
+    "ZF Underwater Adult Remake Rupee 9": "ZF Underwater Heart Piece Ring Green Rupee 4",
+    "ZF Underwater Adult Remake Rupee 10": "ZF Underwater Heart Piece Ring Green Rupee 5",
+    "ZF Underwater Adult Remake Rupee 11": "ZF Underwater Heart Piece Ring Green Rupee 6",
+    "ZF Underwater Adult Remake Rupee 12": "ZF Underwater Green Rupee 6",
+    "ZF Underwater Adult Remake Rupee 13": "ZF Underwater Heart Piece Ring Green Rupee 7",
+    "ZF Underwater Adult Remake Rupee 14": "ZF Underwater Green Rupee 7",
+    "ZF Underwater Adult Remake Rupee 15": "ZF Underwater Heart Piece Ring Green Rupee 8",
+    "ZF Underwater Adult Remake Rupee 16": "ZF Underwater Green Rupee 8",
+    "Deku Tree Before Boss Remake Heart 2": "Deku Tree Lobby Upper Ledge Recovery Heart 1",
+    "Deku Tree Before Boss Remake Heart 4": "Deku Tree Lobby Upper Ledge Recovery Heart 2",
+    "Deku Tree Before Boss Remake Heart 5": "Deku Tree Lobby Upper Ledge Recovery Heart 3",
+    "Deku Tree Before Boss Remake Heart 1": "Deku Tree Before Boss Pool Recovery Heart 1",
+    "Deku Tree Before Boss Remake Heart 3": "Deku Tree Before Boss Pool Recovery Heart 2",
+    "Deku Tree Before Boss Remake Heart 6": "Deku Tree Before Boss Pool Recovery Heart 3",
+    "Fire Temple Boulder Maze Upper Remake Heart 1": "Fire Temple Boulder Maze Upper Recovery Heart 1",
+    "Fire Temple Boulder Maze Upper Remake Heart 2": "Fire Temple Boulder Maze Upper Recovery Heart 2"
+  };
+  // the hint areas those old names had where the new name's area differs (for an older seed's gossip hints)
+  const OLD9_AREAS = { "LLR GS Rain Shed": "Lon Lon Ranch", "HF Open Grotto Chest": "Hyrule Field", "Hyrule Field Adult Remake Rupee 1": "Hyrule Field", "Lake Hylia Remake Rupee 1": "Lake Hylia", "Lake Hylia Remake Rupee 2": "Lake Hylia", "Lake Hylia Remake Rupee 3": "Lake Hylia", "Lake Hylia Child Remake Rupee 1": "Lake Hylia", "Lake Hylia Child Remake Rupee 2": "Lake Hylia", "Lake Hylia Child Remake Rupee 3": "Lake Hylia", "Lake Hylia Child Remake Rupee 4": "Lake Hylia", "Lake Hylia Child Remake Rupee 5": "Lake Hylia", "Lake Hylia Child Remake Rupee 6": "Lake Hylia", "LH Lab Child Remake Rupee 1": "Lake Hylia", "LH Lab Child Remake Rupee 2": "Lake Hylia", "LH Lab Child Remake Rupee 3": "Lake Hylia" };
   // 20261123.5 names shop shelves by position (shops.json slots, same order): "<shop> Item i" → "<shop> <i-th here>"
   const SHELF_NAMES = {
     "KF Shop": ["Right Side Bottom Left", "Left Side Bottom Left", "Left Side Bottom Right", "Right Side Bottom Right", "Right Side Top Left", "Left Side Top Right", "Right Side Top Right", "Left Side Top Left"],
@@ -295,17 +414,20 @@ const Seed = (() => {
   function upgradePlacements(pl, data) {
     if (!pl) return pl;
     const old = (ren) => Object.keys(ren).some((o) => o in pl && !data.checks[o] && data.checks[ren[o]]);
-    const old082 = old(OLD_DATA_RENAMES), oldShops = old(SHOP_RENAMES);
-    if (!old082 && !oldShops) return pl;
-    const ren = { ...(old082 ? OLD_DATA_RENAMES : {}), ...(oldShops ? SHOP_RENAMES : {}) }, out = {};
-    for (const [n, it] of Object.entries(pl)) out[ren[n] && !data.checks[n] ? ren[n] : n] = it;
+    const old082 = old(OLD_DATA_RENAMES), oldShops = old(SHOP_RENAMES), old9 = old(RENAMES9);
+    if (!old082 && !oldShops && !old9) return pl;
+    const ren = { ...(old082 ? OLD_DATA_RENAMES : {}), ...(oldShops ? SHOP_RENAMES : {}), ...(old9 ? RENAMES9 : {}) }, out = {};
+    // a chain of renames is followed to the end (0.8.2's HF Tunnel Ledge Chest → LLR Tunnel → LLR Tower Ledge Chest)
+    for (const [n, it] of Object.entries(pl)) { let m = n; for (let i = 0; i < 4 && ren[m] && !data.checks[m]; i++) m = ren[m]; out[m] = it; }
     if (old082) for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
     return out;
   }
   // the names the seed's generator used, for the hints: a 0.8.2-data seed's stones were written from its own names
   function generatorNames(pl, gen) {
-    if (!pl || !olderThan(gen, NIGHTLY5)) return pl;
+    if (!pl || !olderThan(gen, NIGHTLY9)) return pl;
     const out = { ...pl };
+    for (const [o, nw] of Object.entries(RENAMES9)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
+    if (!olderThan(gen, NIGHTLY5)) return out;
     for (const [o, nw] of Object.entries(SHOP_RENAMES)) if (nw in out && !(o in out)) { out[o] = out[nw]; delete out[nw]; }
     if (!before(gen, [0, 8, 3])) return out;
     for (const [a, b] of OLD_DATA_SWAPS) { const x = out[a], y = out[b]; delete out[a]; delete out[b]; if (x !== undefined) out[b] = x; if (y !== undefined) out[a] = y; }
@@ -370,12 +492,10 @@ const Seed = (() => {
     "Kak Anju Trade Pocket Cucco is adult only: OOTRR's rule is the 'Cojiro Access' event, which either age can use once it has happened.",
     "LW Trade Cojiro and LW Trade Odd Potion are adult only: OOTRR's rules are trade events ('Odd Mushroom Access', 'Poachers Saw Access') either age can use once they have happened.",
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
-    "DMC Central Local Remake Rupee 1 and 4 need the Longshot (adult Link); OOTRR has them with no requirement.",
-    "HF East Rupee Grotto Rupee 1-3 (OOTRR: Lake Hylia Remake Rupee 1-3) are in a grotto you open with an explosive or the Megaton Hammer; OOTRR has them with no requirement.",
+    "DMC Fire Temple Entrance Green Rupee 1 needs the Longshot (adult Link); OOTRR has it with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
-    "HF GS Tree By KF (OOTRR: LLR GS Rain Shed) can be taken by child or adult Link. OOTRR has it child only.",
+    "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
-    "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
   ];
@@ -383,29 +503,22 @@ const Seed = (() => {
   const OWN_RULES = {
     // (KF West Ledge Chest: 20261123.5 has its own bean route, is_adult and here(can_plant_bean), in the Lost
     // Woods; the tracker follows OOTRR's updated rule)
-    // confirmed in game 2026-11-19: both need the Hookshot (OOTRR: True)
-    "DMC Central Local Remake Rupee 1": "can_use(Longshot)",
-    "DMC Central Local Remake Rupee 4": "can_use(Longshot)",
-    // HF East Rupee Grotto Rupee 1-3: in a grotto blown open with an explosive (confirmed in game 2026-11-19);
-    // same rule as OOTRR's other bombable field grottos (HF Southeast / Near Market / Fairy Grotto). OOTRR: True
-    "Lake Hylia Remake Rupee 1": "can_blast_or_smash",
-    "Lake Hylia Remake Rupee 2": "can_blast_or_smash",
-    "Lake Hylia Remake Rupee 3": "can_blast_or_smash",
+    // confirmed in game 2026-11-19/22: needs the Longshot (OOTRR: True). 0.9.0-nightly.20261125.9 renamed it (was DMC
+    // Central Local Remake Rupee 1) but kept True; its partner (old Rupee 4, now DMC Fire Temple Entrance Green Rupee 2)
+    // got OOTRR's own Hookshot rule, which the tracker follows
+    "DMC Fire Temple Entrance Green Rupee 1": "can_use(Longshot)",
+    // (HF Grotto Near Zora River Green Rupee 1-3, our HF East Rupee Grotto: 0.9.0-nightly.20261125.9 put them in a
+    // grotto region of their own that needs can_open_bomb_grotto, so OOTRR's logic covers the explosive)
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
     // the user 2026-11-22: shown as HF GS Tree By KF, a Hyrule Field tree either age can bonk (OOTRR: is_child and can_bonk)
-    "LLR GS Rain Shed": "can_bonk",
+    // (0.9.0-nightly.20261125.9 renamed it from LLR GS Rain Shed and moved it to Hyrule Field, still child only)
+    "HF GS Lone Tree East of LLR": "can_bonk",
     // an OOTRR developer told the user (2026-11-23) these two now need the Boomerang; not in OOTRR's pushed code
     // yet (nightly def150e: the child bridge area takes the Boomerang or the Slingshot). Drop these once it is.
-    // 2026-11-23, the user: the DMT rupees by the Song of Storms grotto (shown as DMT SoS Grotto Rupee 1-6) only
-    // appear after playing Song of Storms there
-    "DMT Rock Red Rupee": "can_play(Song_of_Storms)",
-    "Death Mountain Remake Rupee 1": "can_play(Song_of_Storms)",
-    "Death Mountain Remake Rupee 2": "can_play(Song_of_Storms)",
-    "Death Mountain Remake Rupee 3": "can_play(Song_of_Storms)",
-    "Death Mountain Remake Rupee 4": "can_play(Song_of_Storms)",
-    "Death Mountain Remake Rupee 5": "can_play(Song_of_Storms)",
+    // (the six DMT rupees by the Song of Storms grotto: 0.9.0-nightly.20261125.9 names them DMT Storms Grotto ... and
+    // puts them in the DMT Storms Grotto region, which needs can_open_storm_grotto, as the user found 2026-11-23)
     "Spirit Temple Child Bridge Chest": "Boomerang",
     "Spirit Temple GS Metal Fence": "Boomerang",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
@@ -598,7 +711,7 @@ const Seed = (() => {
     for (const loc of Object.keys(placements).sort(byteOrder)) {
       const item = placements[loc];
       if (!can.has(item)) continue;
-      let place = H.areas[loc];
+      let place = H.areas[loc] ?? OLD9_AREAS[loc] ?? (RENAMES9[loc] !== undefined ? H.areas[RENAMES9[loc]] : undefined);
       if (place === undefined) { const p = H.prefixes.find(([pre]) => loc.startsWith(pre)); if (!p) continue; place = p[1]; }
       const key = `${item}\u0000${place}`;
       if (seen.has(key)) continue;
@@ -610,6 +723,6 @@ const Seed = (() => {
     hintRng(`${seedId}/hints`).shuffle(all);
     return H.stones.map((stone, i) => ({ stone, ...all[i % all.length] }));
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf, olderThan, NIGHTLY5, SHOP_RENAMES };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf, olderThan, NIGHTLY5, NIGHTLY9, SHOP_RENAMES, RENAMES9 };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <!--
   OOTRR Tracker. Logic, settings decoding and save reading are ported from OOTRR (https://github.com/ootrando/ootrr),
-  and its data files are embedded (0.8.3-nightly.20261124.7). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
+  and its data files are embedded (0.9.0-nightly.20261125.9). OOTRR is licensed GPL-3.0-or-later, so this tracker is too:
   GNU General Public License v3 or later, https://www.gnu.org/licenses/gpl-3.0.html. Logic parts follow the OoT Randomizer's design (MIT).
 -->
 <html lang="en">
@@ -234,7 +234,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
 </head>
 <body>
 <header>
-  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.8.3-nightly.20261124.7">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.8.3-nightly.20261124.7</small></h1>
+  <h1>OOTRR TRACKER <span style="color:var(--gold)" title="Follows OOTRR 0.9.0-nightly.20261125.9">NIGHTLY</span><small>OoT Remake randomizer · OOTRR 0.9.0-nightly.20261125.9</small></h1>
   <div class="stats" id="stats"></div>
   <div class="mode" id="modeBox" title="Switch between the list of locations and the game's maps"></div>
   <div class="spacer"></div>
@@ -277,76 +277,21 @@ const KEY = "ootrr-tracker-nightly-v1";
 // placements, the save detection and everything read from OOTRR keep the original name (the key here).
 // When updating from a new OOTRR release, search for the original name: it is still the real one.
 const RENAMES = {
-  // The remake's hidden hole in Lake Hylia (save flag LakeHylia_secretHole_appearTreasureBox) holds the
-  // chest OOTRR's catalog pins to this name (IsTreasureBoxOpen.6900843020594897860).
-  "HF Open Grotto Chest": { name: "LH Open Grotto Chest", area: "Lake Hylia" },
-  // (HF Lake Poe Chest: the 0.8.3 nightly calls it LH Poe Chest in Lake Hylia itself, so no rename is needed)
   // 2026-11-21, the user: the fifth basement silver rupee is behind rocks you blow up, not at the top of the ladders
   "Bottom of the Well Basement Silver Rupee Ladders Top": { name: "Bottom of the Well Basement Silver Rupee Behind Rocks" },
   // 2026-11-21, the user: the Skulltula is in the statue room, and child needs explosives for it
   "Spirit Temple GS Sun on Floor Room": { name: "Spirit Temple GS Statue Room" },
-  // 2026-11-21, the user: a Hyrule Field chest you visit as adult, which child can then open (not in the
-  // Tektite grotto: OOTRR's object is in HyruleField_Adult_Dynamic / HyruleField_Child_Static)
-  "HF Tektite Grotto Freestanding PoH": { name: "HF Present/Past Chest" },
-  // 2026-11-22, the user: the Skulltula is in the push block room, behind a bombable wall
-  // The 0.8.3 nightly swapped the two names' keys (skull_names.json): this spot (key 13690401647626643497) is now
-  // OOTRR's "Dodongos Cavern GS Back Room" ("behind the cracked wall of the block room past the Mouth"); in 0.8.2 it
-  // was "... Alcove Above Stairs", which is now the cracked wall at the lobby bridge's east end.
-  // The tracker uses OOTRR's new name for it (the user's call 2026-11-22: follow OOTRR's new names and logic).
-  // A Gold Skulltula in the Hyrule Field grotto near the Lake Hylia entrance (key 12007978132755687032).
-  // OOTRR's skull_names gives it this name only as a "tour" placeholder; its catalog had pooled it with
-  // LH GS Small Island. It stays in Hyrule Field; only the name changes.
-  "HF GS Cow Grotto": { name: "HF GS Grotto Near Lake Entrance" },
-  // OOTRR's catalog puts these two names the other way round from the spots in the game (its own tracker
-  // targets agree with the game): key 13584527502619061465 is the skulltula behind the tent, which the catalog
-  // and the seed's placements call GV GS Pillar. Only the labels swap, so each one still shows the item that
-  // drops there; both have the same rule.
-  // A Gold Skulltula in a Hyrule Field tree near the Kokiri Forest entrance, which OOTRR's data names as Lon Lon
-  // Ranch's rain shed skulltula (its object and save key are in Hyrule Field)
-  "LLR GS Rain Shed": { name: "HF GS Tree By KF", area: "Hyrule Field" },
-  "GV GS Pillar": { name: "GV GS Behind Tent" },
-  "GV GS Behind Tent": { name: "GV GS Pillar" },
-  // Kakariko: OOTRR's names for three child Skulltulas are rotated from the game's (confirmed in game
-  // 2026-11-16: the tree skulltula sets key 7677963516305772491, and the game's object positions agree).
-  // Only the labels move; each keeps its OOTRR name's item and rule.
-  // The 0.8.3 nightly fixed the tree (OOTRR "Kak GS Tree" is now key 7677963516305772491), but the other two are
-  // still swapped: OOTRR "House Under Construction" is key 11629189455828560791, by the gate guard, and
-  // "Near Gate Guard" is key 14107117960174262321, at the house.
+  // Kakariko: OOTRR's names for two child Skulltulas are swapped from the game's (confirmed in game 2026-11-16 and
+  // by the game's object positions; the 0.8.3 nightly fixed the third, Kak GS Tree). Only the labels move.
   "Kak GS House Under Construction": { name: "Kak GS Near Gate Guard" },  // key 11629189455828560791, by the gate guard
   "Kak GS Near Gate Guard": { name: "Kak GS House Under Construction" },  // key 14107117960174262321, at the house
-  // up the vines on the Lon Lon Ranch tower, adult with the Hookshot (confirmed in game 2026-11-18; the rule
-  // is in Seed.withFixes). OOTRR has it in Hyrule Field, child only.
-  // The 0.8.3 nightly moved it: OOTRR "LLR Tunnel Ledge Chest" (was HF Tunnel Ledge Chest), region LLR Tower, Hookshot.
-  // The tracker uses OOTRR's new name (the user's call 2026-11-22).
-  // a green rupee in the middle of Lake Hylia's Adult Remake Rupees 1-4 (key 4525337806931267688, pinned on the
-  // Lake Hylia map in the game's own data; confirmed in game 2026-11-18). OOTRR files it under Hyrule Field.
-  "Hyrule Field Adult Remake Rupee 1": { name: "Lake Hylia Adult Remake Rupee 5", area: "Lake Hylia" },
-  // a ring of eight child rupees round one in the middle by a Hyrule Field fairy pond (all 9 objects are in
-  // HyruleField_Child_Dynamic; confirmed in game 2026-11-18, 7 picked up). OOTRR files them under Lake Hylia and
-  // the LH Lab with guessed names. Numbered clockwise from the north, the middle one last.
-  "LH Lab Child Remake Rupee 3": { name: "HF Fairy Pond Rupee 1", area: "Hyrule Field" },  // north
-  "Lake Hylia Child Remake Rupee 5": { name: "HF Fairy Pond Rupee 2", area: "Hyrule Field" },  // northeast
-  "LH Lab Child Remake Rupee 2": { name: "HF Fairy Pond Rupee 3", area: "Hyrule Field" },  // east
-  "LH Lab Child Remake Rupee 1": { name: "HF Fairy Pond Rupee 4", area: "Hyrule Field" },  // southeast
-  "Lake Hylia Child Remake Rupee 3": { name: "HF Fairy Pond Rupee 5", area: "Hyrule Field" },  // south
-  "Lake Hylia Child Remake Rupee 6": { name: "HF Fairy Pond Rupee 6", area: "Hyrule Field" },  // southwest
-  "Lake Hylia Child Remake Rupee 4": { name: "HF Fairy Pond Rupee 7", area: "Hyrule Field" },  // west
-  "Lake Hylia Child Remake Rupee 1": { name: "HF Fairy Pond Rupee 8", area: "Hyrule Field" },  // northwest
-  "Lake Hylia Child Remake Rupee 2": { name: "HF Fairy Pond Rupee 9", area: "Hyrule Field" },  // middle
-  // three of a cluster of seven rupees in Hyrule Field, by the east rupee grotto (objects and pins are in Hyrule
-  // Field; confirmed in game 2026-11-18). OOTRR files them under Lake Hylia; the other four (keys 16437715071442568790,
-  // 2314514470754031061, 13785854691967032815, 5620885265123329978) are in its unmatched_remake list, so never shuffled.
-  // 2026-11-23, the user: the six rupees by the Death Mountain Trail Song of Storms grotto only appear with Song of
-  // Storms. Numbered clockwise from the north (picked up together, child, nightly seed)
-  "DMT Rock Red Rupee": { name: "DMT SoS Grotto Rupee 1" },            // key 991975198297951915
-  "Death Mountain Remake Rupee 1": { name: "DMT SoS Grotto Rupee 2" },  // key 5008999164523690598
-  "Death Mountain Remake Rupee 4": { name: "DMT SoS Grotto Rupee 3" },  // key 12472730518306029279
-  "Death Mountain Remake Rupee 5": { name: "DMT SoS Grotto Rupee 4" },  // key 17286901874670360605
-  "Death Mountain Remake Rupee 3": { name: "DMT SoS Grotto Rupee 5" },  // key 9972535766636368278
-  "Death Mountain Remake Rupee 2": { name: "DMT SoS Grotto Rupee 6" },  // key 6307624256587354938
-  "Lake Hylia Remake Rupee 3": { name: "HF East Rupee Grotto Rupee 1", area: "Hyrule Field" },  // key 15135356131305809944, northeast
-  "Lake Hylia Remake Rupee 2": { name: "HF East Rupee Grotto Rupee 2", area: "Hyrule Field" },  // key 14398093248612909712, southeast
-  "Lake Hylia Remake Rupee 1": { name: "HF East Rupee Grotto Rupee 3", area: "Hyrule Field" },  // key 7268667473541116466, middle
+  // 0.9.0-nightly.20261125.9 renamed the checks the tracker used to relabel itself, and the tracker now shows OOTRR's
+  // names (the user's call 2026-11-22): HF Open Grotto Chest → LH Gravestone Grotto Torches Chest, HF Tektite Grotto
+  // Freestanding PoH (our HF Present/Past Chest) → HF Rocks Near Cow Grotto Chest, HF GS Cow Grotto → HF GS Grotto
+  // South of LLR Tower, LLR GS Rain Shed (our HF GS Tree By KF) → HF GS Lone Tree East of LLR, Hyrule Field Adult
+  // Remake Rupee 1 → LH Adult Lakebed Water Temple Gate Blue Rupee, our HF Fairy Pond Rupee 1-9 → HF Child Zora River
+  // Waterfall ..., our DMT SoS Grotto Rupee 1-6 → DMT Storms Grotto ..., our HF East Rupee Grotto Rupee 1-3 → HF
+  // Grotto Near Zora River Green Rupee 1-3. It also fixed the GV GS Pillar / Behind Tent swap.
 };
 for (const [n, r] of Object.entries(RENAMES)) if (DATA.checks[n] && r.area) DATA.checks[n] = [r.area, ...DATA.checks[n].slice(1)];
 // The remake calls OoTR's Gerudo Training Ground the Gerudo Proving Ground. OOTRR keeps the old name
@@ -456,8 +401,9 @@ const DEFAULT = {
 let S = load();
 // checks OOTRR renamed: progress, hand-placed pins and notes saved under the old name carry over
 const OLD_NAMES = { "Market 10 Big Poes": "Market 5 Big Poes", "Market 10 Big Poes Hint": "Market 5 Big Poes Hint",  // OOTRR 0.6.2
-  "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tunnel Ledge Chest",  // OOTRR 0.8.3 nightly
-  ...Seed.SHOP_RENAMES };  // 0.8.3-nightly.20261123.5: shop shelves named by position
+  "HF Lake Poe Chest": "LH Poe Chest", "HF Tunnel Ledge Chest": "LLR Tower Ledge Chest",  // OOTRR 0.8.3 nightly (and 0.9.0)
+  ...Seed.SHOP_RENAMES,  // 0.8.3-nightly.20261123.5: shop shelves named by position
+  ...Seed.RENAMES9 };  // 0.9.0-nightly.20261125.9: the remake's rupees, hearts and grotto checks got real names
 // Saria's gift used to be detected by a flag OOTRR sets on every new game, so it could be ticked from the save
 // without the gift. Clear that tick (and any untick made because of it) once; the save ticks it again for real.
 if (!S.fixes) S.fixes = {};
@@ -1261,7 +1207,7 @@ const PIN_FIXES = {
   "Song from Saria": { place: "SacredForestMeadow", u: 0.5354, v: 0.1575 },
   // Hyrule Field, placed in game by the player (2026-11-16)
   "HF Cow Grotto Cow": { place: "HyruleField", u: 0.178, v: 0.4199 },
-  "HF GS Near Kak Grotto": { place: "HyruleField", u: 0.5867, v: 0.7525 },
+  "HF GS South Gossip Stone Grotto Crate": { place: "HyruleField", u: 0.5867, v: 0.7525 },
   "HF Ocarina of Time Item": { place: "HyruleField", u: 0.5554, v: 0.2249 }, // placed by the user in game 2026-11-22
   "HF South Poe Chest": { place: "HyruleField", u: 0.5309, v: 0.8927 },
   "Song from Ocarina of Time": { place: "HyruleField", u: 0.5568, v: 0.2207 },
@@ -1342,13 +1288,13 @@ const PIN_FIXES = {
   // pins cover each other. Each pile keeps its real centre and in-game layout, spread just enough to click each one.
   // the seven beehives in the bombable hole (Kak Hole): one spot, placed by the user in game, so the map shows one pin
   // (the user's call 2026-11-19: they're right next to each other)
-  // DMT SoS Grotto Rupee 1-6 share one pin, at the middle of the six (the user's choice, 2026-11-23)
-  "DMT Rock Red Rupee": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
-  "Death Mountain Remake Rupee 1": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
-  "Death Mountain Remake Rupee 2": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
-  "Death Mountain Remake Rupee 3": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
-  "Death Mountain Remake Rupee 4": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
-  "Death Mountain Remake Rupee 5": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  // the six DMT Storms Grotto rupees (by the Song of Storms grotto) share one pin, at the middle of the six (the user's choice, 2026-11-23)
+  "DMT Storms Grotto Red Rupee": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  "DMT Storms Grotto Green Rupee 1": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  "DMT Storms Grotto Green Rupee 2": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  "DMT Storms Grotto Blue Rupee 1": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  "DMT Storms Grotto Blue Rupee 2": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
+  "DMT Storms Grotto Green Rupee 3": { place: "DeathMountainTrail", u: 0.5403, v: 0.4855 },
   "Kak Hole Beehive 1": { place: "KakarikoVillage", u: 0.6272, v: 0.6413 },
   "Kak Hole Beehive 2": { place: "KakarikoVillage", u: 0.6272, v: 0.6413 },
   "Kak Hole Beehive 3": { place: "KakarikoVillage", u: 0.6272, v: 0.6413 },
@@ -1449,17 +1395,18 @@ const PIN_FIXES = {
   "ZF GS Hidden Cave": { place: "ZoraFountain", u: 0.7376, v: 0.6054 },
   "ZF Great Fairy Reward": { place: "ZoraFountain", u: 0.6621, v: 0.9199 },
   // Lake Hylia, placed in game by the player (2026-11-16)
-  "HF Open Grotto Chest": { place: "LakeHylia", u: 0.4857, v: 0.3814 },
+  "LH Gravestone Grotto Torches Chest": { place: "LakeHylia", u: 0.4857, v: 0.3814 },
   "LH Adult Fishing": { place: "LakeHylia", u: 0.7979, v: 0.5624 },
   "LH Child Fishing": { place: "LakeHylia", u: 0.7979, v: 0.5602 },
   "LH GS Lab Crate": { place: "LakeHylia", u: 0.549, v: 0.2457 },
   "LH Lab Dive": { place: "LakeHylia", u: 0.549, v: 0.2479 },
   // inside the lab: in one pin with the LH GS Lab Crate (the user's call, 2026-11-23)
-  "LH Lab Remake Rupee 1": { place: "LakeHylia", u: 0.549, v: 0.2457 },
-  "LH Lab Remake Rupee 2": { place: "LakeHylia", u: 0.549, v: 0.2457 },
+  "LH Lab Pool Blue Rupee": { place: "LakeHylia", u: 0.549, v: 0.2457 },
+  "LH Lab Pool Red Rupee": { place: "LakeHylia", u: 0.549, v: 0.2457 },
   "LH Trade Eyeball Frog": { place: "LakeHylia", u: 0.5475, v: 0.2479 },
-  // Gerudo Valley (GV GS Pillar is the one shown as GV GS Behind Tent), placed in game by the player (2026-11-16)
-  "GV GS Pillar": { place: "GerudoValley", u: 0.3228, v: 0.3565 },
+  // Gerudo Valley: the Skulltula behind the tent (key 13584527502619061465; OOTRR's name for it until 0.9.0 was GV GS
+  // Pillar), placed in game by the player (2026-11-16)
+  "GV GS Behind Tent": { place: "GerudoValley", u: 0.3228, v: 0.3565 },
   "GV Octorok Grotto Chest": { place: "GerudoValley", u: 0.543, v: 0.7955 },
   "GV Storms Grotto Chest": { place: "GerudoValley", u: 0.3062, v: 0.4018 },
   "GV Storms Grotto Lens Chest": { place: "GerudoValley", u: 0.3092, v: 0.4041 },
@@ -2156,7 +2103,7 @@ function openStones() {
 }
 const WIDE = window.matchMedia("(min-width:1500px)");
 WIDE.addEventListener("change", () => render());
-const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.8.3-nightly.20261124.7 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
+const ITEMS_HELP = "Click an item to add it, right-click to take one away. Logic, settings and data come from OOTRR 0.9.0-nightly.20261125.9 (GPL-3.0-or-later), and so this tracker is GPL-3.0-or-later too.";
 function renderItems() {
   const el = $("#items"), el2 = $("#items2"); const top = el.scrollTop, top2 = el2.scrollTop;
   const wide = WIDE.matches;
@@ -2587,7 +2534,7 @@ $("#aboutBtn").onclick = () => {
       h("p", {}, `It works out which checks you can get right now with OOTRR's own logic, reads your seed's settings, follows your progress from your save, and shows your checks as lists or as pins on the game's own maps. ${APP ? "This is the desktop app: it reads Longshot and your saves by itself, with nothing else to run." : "It runs in your browser with nothing to install."}`),
       h("p", { style: "border-left:3px solid var(--gold);padding-left:10px;color:var(--dim)" }, h("b", { style: "color:var(--ink)" }, "AI disclosure: "),
         "this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use Report a bug."),
-      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.3-nightly.20261124.7 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
+      h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.9.0-nightly.20261125.9 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), "."),
       APP ? h("p", { style: "color:var(--faint);font-size:12px" }, `OOTRR Tracker app ${APP.version} `,
         h("button", { class: "btn", style: "margin-left:6px", onclick: () => { try { window.chrome.webview.postMessage("update:check"); } catch (e) {} } }, "Check for updates")) : null),
@@ -2637,7 +2584,7 @@ function paintSeed() {
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
     if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
-    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.3-nightly.20261124.7's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
+    if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.9.0-nightly.20261125.9's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
   // the X closes the notes for this seed; another seed (or other notes) brings them back
   const b = $("#banner");
@@ -2845,10 +2792,9 @@ const DROP_FLAGS = {
 };
 // Pools: checks whose save keys OOTRR knows only as a group (locations.json "pool"), so they tick by count:
 // Rupee i is ticked once any i of the keys are set. Confirmed in game 2026-11-18 (all 8 race rupees, one race).
-const POOL_KEYS = {
-  "Graveyard Dampe Race Rupee": ["12976212884789503099", "17177665557365847615", "1718356088455579946", "2669035957658688527",
-    "3236392495739397075", "4184471392680640567", "8404733154085657768", "8987278980043647768"],
-};
+// (Graveyard Dampe Race Rupee 1-8 counted the race's 8 keys this way until 0.9.0-nightly.20261125.9 gave each rupee
+// its own key; the tracker now follows OOTRR's)
+const POOL_KEYS = {};
 const OWN_KEYS = {
   // confirmed 2026-11-22: picking up Bongo Bongo's Heart (a Gold Skulltula Token there) set this key, which OOTRR's
   // data doesn't know; its tracker target (17599164808183510748) stayed unset. Both are kept.
