@@ -101,8 +101,11 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck .nm{flex:1}
 .ck.st-done .nm{color:var(--faint);text-decoration:line-through}
 .ck .price{font-size:11px;color:var(--gold);white-space:nowrap}
-.ck .shopbox{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2}
-.ck .shopit{font-size:11px;color:var(--ink);text-align:right;cursor:default}
+.ck .nm{min-width:0}
+.ck .shopline{display:block;font-size:11px;line-height:1.35;margin-top:1px;color:var(--dim)}
+.ck .shopline .shopit{color:var(--ink);cursor:pointer}
+.ck .shopline .shopit:hover{text-decoration:underline}
+.ck .shopline .price{margin-left:6px}
 .ck .shopq{font-size:14px;font-weight:600;color:var(--gold);border:1px solid var(--gold);border-radius:5px;padding:1px 9px;cursor:pointer;line-height:1.2}
 .ck .shopq:hover{background:var(--gold);color:var(--bg)}
 .ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
@@ -4595,14 +4598,19 @@ const shopOf = (n) => { const m = SHELF.exec(n); return m && DATA.checks[n] && D
 const shopSeen = (n) => { const sh = shopOf(n); return !sh || !!S.shopSeen[sh] || isDone(n) || otherShelves(n).some(isDone); };
 function shopTag(n) {
   const sh = shopOf(n);
-  if (!sh || !S.seed || !S.seed.placements[n]) return null;
-  if (!shopSeen(n)) return h("span", { class: "shopq", title: `You haven't looked in ${sh} yet. Click once you have, to show what's on its shelves and the prices.`,
+  if (!sh || !S.seed || !S.seed.placements[n] || shopSeen(n)) return null;
+  return h("span", { class: "shopq", title: `You haven't looked in ${sh} yet. Click once you have, to show what's on its shelves and the prices.`,
     onclick: (e) => { e.stopPropagation(); S.shopSeen[sh] = 1; render(); } }, "?");
-  const it = S.seed.placements[n], price = dealPrice(n);
-  // the price, with the item under it, so the shelf's name keeps its room
-  return h("span", { class: "shopbox" }, price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null,
-    h("span", { class: "shopit", title: S.shopSeen[sh] && !isDone(n) ? `On this shelf. Click to hide ${sh}'s shelves again.` : "On this shelf",
-      onclick: (e) => { if (!S.shopSeen[sh]) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it));
+}
+// once the shop's been seen: the shelf's item and price on a line under its name, so the name keeps the row's width
+function shopLine(n) {
+  const sh = shopOf(n);
+  if (!sh || !S.seed || !S.seed.placements[n] || !shopSeen(n)) return null;
+  const it = S.seed.placements[n], price = dealPrice(n), hide = S.shopSeen[sh] && !isDone(n);
+  return h("span", { class: "shopline" },
+    h("span", { class: "shopit", title: hide ? `On this shelf. Click to hide ${sh}'s shelves again.` : "On this shelf",
+      onclick: (e) => { if (!hide) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it),
+    price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null);
 }
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
 // one check's row (and its description when open); again() redraws the list it sits in
@@ -4612,14 +4620,14 @@ function ckRow(c, again, open = false) {
     // one click opens the description; a double click marks the check done and cancels the pending click
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; again(); }, 230); },
     ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
-  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: KEY_SPOTS.has(c.n) ? "Keys aren't shuffled here in this seed: this spot holds its usual key" : "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null),
+  }, h("span", { class: "dot" }), h("span", { class: "nm" }, shownName(c.n), c.vanilla ? h("span", { class: "vsong", title: KEY_SPOTS.has(c.n) ? "Keys aren't shuffled here in this seed: this spot holds its usual key" : "Songs aren't shuffled in this seed: this spot teaches its usual song" }, ` · ${c.vanilla}`) : null, shopLine(c.n)),
     h("span", { class: `age ${c.child}`, title: "Child" }, "C"), h("span", { class: `age ${c.adult}`, title: "Adult" }, "A"),
     c.fromSave ? h("span", { class: "sv", title: "Found in your save" }, "save") : null,
     !c.fromSave && S.auto.pend && S.auto.pend[c.n] !== undefined && !isDone(c.n) ? (BOSS_HEART_WAIT.has(c.n)
       ? h("span", { class: "sv broke", title: `Boss beaten, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "beaten")
       : h("span", { class: "sv broke", title: `Broken, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "broken")) : null,
     crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
-    // a shop shelf: its item and price once you've looked in the shop
+    // a shop shelf you haven't looked in yet: "?" (its item and price then go under the name)
     shopTag(c.n),
     h("span", { class: "kind" }, KIND[c.k])),
     open || openCheck === c.n ? describe(c.n) : null];
