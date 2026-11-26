@@ -413,8 +413,7 @@ const DEFAULT = {
   showLogic: false,  // every check shows its logic under it (the "Show logic" button)
   shopSeen: {},  // shops whose shelves the player has looked at: { "Market Bazaar": 1 } (the item and price show then)
   castLayout: "classic",  // Broadcast view layout: "classic" (every tile) or "card" (the Compact layout)
-  lastFound: null,
-  castTipSeen: false,  // the Broadcast view's "hover for options" tip has done its job  // the newest item found at a check, for the Compact layout: { item, area }
+  lastFound: null,  // the newest item found at a check, for the Compact layout: { item, area }
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -1044,9 +1043,9 @@ function openBroadcast() {
   d.head.replaceChildren(Object.assign(d.createElement("style"), { textContent: CAST_CSS }));
   d.body.replaceChildren();
   BW.addEventListener("beforeunload", () => { BW = null; });
-  // a tip about the hover options, for a few seconds after the window opens, until the player has hovered once
-  if (!S.castTipSeen) { castTipUntil = Date.now() + 10000; setTimeout(() => renderBroadcast(), 10100); }
-  d.body.addEventListener("mouseenter", () => { if (S.castTipSeen) return; S.castTipSeen = true; castTipUntil = 0; render(); });
+  // a tip about the hover options for the first 10 seconds every time the window opens (in case they forget);
+  // hovering hides it at once
+  castTipUntil = Date.now() + 10000; setTimeout(() => renderBroadcast(), 10100);
   renderBroadcast();
 }
 let castTipUntil = 0;
