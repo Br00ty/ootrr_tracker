@@ -412,6 +412,9 @@ const DEFAULT = {
   heard: {},   // gossip stones the player has talked to: { GOSSIP_label: 1 }
   showLogic: false,  // every check shows its logic under it (the "Show logic" button)
   shopSeen: {},  // shops whose shelves the player has looked at: { "Market Bazaar": 1 } (the item and price show then)
+  castLayout: "classic",  // Broadcast view layout: "classic" (every tile) or "card" (the Compact layout)
+  lastFound: null,
+  castTipSeen: false,  // the Broadcast view's "hover for options" tip has done its job  // the newest item found at a check, for the Compact layout: { item, area }
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -680,6 +683,7 @@ function render() {
   if (typeof paintSeed === "function") paintSeed();
   renderStats(); renderItems(); renderMode();
   if (S.view === "map") renderMap(); else { renderAreas(); renderChecks(); }
+  noteFound();
   renderBroadcast();
   const lb = $("#logicBtn"); lb.classList.toggle("on", !!S.showLogic); lb.textContent = S.showLogic ? "Hide logic" : "Show logic";
   save();
@@ -1004,6 +1008,29 @@ body:hover .opts{opacity:1}
 .t.on img{filter:none;opacity:1}
 .t .n{position:absolute;right:3px;bottom:1px;font-size:13px;font-weight:800;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,1px 1px 0 #000}
 .t .n.max{color:#7ee08c}
+.tip{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1f2c40;border:1px solid #d9b45a;color:#ece4cf;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;box-shadow:0 4px 14px #000a;text-align:center;z-index:6;animation:tipin .3s ease-out}
+@keyframes tipin{from{opacity:0;transform:translate(-50%,8px)}}
+body:hover .tip{display:none}
+/* Compact layout */
+.card{margin:0 auto;display:flex;flex-direction:column;gap:12px;background:rgba(12,16,24,.92);border:1px solid #d9b45a88;border-radius:16px;padding:16px 18px}
+.card .hd{display:flex;align-items:center;justify-content:center;gap:10px}
+.card .stats{display:flex;gap:22px;font-size:13px;font-weight:700}.card .stats i{font-style:normal;font-weight:500;color:#a7a08c;margin-right:3px}
+.card .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
+.card .t{border-radius:8px}
+.card .split{display:grid;grid-template-columns:1fr 1fr;padding:0}
+.card .split>div{height:100%;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.card .split>div.on{background:#1f2c40}
+.card .split img{width:auto;max-width:none;height:84%;filter:grayscale(1) brightness(.75);opacity:.32;pointer-events:none}
+.card .split>div.on img{filter:none;opacity:1}
+.card .songs{display:grid;grid-template-columns:repeat(12,1fr);gap:3px}
+.card .rews{display:grid;grid-template-columns:repeat(3,1fr) 10px repeat(6,1fr);gap:4px;align-items:center}
+.card .songs .t,.card .rews .t{background:none;border:none}
+.card .rews .dv{width:1px;height:60%;background:#2a3142;justify-self:center}
+.card .found{display:flex;align-items:baseline;gap:8px;padding-top:10px;border-top:1px solid #232b3a;font-size:13px;font-weight:600}
+.card .found b{font-size:10px;letter-spacing:.12em;color:#d9b45a}.card .found span{color:#7d7767;font-weight:500}
+body.key .card .split img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+body.key .card .split>div.on img{filter:drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+body.key .card{background:var(--key)}body.key .card .split>div{background:var(--key)}
 .t .lb{position:absolute;left:0;right:0;top:1px;font-size:8.5px;font-weight:700;color:#e9d7a6;text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:.02em}
 `;
 const CAST_SHORT = { "Forest Temple": "Forest", "Fire Temple": "Fire", "Water Temple": "Water", "Shadow Temple": "Shadow", "Spirit Temple": "Spirit",
@@ -1017,8 +1044,12 @@ function openBroadcast() {
   d.head.replaceChildren(Object.assign(d.createElement("style"), { textContent: CAST_CSS }));
   d.body.replaceChildren();
   BW.addEventListener("beforeunload", () => { BW = null; });
+  // a tip about the hover options, for a few seconds after the window opens, until the player has hovered once
+  if (!S.castTipSeen) { castTipUntil = Date.now() + 10000; setTimeout(() => renderBroadcast(), 10100); }
+  d.body.addEventListener("mouseenter", () => { if (S.castTipSeen) return; S.castTipSeen = true; castTipUntil = 0; render(); });
   renderBroadcast();
 }
+let castTipUntil = 0;
 function castTile(name, label, max, opts = {}) {
   const v = have(name), pic = opts.pic !== undefined ? opts.pic : picOf(name, Math.max(1, v));
   const tiers = TIERS[name], on = opts.on !== undefined ? opts.on : v > 0;
@@ -1031,6 +1062,44 @@ function castTile(name, label, max, opts = {}) {
     opts.label ? h("span", { class: "lb" }, opts.label) : null, opts.extra || null,
     count != null && count !== "" ? h("span", { class: `n ${max > 1 && v >= max ? "max" : ""}` }, String(count)) : null);
 }
+// The Compact layout (designed with the user, 2026-11-26): Items and Equipment in one grid, a row per group (weapons,
+// with the arrows beside the Bow; explosives and tools; magic and quest items; gear and upgrades), the songs, the
+// stones and medallions, a few numbers, and the newest item found.
+const CARD_ROWS = [
+  ["Kokiri Sword", "Biggoron Sword", "Progressive Shield", "Slingshot", "Bow", "ARROWS", "Light Arrows", "Boomerang"],
+  ["Deku Stick Drop", "Deku Nut Drop", "Bomb Bag", "Bombchus", "Progressive Hookshot", "Megaton Hammer", "Magic Bean", "Lens of Truth"],
+  ["Magic Meter", "Dins Fire", "Farores Wind", "Nayrus Love", "Ocarina", "Bottle", "Rutos Letter", "Stone of Agony"],
+  ["Goron Tunic", "Zora Tunic", "Iron Boots", "Hover Boots", "Progressive Strength Upgrade", "Progressive Scale", "Progressive Wallet", "Gerudo Membership Card"]];
+const CARD_DEFS = Object.fromEntries([...INV, ...GEAR, ...ARROWS].map(([n, l, m]) => [n, [l, m]]));
+function castCard() {
+  const tile = (n) => { const [l, m] = CARD_DEFS[n] || [n, 1]; return castTile(n, l, m); };
+  // Fire and Ice Arrows share one tile, half each
+  const half = (n) => { const v = have(n), pic = picOf(n, 1);
+    return h("div", { class: v ? "on" : "", title: n, onclick: () => bump(n, 1, v ? -1 : 1), oncontextmenu: (e) => { e.preventDefault(); bump(n, 1, -1); } },
+      pic ? h("img", { src: pic, alt: n }) : n.split(" ")[0]); };
+  const grid = CARD_ROWS.flat().map((n) => n === "ARROWS" ? h("div", { class: `t split ${have("Fire Arrows") || have("Ice Arrows") ? "on" : ""}` }, half("Fire Arrows"), half("Ice Arrows")) : tile(n));
+  const t = tally(R.values()), hearts = 3 + shownCount("Heart Container") + Math.floor(shownCount("Piece of Heart") / 4);
+  const f = S.lastFound;
+  return h("div", { class: "card" },
+    h("div", { class: "hd" },
+      h("div", { class: "stats" }, h("span", {}, h("i", {}, "Checks"), `${t.done}/${R.size}`), h("span", {}, h("i", {}, "Skulls"), String(shownCount("Gold Skulltula Token"))), h("span", {}, h("i", {}, "Hearts"), String(hearts)))),
+    h("div", { class: "grid" }, grid),
+    h("div", { class: "songs" }, SONGS.map(([n, l, m]) => castTile(n, l, m))),
+    h("div", { class: "rews" }, REWARDS.filter((r) => r[3] === "stone").map(([n, l, m]) => castTile(n, l, m)), h("div", { class: "dv" }),
+      REWARDS.filter((r) => r[3] === "med").map(([n, l, m]) => castTile(n, l, m))),
+    f ? h("div", { class: "found" }, h("b", {}, "JUST FOUND"), f.item, h("span", {}, `· ${f.area}`)) : null);
+}
+// the newest item found at a check (for the Compact layout): checks that turn done since the last look, with a seed
+const JUNK_FIND = /^(Rupees?\b|Recovery Heart|Arrows|Bombs? \(|Deku (Nuts|Sticks?|Seeds) \(|Bombchus \(|Ice Trap|Nothing|Magic Jar)/;
+let seenDone = null;
+function noteFound() {
+  const now = new Set(Object.keys(S.done).concat(Object.keys(S.auto.done || {})).filter(isDone));
+  if (seenDone && S.seed) for (const n of now) if (!seenDone.has(n)) {
+    const it = S.seed.placements[n];
+    if (it && !JUNK_FIND.test(it) && DATA.checks[n]) S.lastFound = { item: it, area: DATA.checks[n][0] };
+  }
+  seenDone = now;
+}
 function renderBroadcast() {
   if (!BW) return;
   if (BW.closed) { BW = null; return; }
@@ -1040,7 +1109,7 @@ function renderBroadcast() {
   const keys = DUNGEONS.map(([dn, sk, m, bk]) => { const v = have(sk);
     return castTile(sk, `${CAST_SHORT[dn]} keys`, m, { pic: PICS.Item_Dungeon_SmallKey || null, on: v > 0, count: v, label: CAST_SHORT[dn] || dn, title: `${dn} small keys` }); });
   const bosses = DUNGEONS.map(([dn, , , bk]) => bk ? castTile(bk, `${CAST_SHORT[dn]} boss key`, 1, { pic: PICS.Item_Dungeon_BossKey || null, title: `${dn} boss key` }) : h("div"));
-  const panel = h("div", { class: "panel" },
+  const panel = S.castLayout === "card" ? castCard() : h("div", { class: "panel" },
     row("g6", INV.map(([n, l, m]) => castTile(n, l, m))),
     row("g6", [...ARROWS, ...REWARDS.filter((r) => r[3] === "stone")].map(([n, l, m]) => castTile(n, l, m))),
     sep(), row("g6", GEAR.map(([n, l, m]) => castTile(n, l, m))),
@@ -1055,12 +1124,14 @@ function renderBroadcast() {
   const key = S.castKey === true ? "green" : S.castKey || "";
   const KEYS = { magenta: "#ff00ff", green: "#00ff00" };
   const btn = (v, label, tip) => h("button", { class: key === v ? "on" : "", title: tip || "", onclick: () => { S.castKey = v || false; render(); } }, label);
-  const opts = h("div", { class: "opts" }, btn("", "Dark background"),
+  const lay = (v, label) => h("button", { class: (S.castLayout || "classic") === v ? "on" : "", onclick: () => { S.castLayout = v; render(); } }, label);
+  const opts = h("div", { class: "opts" }, lay("classic", "Classic"), lay("card", "Compact"), h("span", { style: "width:10px" }), btn("", "Dark background"),
     btn("magenta", "Magenta", "A magenta background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter to the window capture, set Key Color Type to Magenta, and the video shows through."),
     btn("green", "Green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
   d.body.classList.toggle("key", !!key);
   d.body.style.setProperty("--key", KEYS[key] || "transparent");
-  d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts));
+  const tip = Date.now() < castTipUntil ? h("div", { class: "tip" }, "Hover over this window for layouts and see-through backgrounds") : null;
+  d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts), ...(tip ? [d.adoptNode(tip)] : []));
   // fit the window: the tiles follow its width; when that makes the panel taller than the window, shrink it
   // fit the window: the tiles are square, so a panel taller than the window is made narrower (and centred)
   const fit = () => {
@@ -2664,7 +2735,7 @@ $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
   clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
-  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.heard = {}; S.shopSeen = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.heard = {}; S.shopSeen = {}; S.lastFound = null; seenDone = null; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
 };
 
 
@@ -2678,7 +2749,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; S.heard = {}; S.shopSeen = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; S.heard = {}; S.shopSeen = {}; S.lastFound = null; seenDone = null; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
   }
   W.err = "";
   render();
