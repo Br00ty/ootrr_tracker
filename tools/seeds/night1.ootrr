@@ -1,7 +1,7 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261125.9",
+  "generator": "ootrr-core 0.9.0-nightly.20261125.18",
   "seed": "7",
   "settings": "OOTRR1-EYAQCJYBAEZQCAJVAEATUAIFJQAQCTQBAJUQCAEHAEAQBFABAEAZKAIBAGMQCAIBZMAQCALR34",
   "game": "oot-remake:4d51612e6228acca",
@@ -13,7 +13,7 @@
     "Bottom of the Well Front Center Bombable Chest": "Compass (Bottom of the Well)",
     "Bottom of the Well Front Left Fake Wall Chest": "Arrows (10)",
     "Bottom of the Well Invisible Chest": "Rupees (20)",
-    "Bottom of the Well Lens of Truth Chest": "Ice Trap",
+    "Bottom of the Well Lens of Truth Chest": "Rupees (5)",
     "Bottom of the Well Map Chest": "Rupees (50)",
     "Bottom of the Well Right Bottom Fake Wall Chest": "Map (Bottom of the Well)",
     "Colossus Freestanding PoH": "Bomb Bag",
@@ -25,7 +25,7 @@
     "DMC Volcano Freestanding PoH": "Rupees (20)",
     "DMC Wall Freestanding PoH": "Dins Fire",
     "DMT Biggoron": "Bottle",
-    "DMT Chest": "Ice Trap",
+    "DMT Chest": "Bombs (5)",
     "DMT Freestanding PoH": "Rupees (20)",
     "DMT Great Fairy Reward": "Gerudo Membership Card",
     "DMT Trade Broken Sword": "Rupees (20)",
@@ -79,7 +79,7 @@
     "Forest Temple Phantom Ganon Heart": "Rupees (20)",
     "Forest Temple Red Poe Chest": "Map (Forest Temple)",
     "Forest Temple Well Chest": "Bombs (5)",
-    "GC Darunias Joy": "Ice Trap",
+    "GC Darunias Joy": "Rupees (5)",
     "GC Maze Center Chest": "Rutos Letter",
     "GC Maze Left Chest": "Magic Meter",
     "GC Maze Right Chest": "Rupee (1)",
@@ -124,7 +124,7 @@
     "Gerudo Training Ground Heavy Block Second Chest": "Small Key (Gerudo Training Ground)",
     "Gerudo Training Ground Heavy Block Third Chest": "Deku Sticks (3)",
     "Gerudo Training Ground Hidden Ceiling Chest": "Bombs (5)",
-    "Gerudo Training Ground Lobby Left Chest": "Ice Trap",
+    "Gerudo Training Ground Lobby Left Chest": "Rupees (5)",
     "Gerudo Training Ground Lobby Right Chest": "Small Key (Gerudo Training Ground)",
     "Gerudo Training Ground Maze Path Final Chest": "Piece of Heart",
     "Gerudo Training Ground Maze Path First Chest": "Heart Container",
@@ -155,7 +155,7 @@
     "Hideout Gerudo Membership Card": "Rupees (20)",
     "Ice Cavern Compass Chest": "Map (Ice Cavern)",
     "Ice Cavern Iron Boots Chest": "Rupees (5)",
-    "Ice Cavern Map Chest": "Ice Trap",
+    "Ice Cavern Map Chest": "Rupees (20)",
     "Ice Cavern Push Block Room Chest": "Compass (Ice Cavern)",
     "Jabu Jabus Belly Barinade Heart": "Lens of Truth",
     "Jabu Jabus Belly Basement 2 Octoroks Chest": "Compass (Jabu Jabus Belly)",
@@ -188,7 +188,7 @@
     "Kak Granny Trade Odd Mushroom": "Bombs (20)",
     "Kak Impas House Freestanding PoH": "Bombs (5)",
     "Kak Man on Roof": "Rupees (5)",
-    "Kak Open Grotto Chest": "Ice Trap",
+    "Kak Open Grotto Chest": "Rupees (5)",
     "Kak Potion Shop Right Side Bottom Left": "Piece of Heart",
     "Kak Potion Shop Right Side Bottom Right": "Bombs (5)",
     "Kak Potion Shop Right Side Top Left": "Magic Jar (Large)",
@@ -213,11 +213,11 @@
     "LW Target in Woods": "Bomb Bag",
     "LW Trade Cojiro": "Heart Container",
     "LW Trade Odd Potion": "Deku Seeds (30)",
-    "Market 5 Big Poes": "Ice Trap",
+    "Market 5 Big Poes": "Deku Nuts (5)",
     "Market Bazaar Right Side Bottom Left": "Farores Wind",
     "Market Bazaar Right Side Bottom Right": "Piece of Heart",
     "Market Bazaar Right Side Top Left": "Piece of Heart",
-    "Market Bazaar Right Side Top Right": "Ice Trap",
+    "Market Bazaar Right Side Top Right": "Deku Stick (1)",
     "Market Bombchu Bowling Bombchus": "Bombs (5)",
     "Market Bombchu Bowling First Prize": "Business Scrub Seed",
     "Market Bombchu Bowling Second Prize": "Rupees (50)",
@@ -257,8 +257,8 @@
     "Spirit Temple Early Adult Right Chest": "Fire Arrows",
     "Spirit Temple First Mirror Right Chest": "Compass (Spirit Temple)",
     "Spirit Temple Hallway Left Invisible Chest": "Small Key (Spirit Temple)",
-    "Spirit Temple Hallway Right Invisible Chest": "Ice Trap",
-    "Spirit Temple Map Chest": "Ice Trap",
+    "Spirit Temple Hallway Right Invisible Chest": "Deku Stick (1)",
+    "Spirit Temple Map Chest": "Rupee (1)",
     "Spirit Temple Mirror Shield Chest": "Rupee (1)",
     "Spirit Temple Near Four Armos Chest": "Map (Spirit Temple)",
     "Spirit Temple Silver Gauntlets Chest": "Small Key (Spirit Temple)",
@@ -491,7 +491,7 @@
       "pool": "Bombs (5)"
     },
     "Market Bazaar Right Side Top Right": {
-      "item": "Ice Trap",
+      "item": "Deku Stick (1)",
       "price": 70,
       "deal": true,
       "pool": "Deku Nuts (5)"
@@ -617,5 +617,5 @@
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "f6a6446cfb17e4b8a972e94f811a6c8177c8cee78c05ddbdbb65bc1d7e73a08a"
+  "checksum": "cc34c4d5b0f56ed2947497d3aa1afd1b8737f0e5410cdf9e1e29e32964a2e57f"
 }

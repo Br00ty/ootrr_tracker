@@ -6,7 +6,7 @@ A location and item tracker for **OOTRR**, the [Ocarina of Time remake randomize
 
 > **Disclaimer:** this tracker was built with the help of AI (Claude, by Anthropic). Every feature has been tested by people, in real playthroughs of the game with OOTRR seeds, and pin spots and auto-tracking were checked in game. If you find something wrong, please use **Report a bug** on the tracker or [open an issue](https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml).
 
-- **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.9.0-nightly.20261125.9's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
+- **Logic from OOTRR itself.** The checks you can get right now are worked out with OOTRR 0.9.0-nightly.20261125.18's own logic, exported from ootrr-core and run in the page. Green = in logic, yellow = only with tricks, red = not yet, grey = done. C/A shows which age can get it.
 - **Or set the settings by hand.** Without a seed file, Settings works like OOTRR's own settings page: the same groups, presets, labels and help text, settings that only count when another one is on, and a box for an OOTRR settings string. The tracker then lists exactly the locations OOTRR would shuffle with those settings.
 - **Load your seed.** Load the `.ootrr` file OOTRR generated (or drop it on the page). The tracker reads every setting from it, lists exactly the locations your seed shuffles, and counts your starting items.
 - **Dungeon entrance shuffle.** With Entrances set to Dungeons, the logic follows which dungeon is behind each door, exactly like OOTRR's. Each dungeon in the list shows **door: ?** until you click it (or until your save has Link inside it), so the layout isn't spoiled.
@@ -97,7 +97,7 @@ The page shows a banner when a loaded seed uses entrance or shop shuffle.
 | `src/seed.js` | `.ootrr` seed files and settings strings |
 | `src/autotrack.js` | `progress.sav` reading and save-based detection |
 | `src/texdec.js` | Game texture reading for the map tracker: zstd, BNTX, block-linear swizzle and ASTC (ported from ootrr-core's `tex` module) |
-| `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.9.0-nightly.20261125.9 |
+| `data/data.json` | Logic, settings schema, locations and tracker targets from OOTRR 0.9.0-nightly.20261125.18 |
 | `tools/deal_room.py` | Measures how many special deals fit with each setting (`tools/out/deal_room.json`), for the manual settings' shop shelves |
 | `tools/pool_matrix.py` | Runs OOTRR's generator once per setting value and records which locations each one adds or removes (`tools/out/pools.json`), for the manual settings |
 | `tools/` | Scripts that rebuild `data/data.json` for a new OOTRR version, and the cross-check |
