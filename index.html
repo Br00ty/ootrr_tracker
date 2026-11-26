@@ -259,7 +259,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
   <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
-  <button class="btn" id="logicBtn" title="Show the logic under every check (otherwise click a check to see its logic)">Show logic</button>
+  <button class="btn" id="logicBtn" title="Show or hide the logic (region and rule) under every check">Show logic</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
   <a class="btn" id="bugBtn" href="https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml" target="_blank" rel="noopener" title="Found something wrong? Open a bug report on GitHub (needs a GitHub account)">Report a bug</a>
   <button class="btn" id="aboutBtn" title="What this tracker is, which randomizer it's for, and how it was made">About</button>
@@ -4453,8 +4453,14 @@ function skullNote(n) {
   const what = sn[0] === "tour" ? "This name is OOTRR's placeholder for a remake Skulltula" : "OOTRR thinks this name fits this remake Skulltula, but it isn't settled";
   return h("div", { class: "cross" }, h("span", { class: "xa" }, "GS"), `${what}: ${sn[1].replace(/^placeholder, /, "")}.`);
 }
-function describe(n) {
+// a check's notes, and with logic (the "Show logic" button) its region, rule and ways in; null when there's nothing
+function describe(n, logic = true) {
   const [area, , region, rule] = DATA.checks[n];
+  if (!logic) {
+    const notes = [...crossNotes(n).map((c) => h("div", { class: "cross" }, h("span", { class: "xa" }, `${c.first === "child" ? "C" : "A"}→${c.then === "child" ? "C" : "A"}`), c.text)),
+      skullNote(n), renamed(n) ? h("div", { class: "cross" }, `OOTRR name: ${n}`) : null].filter(Boolean);
+    return notes.length ? h("div", { class: "desc" }, notes) : null;
+  }
   // dungeon checks never show the way in: the dungeon's own rooms and keys are the route
   const ways = DUNGEON_AREAS.includes(area) ? [] : waysIn(region);
   const cross = crossNotes(n);
@@ -4507,7 +4513,7 @@ const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skul
 // one check's row (and its description when open); again() redraws the list it sits in
 function ckRow(c, again, open = false) {
   return [h("div", {
-    class: `ck st-${c.st} ${openCheck === c.n ? "open" : ""}`, title: "Click for its logic · double-click to mark it done",
+    class: `ck st-${c.st} ${openCheck === c.n ? "open" : ""}`, title: "Double-click to mark it done (Show logic, at the top, shows each check's logic)",
     // one click opens the description; a double click marks the check done and cancels the pending click
     onclick: () => { clearTimeout(clickTimer); clickTimer = setTimeout(() => { openCheck = openCheck === c.n ? null : c.n; again(); }, 230); },
     ondblclick: () => { clearTimeout(clickTimer); toggleDone(c.n); },
@@ -4521,7 +4527,8 @@ function ckRow(c, again, open = false) {
     // a shop shelf you haven't looked in yet: "?" (its item and price then go under the name)
     shopTag(c.n),
     h("span", { class: "kind" }, KIND[c.k])),
-    open || openCheck === c.n || S.showLogic ? describe(c.n) : null];
+    // Show logic on: every check's logic. Off: no logic anywhere; a click shows only its notes (OOTRR's name, age order)
+    S.showLogic ? describe(c.n) : openCheck === c.n ? describe(c.n, false) : null];
 }
 function renderChecks() {
   const el = $("#checks"), top = el.scrollTop;
@@ -4544,7 +4551,7 @@ function checksPanel(area, again) {
     h("div", { class: "legend" },
       h("span", {}, h("span", { class: "dot g" }), "in logic"), h("span", {}, h("span", { class: "dot y" }), "only with tricks"),
       h("span", {}, h("span", { class: "dot r" }), "inaccessible"), h("span", {}, h("span", { class: "dot d" }), "done"),
-      h("span", {}, "C / A: which age can get it"), h("span", {}, h("span", { class: "xa" }, "C→A"), "do something as one age first"), h("span", {}, "click: logic · double-click: done")));
+      h("span", {}, "C / A: which age can get it"), h("span", {}, h("span", { class: "xa" }, "C→A"), "do something as one age first"), h("span", {}, "double-click: done")));
 }
 
 // ---------- settings dialog ----------
