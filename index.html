@@ -3003,7 +3003,8 @@ function restoreIcons() {
   const want = iconSetKey(); let had = null; try { had = localStorage.getItem(ICON_SET_KEY); } catch (e) {}
   if (nPics() && nPics() < ICON_IDS.size && had !== want) {
     try { localStorage.setItem(ICON_SET_KEY, want); } catch (e) {}
-    iconMsg = `This version shows ${ICON_IDS.size - nPics()} more item pictures (like shop items). Load the UI folder again to add them.`;
+    const more = ICON_IDS.size - nPics();
+    iconMsg = `This version shows ${more} more item picture${more === 1 ? "" : "s"} (like shop items). Load the UI folder again to add ${more === 1 ? "it" : "them"}.`;
     iconView = "main"; openIcons();
   }
 }
