@@ -1,0 +1,9 @@
+{
+ "id": "night4",
+ "name": "nightly test 4",
+ "tip": "test (0.9.0-nightly.20261126.19: Ice Traps on, so the six trap chests are shuffled)",
+ "order": 99,
+ "settings": {
+  "shuffle_ice_traps": true
+ }
+}
