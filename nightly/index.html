@@ -105,7 +105,8 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck .shopline{display:block;font-size:11px;line-height:1.35;margin-top:1px;color:var(--dim)}
 .ck .shopline .shopit{color:var(--ink);cursor:pointer}
 .ck .shopline .shopit:hover{text-decoration:underline}
-.ck .shopline .price{margin-left:6px}
+.ck .shopline{display:flex;align-items:center;gap:6px}
+.ck .shopline .shopico{width:18px;height:18px;object-fit:contain;vertical-align:middle;display:block}
 .ck .shopq{font-size:14px;font-weight:600;color:var(--gold);border:1px solid var(--gold);border-radius:5px;padding:1px 9px;cursor:pointer;line-height:1.2}
 .ck .shopq:hover{background:var(--gold);color:var(--bg)}
 .ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
@@ -3001,7 +3002,33 @@ const ICON = {
   "Eyeball Frog": "Item_EyeballFrog", "Eyedrops": "Item_EyeDrop", "Claim Check": "Item_ClaimCheck",
   "small key": "Item_Dungeon_SmallKey", "boss key": "Item_Dungeon_BossKey",
 };
-const ICON_IDS = new Set(Object.values(ICON).flat());
+// pictures for what a shop shelf (or any check) holds: [pattern on the item's name, picture id], first match wins.
+// "Buy …" and "… for 40 Rupees" are dropped first. Names with a picture above use that one.
+const ITEM_PICS = [
+  [/^Bottle with Red Potion$|^Red Potion/, "Item_Bottle_RedPotion"], [/Green Potion$/, "Item_Bottle_GreenPotion"], [/Blue Potion$/, "Item_Bottle_BluePotion"],
+  [/Blue Fire$/, "Item_Bottle_BlueFire"], [/Fish$/, "Item_Bottle_Fish"], [/Bugs?$|Bottle Bug$/, "Item_Bottle_Bug"], [/Big Poe$/, "Item_Bottle_BigPoe"],
+  [/Poe$/, "Item_Bottle_Poe"], [/Fairy('s Spirit)?$/, "Item_Bottle_Fairy"], [/Milk$/, "Item_Bottle_Milk"],
+  [/^Bombchus?\b|^Bombchu /, "Item_Bombchu"], [/^Bombs?\b/, "Item_Bomb"], [/^Arrows\b/, "Item_Arrow_Normal"],
+  [/^Deku Nut Capacity/, "Item_NutBag_Medium"], [/^Deku Stick Capacity/, "Item_StickBag_Medium"],
+  [/^Deku Nuts?\b/, "Item_DekuNut"], [/^Deku Sticks?\b/, "Item_DekuStick"], [/^Deku Seeds/, "Item_DekuSeed"],
+  [/^Deku Shield/, "Weapon_Shield_Deku"], [/^Hylian Shield/, "Weapon_Shield_Hylian"], [/^Mirror Shield/, "Weapon_Shield_Mirror"],
+  [/^Rupees? \((Treasure Chest Game\) \()?1\)/, "Obj_Rupee_Green"], [/^Rupees \((Treasure Chest Game\) \()?5\)/, "Obj_Rupee_Blue"],
+  [/^Rupees \((Treasure Chest Game\) \()?20\)/, "Obj_Rupee_Red"], [/^Rupees \((Treasure Chest Game\) \()?50\)/, "Obj_Rupee_Purple"],
+  [/^Rupees \(200\)/, "Obj_Rupee_Gold"], [/^Silver Rupee/, "Obj_Rupee_Gold"],
+  [/^Small Key/, "Item_Dungeon_SmallKey"], [/^Boss Key/, "Item_Dungeon_BossKey"], [/^Compass/, "Item_Dungeon_Compass"], [/^Map\b/, "Item_Dungeon_Map"],
+  [/^Giants Knife/, "Weapon_Sword_Giant"], [/Magic Bean/, "Item_MagicBean"], [/^(Heart Container|Piece of Heart)/, "Obj_Heart_Piece"],
+  [/^Goron Mask/, "Armor_Child_Mask_Goron"], [/^Zora Mask/, "Armor_Child_Mask_Zora"], [/^Gerudo Mask/, "Armor_Child_Mask_Gerudo"],
+  [/^Pocket Cucco|^Chicken/, "Item_PocketCucco"], [/^Double Defense/, "Item_FairyBless_DefenseDouble"],
+  [/^Business Scrub Seed/, "Item_ScrubBusinessSeed"], [/^Bomb Bag/, "Item_BombBag_Small"], [/^Progressive Wallet/, "Item_Wallet_Medium"],
+];
+const ICON_IDS = new Set([...Object.values(ICON).flat(), ...ITEM_PICS.map((x) => x[1])]);
+// an item's picture for a shelf, or null (then its name is shown)
+function itemPic(item) {
+  const n = String(item || "").replace(/^Buy /, "").replace(/ for \d+ Rupees$/, "").replace(/^Goron Tunic$|^Zora Tunic$/, (m) => m);
+  if (ICON[n]) return picOf(n, 1);
+  const hit = ITEM_PICS.find(([re]) => re.test(n));
+  return hit ? PICS[hit[1]] || null : null;
+}
 const ICON_KEY = "ootrr-tracker-icons";
 let PICS = {};
 try { PICS = JSON.parse(localStorage.getItem(ICON_KEY) || "{}") || {}; } catch (e) { PICS = {}; }
@@ -4609,8 +4636,9 @@ function shopLine(n) {
   if (!sh || !S.seed || !S.seed.placements[n] || !shopSeen(n)) return null;
   const it = S.seed.placements[n], price = dealPrice(n), hide = S.shopSeen[sh] && !isDone(n);
   return h("span", { class: "shopline" },
-    h("span", { class: "shopit", title: hide ? `On this shelf. Click to hide ${sh}'s shelves again.` : "On this shelf",
-      onclick: (e) => { if (!hide) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it),
+    h("span", { class: "shopit", title: hide ? `${it} on this shelf. Click to hide ${sh}'s shelves again.` : `${it} on this shelf`,
+      onclick: (e) => { if (!hide) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } },
+      itemPic(it) ? h("img", { class: "shopico", src: itemPic(it), alt: it }) : it),
     price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null);
 }
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
