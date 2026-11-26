@@ -917,8 +917,19 @@ async function droppedFolderFiles(entries) {
 function restoreIcons() {
   let ask = null; try { ask = localStorage.getItem(ASK_KEY); } catch (e) {}
   if ($("#dlg").open) return;
-  if (!nPics() && !nMaps() && ask !== "no") { iconMsg = ""; iconView = "main"; openIcons(); }
+  if (!nPics() && !nMaps() && ask !== "no") { iconMsg = ""; iconView = "main"; openIcons(); return; }
+  // an update that looks for more pictures than this browser has: open the window once, the first time this
+  // version runs (website or app), so the player can load the UI folder again
+  const want = iconSetKey(); let had = null; try { had = localStorage.getItem(ICON_SET_KEY); } catch (e) {}
+  if (nPics() && nPics() < ICON_IDS.size && had !== want) {
+    try { localStorage.setItem(ICON_SET_KEY, want); } catch (e) {}
+    iconMsg = `This version shows ${ICON_IDS.size - nPics()} more item pictures (like shop items). Load the UI folder again to add them.`;
+    iconView = "main"; openIcons();
+  }
 }
+// which pictures this version looks for, so a later one that looks for more can say so once
+const ICON_SET_KEY = "ootrr-tracker-icons-set";
+function iconSetKey() { let x = 0; for (const c of [...ICON_IDS].sort().join(",")) x = (x * 31 + c.charCodeAt(0)) | 0; return `${ICON_IDS.size}:${x >>> 0}`; }
 function openIcons() {
   const n = nPics(), close = () => { iconMsg = ""; iconView = "main"; $("#dlg").close(); };
   const row = (...b) => h("div", { style: "display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:12px" }, ...b);
@@ -938,7 +949,10 @@ function openIcons() {
       h("p", {}, "The tracker can show the game's own pictures for items, songs, stones, medallions and keys, and the game's own maps in the Map Tracker. They come from your copy of the game, so they aren't included with the tracker: pick the ", h("b", {}, "UI"), " folder in your extracted game files (romfs → UI) and both are read from it."),
       iconMsg ? h("p", { style: "color:var(--gold)" }, iconMsg) : null,
       mapMsg ? h("p", { style: "color:var(--gold)" }, mapMsg) : null,
-      mapBusy ? null : h("p", { style: "color:var(--dim)" }, n || nMaps() ? `${n} of ${ICON_IDS.size} pictures and ${nMaps()} maps stored in this browser.` : "Nothing stored yet."),
+      mapBusy ? null : h("p", { style: "color:var(--dim)" }, n || nMaps() ? [
+        // fewer than this version looks for: the number in red (load the UI folder again to fill it in)
+        n < ICON_IDS.size ? h("span", { style: "color:var(--red);font-weight:700", title: "Some pictures are missing: load the UI folder again" }, String(n)) : String(n),
+        ` of ${ICON_IDS.size} pictures and ${nMaps()} maps stored in this browser.`] : "Nothing stored yet."),
       mapBusy ? null : h("div", { style: "display:flex;gap:8px;flex-wrap:wrap" },
         h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => pickMaps() }, n || nMaps() ? "Load them again from the UI folder" : "Pick the game's UI folder"),
         h("span", { style: "color:var(--dim);font-size:12px;align-self:center" }, "or drag the UI folder onto the tracker")),
