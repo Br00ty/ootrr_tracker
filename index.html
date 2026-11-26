@@ -208,7 +208,6 @@ main.focus{grid-template-columns:250px 1fr}
 @media (min-width:1500px){main.focus{grid-template-columns:250px 250px 1fr}}
 main.focus.mapmode{grid-template-columns:1fr}
 main.focus #mapview{grid-column:1/-1}
-main.focus .mapside{display:none}
 .mapbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
 .mapbar select{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 6px}
 .mapbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
@@ -3969,6 +3968,9 @@ function renderMap() {
       return [f, g ? h("span", {}, f, h("span", { style: "color:var(--green);font-weight:700;margin-left:4px" }, String(g))) : f]; }), m.floor, (v) => { S.floor[area] = v; }) : null)
       : noMap ? null : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
+    // which checks the map shows (they used to sit above the "Not on the map" list, which now shows only when needed)
+    m.key && PIN_AREAS.has(area) && !S.pinEdit ? h("span", { class: "chips", style: "padding:0" }, [["g", `In logic (${t.g})`], ["y", `Out of logic (${t.y})`], ["r", `Inaccessible (${t.r})`], ["done", `Done (${t.done})`]]
+      .map(([k, label]) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label))) : null,
     h("span", { class: "spacer" }),
     list.length && !noMap ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
     LINK.pos ? h("button", { class: "btn", style: S.showLink === false ? "" : "border-color:var(--gold);color:var(--gold)", title: "Show where Link is on the map (live with the Longshot helper, or where your last save was made)",
@@ -4158,10 +4160,10 @@ function mapSide(area, key, list) {
       h("button", { class: "btn", style: "padding:1px 8px", onclick: () => { pinPlace = pinPlace === pinKey(c) ? null : pinKey(c); renderMap(); } }, pinPlace === pinKey(c) ? "Cancel" : "Place"))),
     other,
     h("div", { class: "hint" }, "Moved or placed pins are kept in this browser. Copy my pin changes and send them to the tracker's author to make them part of the tracker for everyone."));
+  // only when something here has no pin on this map (the filter chips sit in the map bar)
+  if (!off.length && !elsewhere.length) return null;
   return h("div", { class: "mapside" },
-    h("div", { class: "chips", style: "padding:10px 12px 4px" }, chip("g", `In logic (${t.g})`), chip("y", `Out of logic (${t.y})`), chip("r", `Inaccessible (${t.r})`), chip("done", `Done (${t.done})`)),
-    h("h2", {}, `Not on the map (${off.length})`),
-    off.length ? off.map((c) => ckRow(c, renderMap)) : h("div", { class: "hint" }, "Every check shown here has a pin."),
+    off.length ? [h("h2", {}, `Not on the map (${off.length})`), off.map((c) => ckRow(c, renderMap))] : null,
     other,
     h("div", { class: "hint" }, "Click a pin to list its checks; double-click a single pin, or a check in a list, to mark it done."));
 }
