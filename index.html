@@ -202,6 +202,13 @@ dialog.wide{width:min(860px,94vw)}
 @media (min-width:1500px){#mapview{grid-column:3/-1}}
 main.mapmode #areas,main.mapmode #dungeons,main.mapmode #checks{display:none}
 main.mapmode #mapview{display:flex}
+/* "Hide all but …": only the location lists, or only the map; the hidden parts still run (items, auto-tracking, logic) */
+main.focus #items,main.focus #items2{display:none}
+main.focus{grid-template-columns:250px 1fr}
+@media (min-width:1500px){main.focus{grid-template-columns:250px 250px 1fr}}
+main.focus.mapmode{grid-template-columns:1fr}
+main.focus #mapview{grid-column:1/-1}
+main.focus .mapside,main.focus .mapareas{display:none}
 .mapbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line)}
 .mapbar select{background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 6px}
 .mapbar .seg{display:inline-flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
@@ -259,6 +266,7 @@ body.drag::after{content:"Drop a .ootrr seed, a save folder or progress.sav";pos
   <button class="btn" id="iconBtn" title="Item pictures from OOTRR's icon cache, and the game's maps for the Map Tracker">Icons &amp; Maps</button>
   <input type="file" id="iconFile" webkitdirectory directory multiple hidden>
   <button class="btn" id="setBtn">Settings</button>
+  <button class="btn" id="focusBtn" title="Show only the location lists (Location Tracker) or only the map with its pins (Map Tracker). Items, auto-tracking and the logic keep running.">Hide all but Locations</button>
   <button class="btn" id="logicBtn" title="Show or hide the logic (region and rule) under every check">Show logic</button>
   <button class="btn" id="resetBtn" title="Clear items and checked locations">Reset progress</button>
   <a class="btn" id="bugBtn" href="https://github.com/Br00ty/ootrr_tracker/issues/new?template=bug_report.yml" target="_blank" rel="noopener" title="Found something wrong? Open a bug report on GitHub (needs a GitHub account)">Report a bug</a>
@@ -2520,7 +2528,8 @@ const DEFAULT = {
   seed: null,
   reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
   heard: {},   // gossip stones the player has talked to: { GOSSIP_label: 1 }
-  showLogic: false,  // every check shows its logic under it (the "Show logic" button)
+  showLogic: false,
+  focus: false,  // "Hide all but Map/Locations": only the map, or only the location lists  // every check shows its logic under it (the "Show logic" button)
   shopSeen: {},  // shops whose shelves the player has looked at: { "Market Bazaar": 1 } (the item and price show then)
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
@@ -2786,6 +2795,9 @@ function render() {
   renderStats(); renderItems(); renderMode();
   if (S.view === "map") renderMap(); else { renderAreas(); renderChecks(); }
   renderBroadcast();
+  $("main").classList.toggle("focus", !!S.focus);
+  const fb = $("#focusBtn"); fb.classList.toggle("on", !!S.focus);
+  fb.textContent = S.focus ? "Show everything" : S.view === "map" ? "Hide all but Map" : "Hide all but Locations";
   const lb = $("#logicBtn"); lb.classList.toggle("on", !!S.showLogic); lb.textContent = S.showLogic ? "Hide logic" : "Show logic";
   save();
 }
@@ -4769,6 +4781,7 @@ $("#aboutBtn").onclick = () => {
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
 };
+$("#focusBtn").onclick = () => { S.focus = !S.focus; render(); };
 $("#logicBtn").onclick = () => { S.showLogic = !S.showLogic; render(); };
 $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
