@@ -516,6 +516,7 @@ const Seed = (() => {
     "DMC Fire Temple Entrance Green Rupee 1 needs the Longshot (adult Link); OOTRR has it with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
     "Graveyard Heart Piece Grave Chest needs no Sun's Song: the chest is already there. OOTRR asks for Sun's Song.",
+    "HF Ocarina of Time Item and Song from Ocarina of Time need no Ocarina when Zelda's Escape is Not Required. OOTRR asks for an Ocarina.",
     "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
@@ -537,6 +538,11 @@ const Seed = (() => {
     // confirmed by the user 2026-11-25: the chest in the Heart Piece grave is there without Sun's Song (OOTRR:
     // can_play(Suns_Song)); getting into the grave keeps OOTRR's rule (adult, or child at night)
     "Graveyard Heart Piece Grave Chest": "True",
+    // the user, 2026-11-26: with Zelda's Escape Not Required (the Ocarina of Time waiting in the moat from the start),
+    // neither needs an Ocarina in hand. OOTRR asks for one either way (open_world.rs: "the Ocarina of Time cutscene
+    // needs an ocarina in hand"); its rule stays for the other Zelda's Escape settings
+    "HF Ocarina of Time Item": "is_child and (door_of_time_escape == 'moat' or (story_stones and Ocarina))",
+    "Song from Ocarina of Time": "is_child and (door_of_time_escape == 'moat' or (story_stones and Ocarina))",
     // the user 2026-11-22: shown as HF GS Tree By KF, a Hyrule Field tree either age can bonk (OOTRR: is_child and can_bonk)
     // (0.9.0-nightly.20261125.9 renamed it from LLR GS Rain Shed and moved it to Hyrule Field, still child only)
     "HF GS Lone Tree East of LLR": "can_bonk",
