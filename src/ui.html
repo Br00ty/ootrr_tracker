@@ -413,7 +413,8 @@ const DEFAULT = {
   showLogic: false,  // every check shows its logic under it (the "Show logic" button)
   shopSeen: {},  // shops whose shelves the player has looked at: { "Market Bazaar": 1 } (the item and price show then)
   castLayout: "classic",  // Broadcast view layout: "classic" (every tile) or "card" (the Compact layout)
-  lastFound: null,  // the newest item found at a check, for the Compact layout: { item, area }
+  lastFound: null,
+  castTipSeen: false,  // the Broadcast view's "hover for options" tip has done its job  // the newest item found at a check, for the Compact layout: { item, area }
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -1005,6 +1006,9 @@ body:hover .opts{opacity:1}
 .t.on img{filter:none;opacity:1}
 .t .n{position:absolute;right:3px;bottom:1px;font-size:13px;font-weight:800;color:#fff;text-shadow:0 0 3px #000,0 0 3px #000,1px 1px 0 #000}
 .t .n.max{color:#7ee08c}
+.tip{position:fixed;left:50%;bottom:12px;transform:translateX(-50%);max-width:calc(100% - 24px);background:#1f2c40;border:1px solid #d9b45a;color:#ece4cf;font-size:12px;font-weight:600;padding:7px 12px;border-radius:8px;box-shadow:0 4px 14px #000a;text-align:center;z-index:6;animation:tipin .3s ease-out}
+@keyframes tipin{from{opacity:0;transform:translate(-50%,8px)}}
+body:hover .tip{display:none}
 /* Compact layout */
 .card{margin:0 auto;display:flex;flex-direction:column;gap:12px;background:rgba(12,16,24,.92);border:1px solid #d9b45a88;border-radius:16px;padding:16px 18px}
 .card .hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -1037,8 +1041,12 @@ function openBroadcast() {
   d.head.replaceChildren(Object.assign(d.createElement("style"), { textContent: CAST_CSS }));
   d.body.replaceChildren();
   BW.addEventListener("beforeunload", () => { BW = null; });
+  // a tip about the hover options, for a few seconds after the window opens, until the player has hovered once
+  if (!S.castTipSeen) { castTipUntil = Date.now() + 10000; setTimeout(() => renderBroadcast(), 10100); }
+  d.body.addEventListener("mouseenter", () => { if (S.castTipSeen) return; S.castTipSeen = true; castTipUntil = 0; render(); });
   renderBroadcast();
 }
+let castTipUntil = 0;
 function castTile(name, label, max, opts = {}) {
   const v = have(name), pic = opts.pic !== undefined ? opts.pic : picOf(name, Math.max(1, v));
   const tiers = TIERS[name], on = opts.on !== undefined ? opts.on : v > 0;
@@ -1119,7 +1127,8 @@ function renderBroadcast() {
     btn("green", "See-through: green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
   d.body.classList.toggle("key", !!key);
   d.body.style.setProperty("--key", KEYS[key] || "transparent");
-  d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts));
+  const tip = Date.now() < castTipUntil ? h("div", { class: "tip" }, "Hover over this window for layouts and see-through backgrounds") : null;
+  d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts), ...(tip ? [d.adoptNode(tip)] : []));
   // fit the window: the tiles follow its width; when that makes the panel taller than the window, shrink it
   // fit the window: the tiles are square, so a panel taller than the window is made narrower (and centred)
   const fit = () => {
