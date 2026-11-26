@@ -301,7 +301,7 @@ const Seed = (() => {
     "HF Ocarina of Time Item and Song from Ocarina of Time need no Ocarina when Zelda's Escape is Not Required. OOTRR asks for an Ocarina.",
     "HF GS Tree By KF (OOTRR: LLR GS Rain Shed) can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
-    "Spirit Temple Child Early Torches Chest and its room's five silver rupees need the Boomerang too: the room is only reached through the Bridge Chest's room.",
+    "Spirit Temple Child Early Torches Chest, its room's five silver rupees, the two Bridge Flying Pots and the four Anubis Pots need the Boomerang too: they're all past the Bridge Chest's room.",
     "Spirit Temple Early Adult Right Chest needs Song of Time as well as the room's silver rupees.",
     "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
@@ -357,6 +357,14 @@ const Seed = (() => {
     "Spirit Temple Child Early Torches Silver Rupee Bottom Left": "Boomerang",
     "Spirit Temple Child Early Torches Silver Rupee Top Left": "Boomerang",
     "Spirit Temple Child Early Torches Silver Rupee Near Torch": "Boomerang",
+    // the user, 2026-11-26: the two flying pots are right by the Bridge Chest, and the Anubis room is the next room on
+    // (OOTRR: True, same region)
+    "Spirit Temple Child Bridge Flying Pot 1": "Boomerang",
+    "Spirit Temple Child Bridge Flying Pot 2": "Boomerang",
+    "Spirit Temple Child Anubis Pot 1": "Boomerang",
+    "Spirit Temple Child Anubis Pot 2": "Boomerang",
+    "Spirit Temple Child Anubis Pot 3": "Boomerang",
+    "Spirit Temple Child Anubis Pot 4": "Boomerang",
     // 2026-11-26, players' reports via the user: the chest needs Song of Time as well (OOTRR: the room's five silver
     // rupees only; its Skulltula already asks for Song of Time)
     "Spirit Temple Early Adult Right Chest": "(Silver_Rupee_Spirit_Temple_Adult_Boulders, 5) and can_play(Song_of_Time)",
