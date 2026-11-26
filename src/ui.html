@@ -101,9 +101,10 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck .nm{flex:1}
 .ck.st-done .nm{color:var(--faint);text-decoration:line-through}
 .ck .price{font-size:11px;color:var(--gold);white-space:nowrap}
-.ck .shopit{font-size:12px;color:var(--ink);white-space:nowrap;cursor:default}
-.ck .shopq{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:0 5px;cursor:pointer}
-.ck .shopq:hover{color:var(--gold);border-color:var(--gold)}
+.ck .shopbox{display:inline-flex;flex-direction:column;align-items:flex-end;line-height:1.2}
+.ck .shopit{font-size:11px;color:var(--ink);text-align:right;cursor:default}
+.ck .shopq{font-size:14px;font-weight:600;color:var(--gold);border:1px solid var(--gold);border-radius:5px;padding:1px 9px;cursor:pointer;line-height:1.2}
+.ck .shopq:hover{background:var(--gold);color:var(--bg)}
 .ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
 .age{font-size:10px;font-weight:700;border-radius:3px;padding:0 4px;border:1px solid var(--line);color:var(--faint)}
 .age.ok{color:#111;background:var(--green);border-color:var(--green)}
@@ -694,10 +695,10 @@ function compute() {
     if (isDone(n)) st = "done";
     else if (L && (L[0] || L[1])) st = "g";
     else if (T && (T[0] || T[1])) st = "y";
-    // dungeon entrance shuffle: a dungeon whose door you haven't been through stays out of logic, every one of them
+    // dungeon entrance shuffle: a dungeon whose door you haven't been through shows as inaccessible, every one of them
     // alike, so the list can't give away which dungeon an opened door leads to (the user's call, 2026-11-26). The same
     // as the map's door marker: it shows once Link has been inside, or you click "door: ?"
-    if (st !== "done" && unseenDungeon(a) && !doneIn.has(areaName(a))) { dest.set(n, { ...c, st: "y", unseen: true, fromSave: false, child: "", adult: "" }); continue; }
+    if (st !== "done" && unseenDungeon(a) && !doneIn.has(areaName(a))) { dest.set(n, { ...c, st: "r", unseen: true, fromSave: false, child: "", adult: "" }); continue; }
     dest.set(n, { ...c, st, fromSave: !!S.auto.done[n] && !S.ignore[n] && !S.done[n], child: L && L[0] ? "ok" : T && T[0] ? "ol" : "", adult: L && L[1] ? "ok" : T && T[1] ? "ol" : "" });
   }
   return out;
@@ -2402,9 +2403,10 @@ function shopTag(n) {
   if (!shopSeen(n)) return h("span", { class: "shopq", title: `You haven't looked in ${sh} yet. Click once you have, to show what's on its shelves and the prices.`,
     onclick: (e) => { e.stopPropagation(); S.shopSeen[sh] = 1; render(); } }, "?");
   const it = S.seed.placements[n], price = dealPrice(n);
-  return [price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null,
+  // the price, with the item under it, so the shelf's name keeps its room
+  return h("span", { class: "shopbox" }, price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null,
     h("span", { class: "shopit", title: S.shopSeen[sh] && !isDone(n) ? `On this shelf. Click to hide ${sh}'s shelves again.` : "On this shelf",
-      onclick: (e) => { if (!S.shopSeen[sh]) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it)];
+      onclick: (e) => { if (!S.shopSeen[sh]) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it));
 }
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
 // one check's row (and its description when open); again() redraws the list it sits in
