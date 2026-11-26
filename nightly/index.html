@@ -3298,6 +3298,21 @@ body:hover .tip{display:none}
 .card .found b{font-size:10px;letter-spacing:.12em;color:#d9b45a}.card .found span{color:#7d7767;font-weight:500}
 body.key .card .split img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
 body.key .card .split>div.on img{filter:drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+.card .keys{display:grid;grid-template-columns:repeat(9,1fr);gap:4px}
+.card .dk{background:#0f1520;border:1px solid #2c3a52;border-radius:7px;padding:3px 1px 4px;display:flex;flex-direction:column;align-items:center;gap:1px;user-select:none;min-width:0}
+.card .dk.on{border-color:#d9b45a88}
+.card .dk .nm{font-size:9.5px;font-weight:600;color:#a7a08c;white-space:nowrap;overflow:hidden;max-width:100%}
+.card .dk .k{display:flex;align-items:center;gap:1px;font-weight:800;font-size:12px;cursor:pointer;color:#59627a}
+.card .dk .k.some{color:#ece4cf}.card .dk .k.all{color:#7ee08c}
+.card .dk .k i{font-style:normal;font-weight:500;font-size:9px;color:#59627a}
+.card .dk .k img{height:14px;width:auto;opacity:.45}.card .dk .k.some img{opacity:1}
+.card .dk .bk{height:17px;cursor:pointer;display:flex;align-items:center;font-size:9px;font-weight:800;color:#59627a}
+.card .dk .bk img{height:17px;width:auto;filter:grayscale(1) brightness(.75);opacity:.32}
+.card .dk .bk.on img{filter:none;opacity:1}.card .dk .bk.on{color:#d9b45a}
+body.key .card .dk{background:var(--key);border-color:transparent}
+body.key .card .dk .k img{opacity:1;filter:drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+body.key .card .dk .bk img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+body.key .card .dk .bk.on img{filter:drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
 body.key .card{background:var(--key)}body.key .card .split>div{background:var(--key)}
 .t .lb{position:absolute;left:0;right:0;top:1px;font-size:8.5px;font-weight:700;color:#e9d7a6;text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:.02em}
 `;
@@ -3355,6 +3370,16 @@ function castCard() {
     h("div", { class: "songs" }, SONGS.map(([n, l, m]) => castTile(n, l, m))),
     h("div", { class: "rews" }, REWARDS.filter((r) => r[3] === "stone").map(([n, l, m]) => castTile(n, l, m)), h("div", { class: "dv" }),
       REWARDS.filter((r) => r[3] === "med").map(([n, l, m]) => castTile(n, l, m))),
+    // each dungeon's small keys (found / in it) and its boss key; click to add, right-click to take one away
+    h("div", { class: "keys" }, DUNGEONS.map(([dn, sk, m, bk]) => {
+      const v = have(sk), b = bk ? have(bk) : 0, kp = PICS.Item_Dungeon_SmallKey, bp = PICS.Item_Dungeon_BossKey;
+      return h("div", { class: `dk ${v || b ? "on" : ""}`, title: `${dn}: ${v}/${m} small keys${bk ? `, boss key ${b ? "found" : "not found"}` : ""}` },
+        h("div", { class: "nm" }, CAST_SHORT[dn] || dn),
+        h("div", { class: `k ${v >= m ? "all" : v ? "some" : ""}`, onclick: () => bump(sk, m, 1), oncontextmenu: (e) => { e.preventDefault(); bump(sk, m, -1); } },
+          kp ? h("img", { src: kp, alt: "" }) : null, String(v), h("i", {}, `/${m}`)),
+        bk ? h("div", { class: `bk ${b ? "on" : ""}`, onclick: () => bump(bk, 1, b ? -1 : 1), oncontextmenu: (e) => { e.preventDefault(); bump(bk, 1, -1); } },
+          bp ? h("img", { src: bp, alt: "Boss key" }) : "BK") : h("div", { class: "bk" }));
+    })),
     f ? h("div", { class: "found" }, h("b", {}, "JUST FOUND"), f.item, h("span", {}, `· ${f.area}`)) : null);
 }
 // the newest item found at a check (for the Compact layout): checks that turn done since the last look, with a seed
