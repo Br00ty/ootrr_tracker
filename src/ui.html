@@ -986,8 +986,10 @@ body.key,body.key .panel,body.key .t{background:var(--key)}
 body.key{padding:8px}
 body.key .panel{box-shadow:none}
 body.key .t{border-color:transparent}
-body.key .t img{opacity:1;filter:grayscale(1) brightness(.45)}
-body.key .t.on img{filter:none}
+/* a black outline round each picture, so its soft edges blend into black instead of the key colour (users found the
+   keyed pictures looked rough, 2026-11-26) */
+body.key .t img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
+body.key .t.on img{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
 body.key .t{color:#1b2433}
 .opts{position:fixed;top:0;left:0;right:0;display:flex;gap:6px;justify-content:center;padding:6px;background:#000c;opacity:0;transition:opacity .15s;z-index:5}
 body:hover .opts{opacity:1}
@@ -1054,8 +1056,8 @@ function renderBroadcast() {
   const KEYS = { magenta: "#ff00ff", green: "#00ff00" };
   const btn = (v, label, tip) => h("button", { class: key === v ? "on" : "", title: tip || "", onclick: () => { S.castKey = v || false; render(); } }, label);
   const opts = h("div", { class: "opts" }, btn("", "Dark background"),
-    btn("magenta", "See-through: magenta", "A magenta background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter to the window capture, set Key Color Type to Magenta, and the video shows through."),
-    btn("green", "See-through: green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
+    btn("magenta", "Magenta", "A magenta background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter to the window capture, set Key Color Type to Magenta, and the video shows through."),
+    btn("green", "Green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
   d.body.classList.toggle("key", !!key);
   d.body.style.setProperty("--key", KEYS[key] || "transparent");
   d.body.replaceChildren(d.adoptNode(panel), d.adoptNode(opts));
