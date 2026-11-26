@@ -3234,8 +3234,10 @@ body.key,body.key .panel,body.key .t{background:var(--key)}
 body.key{padding:8px}
 body.key .panel{box-shadow:none}
 body.key .t{border-color:transparent}
-body.key .t img{opacity:1;filter:grayscale(1) brightness(.45)}
-body.key .t.on img{filter:none}
+/* a black outline round each picture, so its soft edges blend into black instead of the key colour (users found the
+   keyed pictures looked rough, 2026-11-26) */
+body.key .t img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
+body.key .t.on img{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
 body.key .t{color:#1b2433}
 .opts{position:fixed;top:0;left:0;right:0;display:flex;gap:6px;justify-content:center;padding:6px;background:#000c;opacity:0;transition:opacity .15s;z-index:5}
 body:hover .opts{opacity:1}
@@ -3271,6 +3273,8 @@ body:hover .tip{display:none}
 .card .rews .dv{width:1px;height:60%;background:#2a3142;justify-self:center}
 .card .found{display:flex;align-items:baseline;gap:8px;padding-top:10px;border-top:1px solid #232b3a;font-size:13px;font-weight:600}
 .card .found b{font-size:10px;letter-spacing:.12em;color:#d9b45a}.card .found span{color:#7d7767;font-weight:500}
+body.key .card .split img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
+body.key .card .split>div.on img{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
 body.key .card{background:var(--key)}body.key .card .split>div{background:var(--key)}
 .t .lb{position:absolute;left:0;right:0;top:1px;font-size:8.5px;font-weight:700;color:#e9d7a6;text-shadow:0 0 3px #000,0 0 3px #000;letter-spacing:.02em}
 `;
@@ -3367,8 +3371,8 @@ function renderBroadcast() {
   const btn = (v, label, tip) => h("button", { class: key === v ? "on" : "", title: tip || "", onclick: () => { S.castKey = v || false; render(); } }, label);
   const lay = (v, label) => h("button", { class: (S.castLayout || "classic") === v ? "on" : "", onclick: () => { S.castLayout = v; render(); } }, label);
   const opts = h("div", { class: "opts" }, lay("classic", "Classic"), lay("card", "Compact"), h("span", { style: "width:10px" }), btn("", "Dark background"),
-    btn("magenta", "See-through: magenta", "A magenta background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter to the window capture, set Key Color Type to Magenta, and the video shows through."),
-    btn("green", "See-through: green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
+    btn("magenta", "Magenta", "A magenta background behind everything but the pictures, numbers, border and dividers. In OBS, add a Chroma Key filter to the window capture, set Key Color Type to Magenta, and the video shows through."),
+    btn("green", "Green", "The same with green, OBS's default key colour. Green also takes some green out of the Forest Medallion, Minuet of Forest, Farore's Wind and the Kokiri Emerald."));
   d.body.classList.toggle("key", !!key);
   d.body.style.setProperty("--key", KEYS[key] || "transparent");
   const tip = Date.now() < castTipUntil ? h("div", { class: "tip" }, "Hover over this window for layouts and see-through backgrounds") : null;
