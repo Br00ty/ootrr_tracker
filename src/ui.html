@@ -214,7 +214,7 @@ main.focus #mapview{grid-column:1/-1}
 .mapbar .seg button{background:var(--panel2);border:0;padding:3px 9px;cursor:pointer;color:var(--dim)}
 .mapbar .seg button+button{border-left:1px solid var(--line)}
 .mapbar .seg button.on{background:#33301f;color:var(--gold)}
-.mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b;position:relative}
+.mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b;position:relative;container-type:size}
 .mapchips{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;z-index:3;max-width:calc(100% - 20px)}
 .mapchips .chip{background:rgba(20,18,14,.85)}
 .mapbox img{max-width:100%;max-height:100%;aspect-ratio:3/2;object-fit:fill;width:auto;height:auto;display:block}
@@ -231,7 +231,8 @@ main.focus #mapview{grid-column:1/-1}
 .mapareas .door{display:none}
 .mapside .ck{padding:4px 12px}
 .mapside .desc{padding-left:24px}
-.mapfit{position:relative;aspect-ratio:3/2;max-width:100%;max-height:100%;width:100%}
+/* the largest 3:2 box that fits the space both ways, so the map is never stretched out of shape */
+.mapfit{position:relative;aspect-ratio:3/2;width:min(100cqw,150cqh);max-width:none;max-height:none;flex:none}
 .mapfit img{position:absolute;inset:0;width:100%;height:100%;max-width:none;max-height:none}
 .pin{position:absolute;transform:translate(-50%,-50%);width:18px;height:18px;border-radius:50%;border:2px solid #111;box-shadow:0 0 0 1px #0008,0 1px 4px #000c;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;color:#111;z-index:1}
 .pin.many{width:22px;height:22px}
