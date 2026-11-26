@@ -3712,6 +3712,13 @@ const PIN_FIXES = {
   "Twinrova": { place: "SpiritTemple_3F", u: 0.5023, v: 0.1491 },
   "Bottom of the Well Basement Silver Rupee Ladders Top": { place: "BottomOfTheWell_B2", u: 0.5852, v: 0.7079 },
   "Sheik in Ice Cavern": { place: "IceCavern_1F", u: 0.3002, v: 0.6921 },
+  // placed in game by the user with Edit pins (2026-11-26): checks OOTRR's map index had no pin (or a wrong one) for
+  "GC Pot Freestanding PoH": { place: "GoronCity", u: 0.5319, v: 0.4991 },
+  "LH Underwater Item": { place: "LakeHylia", u: 0.6274, v: 0.3932 },
+  "Hideout 1 Torch Jail Gerudo Key": { place: "GerudoFortress", u: 0.2936, v: 0.2207 },
+  "Shadow Temple Freestanding Key": { place: "ShadowTemple_B3", u: 0.6177, v: 0.5822 },
+  "Bottom of the Well Freestanding Key": { place: "BottomOfTheWell_B1", u: 0.2922, v: 0.5781 },
+  "LH Sun": { place: "LakeHylia", u: 0.6025, v: 0.6093 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
