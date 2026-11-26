@@ -214,7 +214,9 @@ main.focus #mapview{grid-column:1/-1}
 .mapbar .seg button{background:var(--panel2);border:0;padding:3px 9px;cursor:pointer;color:var(--dim)}
 .mapbar .seg button+button{border-left:1px solid var(--line)}
 .mapbar .seg button.on{background:#33301f;color:var(--gold)}
-.mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b}
+.mapbox{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;padding:10px;background:#0f0e0b;position:relative}
+.mapchips{position:absolute;top:10px;left:10px;display:flex;gap:6px;flex-wrap:wrap;z-index:3;max-width:calc(100% - 20px)}
+.mapchips .chip{background:rgba(20,18,14,.85)}
 .mapbox img{max-width:100%;max-height:100%;aspect-ratio:3/2;object-fit:fill;width:auto;height:auto;display:block}
 .mapbox .empty{max-width:520px;text-align:center;line-height:1.6}
 .mapwrap{flex:1;min-height:0;display:flex}
@@ -4231,9 +4233,6 @@ function renderMap() {
       return [f, g ? h("span", {}, f, h("span", { style: "color:var(--green);font-weight:700;margin-left:4px" }, String(g))) : f]; }), m.floor, (v) => { S.floor[area] = v; }) : null)
       : noMap ? null : ZONE_AGE[area] ? h("span", { style: "color:var(--dim);font-size:12px" }, ZONE_AGE[area] === "child" ? "Child" : "Adult")
       : seg([["child", "Child"], ["adult", "Adult"]], S.mapAge, (v) => { S.mapAge = v; }),
-    // which checks the map shows (they used to sit above the "Not on the map" list, which now shows only when needed)
-    m.key && PIN_AREAS.has(area) && !S.pinEdit ? h("span", { class: "chips", style: "padding:0" }, [["g", `In logic (${t.g})`], ["y", `Out of logic (${t.y})`], ["r", `Inaccessible (${t.r})`], ["done", `Done (${t.done})`]]
-      .map(([k, label]) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label))) : null,
     h("span", { class: "spacer" }),
     list.length && !noMap ? h("span", { style: "color:var(--dim)" }, `${t.done}/${list.length} done`) : null,
     LINK.pos ? h("button", { class: "btn", style: S.showLink === false ? "" : "border-color:var(--gold);color:var(--gold)", title: "Show where Link is on the map (live with the Longshot helper, or where your last save was made)",
@@ -4270,7 +4269,10 @@ function renderMap() {
     return;
   }
   el.replaceChildren(...K(bar, edit, m.note ? h("div", { class: "hint", style: "padding:6px 14px 0" }, m.note) : null,
-    h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body), side, mapAreas())));
+    h("div", { class: "mapwrap" }, h("div", { class: "mapbox" }, body,
+      // which checks the map shows, in its top-left corner
+      m.key && PIN_AREAS.has(area) && !S.pinEdit ? h("div", { class: "mapchips" }, [["g", `In logic (${t.g})`], ["y", `Out of logic (${t.y})`], ["r", `Inaccessible (${t.r})`], ["done", `Done (${t.done})`]]
+        .map(([k, label]) => h("span", { class: `chip ${S.show[k] ? "on" : ""}`, onclick: () => { S.show[k] = !S.show[k]; render(); } }, label))) : null), side, mapAreas())));
 }
 const ORDER = { g: 0, y: 1, r: 2, done: 3 };
 // how many of a pin's checks are still to get (its number counts down as they're picked up)
