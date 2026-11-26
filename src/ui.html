@@ -101,6 +101,9 @@ h2{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--dim);
 .ck .nm{flex:1}
 .ck.st-done .nm{color:var(--faint);text-decoration:line-through}
 .ck .price{font-size:11px;color:var(--gold);white-space:nowrap}
+.ck .shopit{font-size:12px;color:var(--ink);white-space:nowrap;cursor:default}
+.ck .shopq{font-size:11px;color:var(--dim);border:1px solid var(--line);border-radius:4px;padding:0 5px;cursor:pointer}
+.ck .shopq:hover{color:var(--gold);border-color:var(--gold)}
 .ck .kind{font-size:10px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em;width:44px;text-align:right}
 .age{font-size:10px;font-weight:700;border-radius:3px;padding:0 4px;border:1px solid var(--line);color:var(--faint)}
 .age.ok{color:#111;background:var(--green);border-color:var(--green)}
@@ -445,6 +448,7 @@ const DEFAULT = {
   seed: null,
   reveal: {},  // dungeons whose door the player has uncovered (dungeon entrance shuffle)
   heard: {},   // gossip stones the player has talked to: { GOSSIP_label: 1 }
+  shopSeen: {},  // shops whose shelves the player has looked at: { "Market Bazaar": 1 } (the item and price show then)
   cats: { chest: true, npc: true, song: true, boss: false, gs: false, other: false },
 };
 let S = load();
@@ -602,6 +606,8 @@ function doorOf(dungeon) {
   return null;
 }
 const entrancesShuffled = () => Object.entries(LAYOUT).some(([a, b]) => a !== b);
+// a shuffled dungeon the player hasn't uncovered yet (see compute)
+const unseenDungeon = (area) => { const d = areaName(area); return entrancesShuffled() && POOL.has(d) && !S.reveal[d]; };
 // Checks the tracker leaves out for now, even when a seed lists them: OOTRR's data names them but nobody has found
 // the thing in the game. Take a name out of here once it's found (and give it its save key if it lacks one).
 const HIDDEN_CHECKS = new Set([
@@ -674,6 +680,8 @@ function compute() {
   // song spots the seed doesn't shuffle: not checks, but the map still shows them (with their vanilla song)
   VSONGS = new Map();
   const vsongs = Object.keys(DATA.checks).filter((n) => DATA.checks[n][1] === "song" && !tracked.has(n) && !excluded.has(n));
+  // a dungeon with a check already done (say, from the save) has been visited
+  const doneIn = new Set(names.filter(isDone).map((n) => areaName(DATA.checks[n][0])));
   for (const n of [...names, ...vsongs]) {
     const [a, k] = DATA.checks[n];
     const c = { n, a, k };
@@ -686,6 +694,10 @@ function compute() {
     if (isDone(n)) st = "done";
     else if (L && (L[0] || L[1])) st = "g";
     else if (T && (T[0] || T[1])) st = "y";
+    // dungeon entrance shuffle: a dungeon whose door you haven't been through stays out of logic, every one of them
+    // alike, so the list can't give away which dungeon an opened door leads to (the user's call, 2026-11-26). The same
+    // as the map's door marker: it shows once Link has been inside, or you click "door: ?"
+    if (st !== "done" && unseenDungeon(a) && !doneIn.has(areaName(a))) { dest.set(n, { ...c, st: "y", unseen: true, fromSave: false, child: "", adult: "" }); continue; }
     dest.set(n, { ...c, st, fromSave: !!S.auto.done[n] && !S.ignore[n] && !S.done[n], child: L && L[0] ? "ok" : T && T[0] ? "ol" : "", adult: L && L[1] ? "ok" : T && T[1] ? "ol" : "" });
   }
   return out;
@@ -2370,6 +2382,21 @@ function describe(n) {
 }
 
 const dealPrice = (n) => { const sh = S.seed && S.seed.shops && S.seed.shops[n]; return sh && sh.deal && S.seed.placements[n] ? sh.price : null; };
+// A shop shelf's shop ("Market Bazaar" for "Market Bazaar Right Side Top Left"). What's on its shelves and the prices
+// stay hidden until you've looked in the shop (the user's call, 2026-11-26: showing them earlier spoils the seed):
+// click "?" on any of its shelves once you've been in, and buying from it counts too.
+const shopOf = (n) => { const m = SHELF.exec(n); return m && DATA.checks[n] && DATA.checks[n][1] === "shop" ? n.slice(0, m.index) : null; };
+const shopSeen = (n) => { const sh = shopOf(n); return !sh || !!S.shopSeen[sh] || isDone(n) || otherShelves(n).some(isDone); };
+function shopTag(n) {
+  const sh = shopOf(n);
+  if (!sh || !S.seed || !S.seed.placements[n]) return null;
+  if (!shopSeen(n)) return h("span", { class: "shopq", title: `You haven't looked in ${sh} yet. Click once you have, to show what's on its shelves and the prices.`,
+    onclick: (e) => { e.stopPropagation(); S.shopSeen[sh] = 1; render(); } }, "?");
+  const it = S.seed.placements[n], price = dealPrice(n);
+  return [price != null ? h("span", { class: "price", title: "Price in this seed" }, `${price} rupees`) : null,
+    h("span", { class: "shopit", title: S.shopSeen[sh] && !isDone(n) ? `On this shelf. Click to hide ${sh}'s shelves again.` : "On this shelf",
+      onclick: (e) => { if (!S.shopSeen[sh]) return; e.stopPropagation(); delete S.shopSeen[sh]; render(); } }, it)];
+}
 const KIND = { chest: "chest", npc: "npc", song: "song", boss: "boss", gs: "skull", pot: "pot", crate: "crate", rock: "rock", grass: "grass", hive: "hive", cow: "cow", shop: "shop", silver: "silver", scrub: "scrub", free: "item", other: "other" };
 // one check's row (and its description when open); again() redraws the list it sits in
 function ckRow(c, again, open = false) {
@@ -2385,8 +2412,8 @@ function ckRow(c, again, open = false) {
       ? h("span", { class: "sv broke", title: `Boss beaten, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "beaten")
       : h("span", { class: "sv broke", title: `Broken, but ${dropItem(c.n) || "its item"} hasn't been picked up yet (it ticks once it is). Double-click to mark it done yourself.` }, "broken")) : null,
     crossNotes(c.n).slice(0, 1).map((x) => h("span", { class: "xa", title: x.text }, `${x.first === "child" ? "C" : "A"}→${x.then === "child" ? "C" : "A"}`)),
-    // a shop deal: its price in this seed
-    dealPrice(c.n) != null ? h("span", { class: "price", title: "Price in this seed" }, `${dealPrice(c.n)} rupees`) : null,
+    // a shop shelf: its item and price once you've looked in the shop
+    shopTag(c.n),
     h("span", { class: "kind" }, KIND[c.k])),
     open || openCheck === c.n ? describe(c.n) : null];
 }
@@ -2605,7 +2632,7 @@ $("#resetBtn").onclick = (e) => {
   const b = e.currentTarget;
   if (!armed) { b.textContent = "Click again to clear"; b.style.borderColor = "var(--red)"; armed = setTimeout(() => { armed = 0; b.textContent = "Reset progress"; b.style.borderColor = ""; }, 3000); return; }
   clearTimeout(armed); armed = 0; b.textContent = "Reset progress"; b.style.borderColor = "";
-  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.heard = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
+  S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.heard = {}; S.shopSeen = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = ""; render();
 };
 
 
@@ -2619,7 +2646,7 @@ async function loadSeedFile(f) {
   const fresh = !S.seed || seedId(S.seed) !== seedId(sd);
   S.seed = sd;
   if (fresh) {  // a different seed is a new run
-    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; S.heard = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
+    S.items = {}; S.done = {}; S.auto = { items: {}, done: {} }; S.ignore = {}; S.reveal = {}; S.heard = {}; S.shopSeen = {}; lastSig = ""; lastMap = ""; lastFloor = ""; LIVE.saveSig = "";
   }
   W.err = "";
   render();
@@ -2642,7 +2669,7 @@ function paintSeed() {
     else if (v.shuffle_entrances && v.shuffle_entrances !== "off" && v.shuffle_entrances !== "dungeons") notes.push("Entrances are shuffled in this seed. The tracker only follows shuffled dungeon entrances; the rest of its logic assumes vanilla entrances.");
     else if (entrancesShuffled()) notes.push(h("span", {}, "Dungeon entrances are shuffled in this seed, and the logic follows them. Under each dungeon, click ", h("b", {}, "door: ?"), " to show which door leads to it, or ",
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
-    if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
+    if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Once you've looked in a shop, click \"?\" on one of its shelves to show what's on them and the prices.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
     if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.8.2's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
