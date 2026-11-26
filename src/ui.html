@@ -988,8 +988,8 @@ body.key .panel{box-shadow:none}
 body.key .t{border-color:transparent}
 /* a black outline round each picture, so its soft edges blend into black instead of the key colour (users found the
    keyed pictures looked rough, 2026-11-26) */
-body.key .t img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
-body.key .t.on img{filter:drop-shadow(1px 0 0 #000) drop-shadow(-1px 0 0 #000) drop-shadow(0 1px 0 #000) drop-shadow(0 -1px 0 #000)}
+body.key .t img{opacity:1;filter:grayscale(1) brightness(.45) drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
+body.key .t.on img{filter:drop-shadow(.5px 0 0 #000) drop-shadow(-.5px 0 0 #000) drop-shadow(0 .5px 0 #000) drop-shadow(0 -.5px 0 #000)}
 body.key .t{color:#1b2433}
 .opts{position:fixed;top:0;left:0;right:0;display:flex;gap:6px;justify-content:center;padding:6px;background:#000c;opacity:0;transition:opacity .15s;z-index:5}
 body:hover .opts{opacity:1}
