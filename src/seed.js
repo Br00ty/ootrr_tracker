@@ -519,6 +519,8 @@ const Seed = (() => {
     "HF Ocarina of Time Item and Song from Ocarina of Time need no Ocarina when Zelda's Escape is Not Required. OOTRR asks for an Ocarina.",
     "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
+    "Spirit Temple Child Early Torches Chest and its room's five silver rupees need the Boomerang too: the room is only reached through the Bridge Chest's room.",
+    "Spirit Temple Early Adult Right Chest needs Song of Time as well as the room's silver rupees.",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
   ];
@@ -552,6 +554,18 @@ const Seed = (() => {
     // puts them in the DMT Storms Grotto region, which needs can_open_storm_grotto, as the user found 2026-11-23)
     "Spirit Temple Child Bridge Chest": "Boomerang",
     "Spirit Temple GS Metal Fence": "Boomerang",
+    // 2026-11-26, players' reports via the user: the Early Torches room (its chest and its five silver rupees) is
+    // only reached through the Bridge Chest's room, so it needs the Boomerang too (its other door doesn't open
+    // from the lobby side). OOTRR: Sticks or Din's Fire for the chest, True for the rupees
+    "Spirit Temple Child Early Torches Chest": "Boomerang and (Sticks or can_use(Dins_Fire))",
+    "Spirit Temple Child Early Torches Silver Rupee Top Right": "Boomerang",
+    "Spirit Temple Child Early Torches Silver Rupee Bottom Right": "Boomerang",
+    "Spirit Temple Child Early Torches Silver Rupee Bottom Left": "Boomerang",
+    "Spirit Temple Child Early Torches Silver Rupee Top Left": "Boomerang",
+    "Spirit Temple Child Early Torches Silver Rupee Near Torch": "Boomerang",
+    // 2026-11-26, players' reports via the user: the chest needs Song of Time as well (OOTRR: the room's five silver
+    // rupees only; its Skulltula already asks for Song of Time)
+    "Spirit Temple Early Adult Right Chest": "(Silver_Rupee_Spirit_Temple_Adult_Boulders, 5) and can_play(Song_of_Time)",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
     // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has its own rule now, is_adult in Hyrule Field; the
