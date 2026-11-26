@@ -2382,6 +2382,15 @@ function describe(n) {
 }
 
 const dealPrice = (n) => { const sh = S.seed && S.seed.shops && S.seed.shops[n]; return sh && sh.deal && S.seed.placements[n] ? sh.price : null; };
+// shop shelves: "KF Shop Item 3" (OOTRR 0.8.2), "KF Shop Left Side Top Right" (later nightlies), and a shelf's
+// shop-mates
+const SHELF = / (?:Item \d+|(?:Left|Right) Side (?:Top|Bottom) (?:Left|Right))$/;
+function otherShelves(n) {
+  const m = SHELF.exec(n);
+  if (!m || !DATA.checks[n] || DATA.checks[n][1] !== "shop") return [];
+  const shop = n.slice(0, m.index);
+  return Object.keys(DATA.checks).filter((o) => o !== n && DATA.checks[o][1] === "shop" && o.slice(0, shop.length + 1) === `${shop} ` && SHELF.test(o) && SHELF.exec(o).index === shop.length);
+}
 // A shop shelf's shop ("Market Bazaar" for "Market Bazaar Right Side Top Left"). What's on its shelves and the prices
 // stay hidden until you've looked in the shop (the user's call, 2026-11-26: showing them earlier spoils the seed):
 // click "?" on any of its shelves once you've been in, and buying from it counts too.
