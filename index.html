@@ -4868,7 +4868,7 @@ function paintSeed() {
     else if (v.shuffle_entrances && v.shuffle_entrances !== "off" && v.shuffle_entrances !== "dungeons") notes.push("Entrances are shuffled in this seed. The tracker only follows shuffled dungeon entrances; the rest of its logic assumes vanilla entrances.");
     else if (entrancesShuffled()) notes.push(h("span", {}, "Dungeon entrances are shuffled in this seed, and the logic follows them. Under each dungeon, click ", h("b", {}, "door: ?"), " to show which door leads to it, or ",
       h("a", { href: "#", style: "color:var(--gold)", onclick: (e) => { e.preventDefault(); const all = DUNGEON_AREAS.filter((d) => POOL.has(d)); const open = all.every((d) => S.reveal[d]); all.forEach((d) => (S.reveal[d] = !open)); render(); } }, "show or hide them all"), "."));
-    if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Shop items and prices aren't tracked yet.");
+    if (v.shuffle_shops && v.shuffle_shops !== "off") notes.push("Shop shelves are shuffled in this seed. Once you've looked in a shop, click \"?\" on one of its shelves to show what's on them and the prices.");
     if (S.seed.warn.length) notes.push("Settings notes: " + S.seed.warn.join("; "));
     if (Seed.isLegacy(S.seed.generator)) notes.push(`This seed was made with ${S.seed.generator}. The tracker reads its settings as that version did, but works out logic with OOTRR 0.9.0-nightly.20261125.18's rules, so a few checks 0.8 changed can show differently (child boss fights need the Kokiri Sword, Bombchu Bowling and the Bombchu Shop are open from the start).`);
   }
