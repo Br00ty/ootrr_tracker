@@ -1013,9 +1013,8 @@ body:hover .opts{opacity:1}
 body:hover .tip{display:none}
 /* Compact layout */
 .card{margin:0 auto;display:flex;flex-direction:column;gap:12px;background:rgba(12,16,24,.92);border:1px solid #d9b45a88;border-radius:16px;padding:16px 18px}
-.card .hd{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.card .brand{font-weight:800;font-size:15px;letter-spacing:.1em;color:#d9b45a}
-.card .stats{display:flex;gap:12px;font-size:13px;font-weight:700}.card .stats i{font-style:normal;font-weight:500;color:#a7a08c;margin-right:3px}
+.card .hd{display:flex;align-items:center;justify-content:center;gap:10px}
+.card .stats{display:flex;gap:22px;font-size:13px;font-weight:700}.card .stats i{font-style:normal;font-weight:500;color:#a7a08c;margin-right:3px}
 .card .grid{display:grid;grid-template-columns:repeat(8,1fr);gap:5px}
 .card .t{border-radius:8px}
 .card .split{display:grid;grid-template-columns:1fr 1fr;padding:0}
@@ -1082,7 +1081,7 @@ function castCard() {
   const t = tally(R.values()), hearts = 3 + shownCount("Heart Container") + Math.floor(shownCount("Piece of Heart") / 4);
   const f = S.lastFound;
   return h("div", { class: "card" },
-    h("div", { class: "hd" }, h("div", { class: "brand" }, "OOTRR"),
+    h("div", { class: "hd" },
       h("div", { class: "stats" }, h("span", {}, h("i", {}, "Checks"), `${t.done}/${R.size}`), h("span", {}, h("i", {}, "Skulls"), String(shownCount("Gold Skulltula Token"))), h("span", {}, h("i", {}, "Hearts"), String(hearts)))),
     h("div", { class: "grid" }, grid),
     h("div", { class: "songs" }, SONGS.map(([n, l, m]) => castTile(n, l, m))),
