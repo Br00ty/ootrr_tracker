@@ -2787,6 +2787,19 @@ async function loadSeedFile(f) {
   }
   W.err = "";
   render();
+  if (fresh) tellExperimental(sd);
+}
+// OOTRR's Experimental sanities (2026-11-27): their pins haven't been gone over yet, so a seed using any of them gets a note
+const EXPERIMENTAL = [["shuffle_pots", "Pots"], ["shuffle_crates", "Crates"], ["shuffle_rocks", "Small Rocks"], ["shuffle_grass", "Grass"], ["shuffle_beehives", "Beehives"]];
+function tellExperimental(sd) {
+  const v = sd.vals || {};
+  const on = EXPERIMENTAL.filter(([k]) => v[k] && v[k] !== "off").map(([k, l]) => typeof v[k] === "string" ? `${l} (${v[k]})` : l);
+  if (!on.length) return;
+  const show = () => { $("#dlgBody").replaceChildren(h("h3", {}, "Experimental settings"),
+    h("p", {}, "This seed uses OOTRR's experimental settings:"), h("ul", {}, ...on.map((x) => h("li", {}, x))),
+    h("p", {}, "Their pins on the map haven't been gone over yet, so some may be in the wrong spot or missing. OOTRR also warns these settings can make a seed unbeatable."),
+    h("div", { class: "foot" }, h("button", { class: "btn", onclick: () => $("#dlg").close() }, "OK"))); $("#dlg").showModal(); };
+  if ($("#dlg").open) $("#dlg").addEventListener("close", () => setTimeout(show, 50), { once: true }); else show();
 }
 $("#seedFile").onchange = (e) => { loadSeedFile(e.target.files[0]); e.target.value = ""; };
 
