@@ -1,0 +1,19 @@
+[package]
+name = "ootrr-tracker"
+version = "0.2.9"
+edition = "2021"
+description = "OOTRR Tracker for Linux: the tracker page plus the Longshot live helper, in one file"
+license = "GPL-3.0-or-later"
+
+# No dependencies on purpose: one small file that runs on any Linux, built static (musl) by the release workflow.
+[dependencies]
+
+[[bin]]
+name = "OOTRR-Tracker"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true
+panic = "abort"

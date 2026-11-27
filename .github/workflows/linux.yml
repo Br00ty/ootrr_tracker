@@ -1,0 +1,79 @@
+# Builds the OOTRR Tracker Linux app (linux/): one static file (musl), with both tracker pages built in.
+# Every push that touches the app or the pages uploads "OOTRR-Tracker-Linux" as a build artifact
+# (Actions tab → the run → Artifacts); a published release also gets "OOTRR-Tracker(Linux).tar.gz" attached.
+name: Linux app
+
+on:
+  push:
+    paths:
+      - 'linux/**'
+      - 'index.html'
+      - 'nightly/index.html'
+      - '.github/workflows/linux.yml'
+  workflow_dispatch:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Rust for a static build
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq musl-tools
+          rustup target add x86_64-unknown-linux-musl
+
+      # a release's tag is the app version ("v0.3.0"): the file is stamped with it, and the page compares it with
+      # the newest release's tag to offer the update
+      - name: Build
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            tag="${{ github.event.release.tag_name }}"
+            ver="${tag#v}"; ver="${ver#V}"
+            if ! echo "$ver" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then echo "the release tag '$tag' isn't an app version like v0.3.0"; exit 1; fi
+            export OOTRR_VERSION="$ver"
+          fi
+          cd linux && cargo build --release --target x86_64-unknown-linux-musl
+
+      - name: Package
+        run: |
+          mkdir -p pkg
+          cp linux/target/x86_64-unknown-linux-musl/release/OOTRR-Tracker pkg/
+          chmod +x pkg/OOTRR-Tracker
+          cp LICENSE NOTICE pkg/ 2>/dev/null || true
+          cat > pkg/README.txt <<'EOF'
+          OOTRR Tracker (Linux app, beta)
+
+          Unpack this anywhere you can write to and run OOTRR-Tracker (double-click it, or ./OOTRR-Tracker in a
+          terminal). It opens the tracker in its own window and adds itself to your apps menu.
+          The window needs a Chromium-family browser installed (Chromium, Chrome, Brave, Edge or Vivaldi, normal
+          or Flatpak); without one the tracker opens in your default browser instead.
+
+          Live tracking reads Longshot's (or a yuzu-family emulator's) memory; it never changes the game or your
+          files. Most Linux systems only allow that when the tracker starts Longshot: put your Longshot AppImage
+          next to OOTRR-Tracker (or pick it in the tracker's Longshot window) and start it from there.
+
+          The app offers each new version when it starts and updates itself. The Switch to Nightly / Stable
+          button picks OOTRR's release or nightly builds; each keeps its own progress.
+          Your settings are kept in ~/.local/share/ootrr-tracker.
+          EOF
+          sed -i 's/^          //' pkg/README.txt
+          ./pkg/OOTRR-Tracker --version
+          ls -la pkg
+          tar -C pkg -czf "OOTRR-Tracker(Linux).tar.gz" .
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OOTRR-Tracker-Linux
+          path: pkg/
+
+      - name: Attach to the release
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "OOTRR-Tracker(Linux).tar.gz" --clobber

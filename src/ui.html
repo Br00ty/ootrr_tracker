@@ -2771,7 +2771,7 @@ $("#aboutBtn").onclick = () => {
       h("p", { style: "color:var(--dim);font-size:12px" }, "Logic, settings and data come from OOTRR 0.8.2 (GPL-3.0-or-later), so this tracker is GPL-3.0-or-later too. No game files are included. Source: ",
         a("https://github.com/Br00ty/ootrr_tracker", "github.com/Br00ty/ootrr_tracker"), "."),
       APP ? h("p", { style: "color:var(--faint);font-size:12px" }, `OOTRR Tracker app ${APP.version} `,
-        h("button", { class: "btn", style: "margin-left:6px", onclick: () => { try { window.chrome.webview.postMessage("update:check"); } catch (e) {} } }, "Check for updates")) : null),
+        h("button", { class: "btn", style: "margin-left:6px", onclick: () => { if (APP.linux) { linuxUpdate(false); return; } try { window.chrome.webview.postMessage("update:check"); } catch (e) {} } }, "Check for updates")) : null),
     h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Close"))));
   $("#dlg").showModal();
 };
@@ -3553,7 +3553,64 @@ function appSetSaves(dir) {
   appSaves = dir.trim();
   try { localStorage.setItem(APP_SAVES_KEY, appSaves); } catch (e) {}
   try { window.chrome.webview.postMessage("saves:" + appSaves); } catch (e) {}
+  if (APP && APP.linux) appCall("saves", { dir: appSaves });
   LIVE.saveSig = "";
+}
+// ---------- the Linux app (linux/, which sets OOTRR_APP.linux): it serves this page on 127.0.0.1:47811 and takes
+// the page's requests there (the Windows app gets them as WebView2 messages). X-OOTRR marks them as ours.
+async function appCall(what, args = {}) {
+  const q = new URLSearchParams(args).toString();
+  try { const r = await fetch(`${LIVE_URL}/app/${what}${q ? "?" + q : ""}`, { cache: "no-store", headers: { "X-OOTRR": "1" } }); return await r.json(); }
+  catch (e) { return { ok: false, why: e.message }; }
+}
+// updates, as the Windows app does them: the newest published release with the Linux download and a version tag;
+// quiet (the check at start) only speaks up when there is one
+const RELEASES_API = "https://api.github.com/repos/Br00ty/ootrr_tracker/releases?per_page=20";
+const verNum = (v) => String(v || "").replace(/^v/i, "").split(".").map((x) => parseInt(x, 10) || 0);
+const verNewer = (a, b) => { const x = verNum(a), y = verNum(b); for (let i = 0; i < 3; i++) if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); return false; };
+async function linuxUpdate(quiet) {
+  const say = (title, ...body) => { $("#dlgBody").replaceChildren(h("h3", {}, title), ...body); if (!$("#dlg").open) $("#dlg").showModal(); };
+  const ok = () => h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "OK"));
+  let best = null;
+  try {
+    const r = await fetch(RELEASES_API, { headers: { Accept: "application/vnd.github+json" } });
+    if (!r.ok) throw new Error(`GitHub answered ${r.status}`);
+    for (const rel of await r.json()) {
+      if (rel.draft || rel.prerelease || !/^v?\d+\.\d+\.\d+$/i.test(rel.tag_name || "")) continue;
+      const a = (rel.assets || []).find((x) => /linux/i.test(x.name) && /\.tar\.gz$/i.test(x.name));
+      if (a && (!best || verNewer(rel.tag_name, best.tag))) best = { tag: rel.tag_name, url: a.browser_download_url, page: rel.html_url, notes: (rel.body || "").trim() };
+    }
+  } catch (e) { if (!quiet) say("Updates", h("p", {}, `Couldn't check for updates: ${e.message}`), ok()); return; }
+  const cur = APP.version;
+  if (!best || !verNewer(best.tag, cur)) { if (!quiet) say("Updates", h("p", {}, `You have the newest version (${cur}).`), ok()); return; }
+  const v = best.tag.replace(/^v/i, ""), notes = best.notes.length > 700 ? best.notes.slice(0, 700).trimEnd() + "…" : best.notes;
+  say("OOTRR Tracker update", h("p", {}, `OOTRR Tracker ${v} is out (you have ${cur}).`),
+    notes ? h("div", {}, h("b", {}, "What's new:"), h("pre", { style: "white-space:pre-wrap;max-height:260px;overflow:auto;font:inherit;color:var(--dim)" }, notes)) : null,
+    h("p", {}, "Update now? The tracker restarts when it's done, and your progress is kept."),
+    h("div", { class: "foot" }, h("span"),
+      h("button", { class: "btn", onclick: () => $("#dlg").close() }, "Later"),
+      h("button", { class: "btn", style: "border-color:var(--gold)", onclick: async () => {
+        save();
+        say("Updating…", h("p", {}, "Downloading the new version. The tracker reloads by itself when it's done."));
+        const res = await appCall("update", { url: best.url });
+        if (!res.ok) {
+          say("OOTRR Tracker update", h("p", {}, `The update couldn't be installed: ${res.why || "unknown error"}`), h("p", {}, "Open the download page to update by hand?"),
+            h("div", { class: "foot" }, h("span"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "No"),
+              h("a", { class: "btn", href: best.page, target: "_blank", rel: "noopener", onclick: () => $("#dlg").close() }, "Open the download page")));
+          return;
+        }
+        // the app restarts into the new file: wait for it to answer with the new version, then reload
+        for (let i = 0; i < 60; i++) {
+          await new Promise((r) => setTimeout(r, 500));
+          try { const t = await (await fetch(`${LIVE_URL}/app/ping`, { cache: "no-store" })).text(); if (t && t !== cur) break; } catch (e) {}
+        }
+        location.reload();
+      } }, "Update now")));
+}
+if (APP && APP.linux) {
+  // the app stops when nothing has asked it anything for two minutes (an ordinary browser tab doesn't say when it closes)
+  every(30000, () => { fetch(`${LIVE_URL}/app/ping`, { cache: "no-store" }).catch(() => {}); });
+  setTimeout(() => linuxUpdate(true), 3000);
 }
 async function livePoll() {
   if (!LIVE.on || LIVE.busy) return;
@@ -3628,21 +3685,41 @@ function liveStatus() {
 let liveSaveDir = "";
 const liveCmdWith = (dir) => (dir.trim() ? `$env:OOTRR_SAVES='${dir.trim().replace(/'/g, "''")}'; ${LIVE_CMD}` : LIVE_CMD);
 // the Longshot window in the desktop app: no helper to start, just the connection and the save folder
+// Linux: most systems only let a program read another one's memory when it started it (ptrace_scope 1), so the
+// app can start Longshot itself, now or each time the tracker opens
+function linuxLongshotBox() {
+  const wrap = h("details", { style: "margin-top:10px" }, h("summary", { style: "cursor:pointer" }, h("b", {}, "Start Longshot from the tracker")), h("div", { style: "color:var(--dim);margin-top:6px" }, "…"));
+  appCall("longshot").then((ls) => {
+    if (ls.scope >= 1 && !(LIVE.state && LIVE.state.ok)) wrap.open = true;
+    const box = h("input", { type: "text", value: ls.path || "", placeholder: "e.g. ~/Applications/Longshot.AppImage", style: "width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px" });
+    const msg = h("span", { style: "margin-left:8px" });
+    const auto = h("input", { type: "checkbox", checked: !!ls.auto, onchange: (e) => appCall("longshot", { auto: e.target.checked ? "1" : "0" }) });
+    wrap.lastChild.replaceChildren(
+      h("p", { style: "margin:0 0 6px" }, "Linux usually only lets the tracker read Longshot's memory when the tracker started it. If live tracking says it isn't allowed, close Longshot and start it from here. Put the path to your Longshot AppImage (or Longshot's program) here; an AppImage beside the tracker is found by itself."),
+      box,
+      h("div", { style: "display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap" },
+        h("button", { class: "btn", style: "border-color:var(--gold)", onclick: async () => { msg.textContent = "Starting…"; const r = await appCall("launch", { path: box.value.trim() }); msg.textContent = r.ok ? "Started: live tracking connects once your save is loaded." : (r.why || "Couldn't start it."); } }, ls.running ? "Start another Longshot" : "Start Longshot"),
+        h("label", { style: "display:flex;gap:6px;align-items:center" }, auto, "Start Longshot whenever the tracker opens"), msg),
+      h("p", { style: "margin:6px 0 0;font-size:12px" }, "Or allow it once, so Longshot can be started any way: run ", h("code", { class: "q", style: "word-break:break-all" }, `sudo setcap cap_sys_ptrace=eip "${ls.self || "OOTRR-Tracker"}"`), " in a terminal (needed again after each update)."));
+  });
+  return wrap;
+}
 function openLongshotApp() {
   const st = LIVE.state, noSave = LIVE.on && st && st.ok && !st.save;
-  const box = h("input", { type: "text", value: appSaves, placeholder: "e.g. D:\\Games\\Longshot\\user", style: "width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px" });
+  const box = h("input", { type: "text", value: appSaves, placeholder: APP.linux ? "e.g. ~/Games/Longshot/user" : "e.g. D:\\Games\\Longshot\\user", style: "width:100%;background:var(--panel2);border:1px solid var(--line);border-radius:5px;padding:4px 8px" });
   $("#dlgBody").replaceChildren(...K(
     h("h3", {}, "Longshot: live tracking"),
     h("div", { style: "max-width:600px;line-height:1.55" },
       h("p", {}, "The app reads the game's memory while you play, so checks tick the moment you get them and the map follows Link from area to area and floor to floor. Items come from your newest save, which the app finds by itself. Works with ", h("b", {}, "Longshot"), " (and Hookshot) and with emulators like ", h("b", {}, "Lichii"), ". It only reads: it never changes the game or your files."),
       liveStatus(),
+      APP.linux ? linuxLongshotBox() : null,
       h("div", { style: "margin-top:8px" },
         LIVE.on ? h("button", { class: "btn", onclick: () => { liveStop(); openLongshotApp(); } }, "Pause live tracking")
           : h("button", { class: "btn", style: "border-color:var(--gold)", onclick: () => { liveStart(); openLongshotApp(); } }, "Resume live tracking")),
       h("details", { open: noSave || !!appSaves, style: "margin-top:10px" },
         h("summary", { style: "cursor:pointer" }, h("b", {}, "Portable Longshot, or saves somewhere else?")),
         h("div", { style: "color:var(--dim);margin-top:6px" },
-          h("p", { style: "margin:0 0 6px" }, "The app looks in ", h("code", { class: "q" }, "%APPDATA%\\Longshot\\save"), " and, for a portable Longshot, beside the running game (its ", h("code", { class: "q" }, "user"), " folder or the launcher's ", h("code", { class: "q" }, "LongshotLauncher-data"), "). If it still says no save was found, find the folder that holds ", h("code", { class: "q" }, "slot_00"), ", ", h("code", { class: "q" }, "slot_01"), " … (search your Longshot folder for ", h("code", { class: "q" }, "progress.sav"), ") and paste it, or any folder above it, here:"),
+          h("p", { style: "margin:0 0 6px" }, "The app looks in ", h("code", { class: "q" }, APP.linux ? "~/.local/share/Longshot/save" : "%APPDATA%\\Longshot\\save"), " and, for a portable Longshot, beside the running game (its ", h("code", { class: "q" }, "user"), " folder or the launcher's ", h("code", { class: "q" }, "LongshotLauncher-data"), "). If it still says no save was found, find the folder that holds ", h("code", { class: "q" }, "slot_00"), ", ", h("code", { class: "q" }, "slot_01"), " … (search your Longshot folder for ", h("code", { class: "q" }, "progress.sav"), ") and paste it, or any folder above it, here:"),
           box,
           h("div", { style: "display:flex;gap:8px;margin-top:6px" },
             h("button", { class: "btn", onclick: () => { appSetSaves(box.value); openLongshotApp(); } }, "Use this folder"),
