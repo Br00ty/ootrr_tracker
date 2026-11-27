@@ -3402,13 +3402,13 @@ const PIN_FIXES = {
   // Lost Woods, placed in game by the player (2026-11-16)
   "Deku Theater Mask of Truth": { place: "LostWood", u: 0.5038, v: 0.3769 },
   "Deku Theater Skull Mask": { place: "LostWood", u: 0.5053, v: 0.3792 },
-  "LW Deku Scrub Grotto Front": { place: "LostWood", u: 0.5038, v: 0.2479 },
+  "LW Deku Scrub Grotto Front": { place: "LostWood", u: 0.536, v: 0.2505 },
   "LW Deku Scrub Grotto Rear": { place: "LostWood", u: 0.5038, v: 0.2502 },
-  "LW Deku Scrub Near Bridge": { place: "LostWood", u: 0.3741, v: 0.8384 },
-  "LW GS Bean Patch Near Bridge": { place: "LostWood", u: 0.3756, v: 0.7774 },
-  "LW Ocarina Memory Game": { place: "LostWood", u: 0.6335, v: 0.8271 },
-  "LW Skull Kid": { place: "LostWood", u: 0.3771, v: 0.714 },
-  "LW Target in Woods": { place: "LostWood", u: 0.6305, v: 0.705 },
+  "LW Deku Scrub Near Bridge": { place: "LostWood", u: 0.3767, v: 0.7553 },
+  "LW GS Bean Patch Near Bridge": { place: "LostWood", u: 0.4003, v: 0.6078 },
+  "LW Ocarina Memory Game": { place: "LostWood", u: 0.5997, v: 0.5538 },
+  "LW Skull Kid": { place: "LostWood", u: 0.4169, v: 0.5102 },
+  "LW Target in Woods": { place: "LostWood", u: 0.5568, v: 0.4998 },
   "LW Trade Cojiro": { place: "LostWood", u: 0.3756, v: 0.714 },
   "LW Trade Odd Potion": { place: "LostWood", u: 0.3771, v: 0.714 },
   // Sacred Forest Meadow, placed in game by the player (2026-11-16)
@@ -3691,6 +3691,7 @@ const PIN_FIXES = {
   "Shadow Temple Freestanding Key": { place: "ShadowTemple_B3", u: 0.6177, v: 0.5822 },
   "Bottom of the Well Freestanding Key": { place: "BottomOfTheWell_B1", u: 0.2922, v: 0.5781 },
   "LH Sun": { place: "LakeHylia", u: 0.6025, v: 0.6093 },
+  "LW GS Bean Patch Near Theater": { place: "LostWood", u: 0.5125, v: 0.3253 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
