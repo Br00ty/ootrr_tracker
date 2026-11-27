@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-EYAQCJYBAEZQCAJVAEATUAIFJQAQCTQBAJUQCAEHAEAQBFABAEAZKAIBAGMQCAIBZMAQCALR34",
+  "settings": "OOTRR1-EYAQCJYBAEZQCAJVAEATUAIFJYAQE2IBACDQCAIASQAQCAMVAEAQDGIBAEA4WAIBAFJRW",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Bottom of the Well Back Left Bombable Chest": "Rupees (5)",
@@ -53,7 +53,7 @@
     "Fire Temple Big Lava Room Lower Open Door Chest": "Small Key (Fire Temple)",
     "Fire Temple Boss Key Chest": "Small Key (Fire Temple)",
     "Fire Temple Boulder Maze Lower Chest": "Small Key (Fire Temple)",
-    "Fire Temple Boulder Maze Shortcut Chest": "Rupee (1)",
+    "Fire Temple Boulder Maze Shortcut Chest": "Weird Egg",
     "Fire Temple Boulder Maze Side Room Chest": "Small Key (Fire Temple)",
     "Fire Temple Boulder Maze Upper Chest": "Ice Arrows",
     "Fire Temple Compass Chest": "Small Key (Fire Temple)",
@@ -100,7 +100,7 @@
     "GV Octorok Grotto Chest": "Piece of Heart",
     "GV Storms Grotto Chest": "Rupees (20)",
     "GV Storms Grotto Lens Chest": "Rupees (5)",
-    "GV Trade Poachers Saw": "Progressive Wallet",
+    "GV Trade Poachers Saw": "Rupees (5)",
     "GV Waterfall Freestanding PoH": "Rupees (5)",
     "Ganons Castle Forest Trial Chest": "Small Key (Ganons Castle)",
     "Ganons Castle Light Trial First Left Chest": "Rupees (50)",
@@ -184,9 +184,9 @@
     "Kak Bazaar Right Side Top Left": "Rupees (20)",
     "Kak Bazaar Right Side Top Right": "Biggoron Sword",
     "Kak Granny Trade Odd Mushroom": "Heart Container",
-    "Kak Impas House Freestanding PoH": "Weird Egg",
+    "Kak Impas House Freestanding PoH": "Rupees (5)",
     "Kak Man on Roof": "Business Scrub Seed",
-    "Kak Open Grotto Chest": "Rupees (5)",
+    "Kak Open Grotto Chest": "Progressive Wallet",
     "Kak Potion Shop Right Side Bottom Left": "Lens of Truth",
     "Kak Potion Shop Right Side Bottom Right": "Rupees (50)",
     "Kak Potion Shop Right Side Top Left": "Business Scrub Seed",
@@ -198,7 +198,7 @@
     "LH Child Fishing": "Rupees (50)",
     "LH Freestanding PoH": "Business Scrub Seed",
     "LH Gravestone Grotto Torches Chest": "Magic Jar (Large)",
-    "LH Lab Dive": "Rupees (5)",
+    "LH Lab Dive": "Rupee (1)",
     "LH Poe Chest": "Piece of Heart",
     "LH Sun": "Rupees (5)",
     "LH Trade Eyeball Frog": "Bombchus (20)",
@@ -615,5 +615,5 @@
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "008d17e9796defd5501e13ae8ae90e2e687639a4cc9010f101b4b4acea19012e"
+  "checksum": "b4575d5caa9d20ac650da54fa120bb9b4ae404bc0571b818163d2a5f80bba5ae"
 }

@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-EYAQCJYBAEZQCAKMAEAU4AICNEAQBBYBAEAMYAIBAHGQCAIM6FLQ",
+  "settings": "OOTRR1-EYAQCJYBAEZQCAKOAEBGSAIAQ4AQCAGMAEAQDTIBAEGGIBQ",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Bottom of the Well Back Left Bombable Chest": "Rupees (20)",
@@ -257,5 +257,5 @@
     "ZR Near Open Grotto Freestanding PoH": "Piece of Heart",
     "ZR Open Grotto Chest": "Rupees (50)"
   },
-  "checksum": "9bca49843a19ca1370e01a211ef465fed26b7b3dc4c1e998c4333ccabda5821e"
+  "checksum": "954f3f703933f1770ee0bcdbeea0441fac1de1607b4141f33d135f58aabff73f"
 }

@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-DAAQIGYBAYTACAJHAEATGAIBHIAQCSQBAJGACAKOAEBGSAIAQ4AQCAGHTI",
+  "settings": "OOTRR1-DAAQIGYBAYTACAJHAEATGAIBHIAQCSQBAJHACATJAEAIOAIBABZ5W",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Barinade": "Kokiri Emerald",
@@ -518,5 +518,5 @@
       "price": 200
     }
   },
-  "checksum": "b6f6b1eeb2f86379d70600ee3e64b058f0e4cf8380b0e6bfa91b75687d492e80"
+  "checksum": "e4fa00a3796f1330682326ffcd3f9c08af473d917da69cccb8245c63d678ba2d"
 }

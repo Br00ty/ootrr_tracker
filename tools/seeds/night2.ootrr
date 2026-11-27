@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-CIAQCJQBAETQCAJTAEATKAIBHIAQKTABAFHACATJAEAIOAIBACQACAIIUEAQCANDAEAQDJABAEA2UAIBABME4",
+  "settings": "OOTRR1-CIAQCJQBAETQCAJTAEATKAIBHIAQKTQBAJUQCAEHAEAQBIABAEEKCAIBAGRQCAIBUQAQCANKAEAQB55O",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Bottom of the Well Back Left Bombable Chest": "Compass (Bottom of the Well)",
@@ -614,5 +614,5 @@
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "c0113c9645d34275eafa71a16812541cad95488652249f3899a5bbf775bf8bee"
+  "checksum": "168a1f32a1ffe034181570dced936ae8420859eea312f80527e44903ca22b212"
 }

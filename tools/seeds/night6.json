@@ -1,0 +1,10 @@
+{
+ "id": "night6",
+ "name": "nightly test 6",
+ "tip": "test (0.9.0-nightly.20261127.23: Kakariko gate open on its own with a closed forest, Weird Egg not shuffled)",
+ "order": 99,
+ "settings": {
+  "open_kakariko": "open",
+  "shuffle_weird_egg": false
+ }
+}

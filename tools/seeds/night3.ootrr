@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-A4AQCJQBAETQCAJOAEATGAIBGUAQCOQBANGACAKOAEBGSAIAQ4AQCAFLAEAQCLYG",
+  "settings": "OOTRR1-A4AQCJQBAETQCAJOAEATGAIBGUAQCOQBANHACATJAEAIOAIBACVQCAIBL33Q",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Bottom of the Well Back Left Bombable Chest": "Piece of Heart",
@@ -88,7 +88,7 @@
     "GC Rolling Goron as Adult": "Rupees (50)",
     "GC Rolling Goron as Child": "Rupees (5)",
     "GC Shop Right Side Top Left": "Rupees (20)",
-    "GC Shop Right Side Top Right": "Weird Egg",
+    "GC Shop Right Side Top Right": "Arrows (10)",
     "GF Chest": "Business Scrub Seed",
     "GF HBA 1000 Points": "Business Scrub Seed",
     "GF HBA 1500 Points": "Rupees (5)",
@@ -99,7 +99,7 @@
     "GV Storms Grotto Chest": "Piece of Heart",
     "GV Storms Grotto Lens Chest": "Progressive Strength Upgrade",
     "GV Trade Poachers Saw": "Bombs (5)",
-    "GV Waterfall Freestanding PoH": "Arrows (10)",
+    "GV Waterfall Freestanding PoH": "Iron Boots",
     "Ganons Castle Forest Trial Chest": "Rupees (20)",
     "Ganons Castle Light Trial First Left Chest": "Rupees (20)",
     "Ganons Castle Light Trial Invisible Enemies Chest": "Bombs (5)",
@@ -144,7 +144,7 @@
     "HC Malon Egg": "Rupees (20)",
     "HC Zeldas Letter": "Piece of Heart",
     "HF Deku Scrub Grotto": "Rupees (20)",
-    "HF East Poe Chest": "Iron Boots",
+    "HF East Poe Chest": "Weird Egg",
     "HF Rocks Near Cow Grotto Chest": "Rupees (50)",
     "HF South Poe Chest": "Progressive Wallet",
     "HF Storms Grotto Near Kakariko Redead Chest": "Rupees (50)",
@@ -311,7 +311,7 @@
       "pool": "Bombs (5)"
     },
     "GC Shop Right Side Top Right": {
-      "item": "Weird Egg",
+      "item": "Arrows (10)",
       "price": 15,
       "deal": true,
       "pool": "Bombs (10)"
@@ -569,5 +569,5 @@
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "c78d9d0ee9e8fa80aab5e7b152ebcee89fac59ffc1db081302ec06cc716c9b2c"
+  "checksum": "3574dbb2545aab300f77cad9d8ae72338bc6b3bd37afe7db3f7a86e075264dce"
 }

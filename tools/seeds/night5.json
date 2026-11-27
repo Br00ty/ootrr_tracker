@@ -1,0 +1,11 @@
+{
+ "id": "night5",
+ "name": "nightly test 5",
+ "tip": "test (0.9.0-nightly.20261127.23: Skip Zelda Meeting with the forest open, Full Wallets)",
+ "order": 99,
+ "settings": {
+  "open_forest": "open",
+  "skip_child_zelda": true,
+  "full_wallets": true
+ }
+}

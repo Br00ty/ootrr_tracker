@@ -101,6 +101,14 @@ const Seed = (() => {
     // (0.8.1: only when the string doesn't also choose a Door of Time; older generators always moved it)
     const chosen = !before(gen, [0, 8, 1]) && Object.prototype.hasOwnProperty.call(given, "door_of_time_condition");
     if (vals.open_door_of_time === true) { vals.open_door_of_time = false; if (!chosen) vals.door_of_time_condition = "open"; }
+    if (olderThan(gen, NIGHTLY23)) {
+      // before 0.9.0-nightly.20261127.23 an open Kakariko gate (with the forest open) also skipped the castle visit;
+      // since then that is its own setting, Skip Zelda Meeting, and the gate only opens the gate
+      if (vals.open_kakariko === "open" && vals.open_forest === "open") vals.skip_child_zelda = true;
+    } else {
+      // string.rs: a legacy setting always reads as its default and is never written (Time always passes: on)
+      for (const s of schema) if (s.legacy && s.id !== "open_door_of_time") vals[s.id] = s.default;
+    }
     // Schema::normalize: a setting whose dependency does not hold takes its off value
     for (const s of schema) if (!enabled(s, vals)) vals[s.id] = "disabled" in s ? s.disabled : s.default;
     return { vals, warn };
@@ -137,7 +145,9 @@ const Seed = (() => {
     }
     // 0.9.0-nightly.20261125.9 slice/bombchus.rs: Bombchus in logic is forced off for everyone (old strings still load)
     if (v.bombchus_in_logic === true && olderThan(gen, NIGHTLY9)) out.push(["free_bombchu_drops", "true"]);
-    if (kakarikoSkip(v)) { out.push(["open_kakariko", "open"]); out.push(["skip_child_zelda", "true"]); }
+    // support.rs Plan::logic: the gate (open, or opened by Skip Zelda Meeting), then the skip itself
+    if (v.open_kakariko === "open" || kakarikoSkip(v)) out.push(["open_kakariko", "open"]);
+    if (kakarikoSkip(v)) out.push(["skip_child_zelda", "true"]);
     if (v.anju_one_cucco === true) out.push(["chicken_count", "1"]);
     if (v.big_poe_one === true) out.push(["big_poe_count", "1"]);
     if (v.zora_fountain === "open") out.push(["zora_fountain", "open"]);
@@ -217,6 +227,8 @@ const Seed = (() => {
   const NIGHTLY5 = "0.8.3-nightly.20261123.5";
   // that build put LACS medallions second among the Ganon's Boss Key choices, so older strings count without it
   const PRE5_CHOICES = { shuffle_ganon_bosskey: (c) => c.filter((x) => x !== "lacs_medallions") };
+  // 0.9.0-nightly.20261127.23: Skip Zelda Meeting split from the Kakariko gate; Time always passes became legacy (on)
+  const NIGHTLY23 = "0.9.0-nightly.20261127.23";
   function isLegacy(generator) { return before(generator, [0, 8, 0]); }
   // whether a seed's generator ("ootrr-core 0.8.0") is older than version v; no version reads as current
   function before(generator, v) {
@@ -252,8 +264,8 @@ const Seed = (() => {
   // slice/support.rs plan(): an open Kakariko gate skips child Zelda's story (unless the forest is closed),
   // and start_state.rs KAKARIKO_LOCATIONS' items are handed out at new game instead of in the world.
   const KAKARIKO_LOCATIONS = ["HC Zeldas Letter", "Song from Impa"];
-  // 0.7.2: an open Kakariko gate needs Kokiri Forest fully open (settings/list.rs: Closed Deku locks it to Zelda's Letter)
-  function kakarikoSkip(v) { return v.open_kakariko === "open" && v.open_forest === "open"; }
+  // Skip Zelda Meeting (decodeSettings turns an older seed's open gate into it): needs Kokiri Forest open
+  function kakarikoSkip(v) { return v.skip_child_zelda === true && v.open_forest === "open"; }
   // Dungeon Rewards was a toggle before 0.7 (off = vanilla, on = anywhere), as old manual settings still store it
   function dungeonRewards(v) { const x = v.shuffle_dungeon_rewards; return x === true ? "anywhere" : x === false || x == null ? "vanilla" : x; }
   function startItems(v, table) {
@@ -518,8 +530,6 @@ const Seed = (() => {
     "Graveyard Heart Piece Grave Chest needs no Sun's Song: the chest is already there. OOTRR asks for Sun's Song.",
     "HF Ocarina of Time Item and Song from Ocarina of Time need no Ocarina when Zelda's Escape is Not Required. OOTRR asks for an Ocarina.",
     "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
-    "Spirit Temple Child Bridge Chest and Spirit Temple GS Metal Fence need the Boomerang (an OOTRR developer's coming fix).",
-    "Spirit Temple Child Early Torches Chest, its room's five silver rupees, the two Bridge Flying Pots and the four Anubis Pots need the Boomerang too: they're all past the Bridge Chest's room.",
     "Spirit Temple Early Adult Right Chest needs Song of Time as well as the room's silver rupees.",
     "Ganons Castle Shadow Trial Front Chest can also be reached with the Bow (OOTRR's coming fix).",
     "GF GS Top Floor needs no Gerudo Membership Card (OOTRR's strict Skulltula rules guess it does).",
@@ -552,31 +562,12 @@ const Seed = (() => {
     // the user 2026-11-22: shown as HF GS Tree By KF, a Hyrule Field tree either age can bonk (OOTRR: is_child and can_bonk)
     // (0.9.0-nightly.20261125.9 renamed it from LLR GS Rain Shed and moved it to Hyrule Field, still child only)
     "HF GS Lone Tree East of LLR": "can_bonk",
-    // an OOTRR developer told the user (2026-11-23) these two now need the Boomerang; not in OOTRR's pushed code
-    // yet (nightly def150e: the child bridge area takes the Boomerang or the Slingshot). Drop these once it is.
     // (the six DMT rupees by the Song of Storms grotto: 0.9.0-nightly.20261125.9 names them DMT Storms Grotto ... and
     // puts them in the DMT Storms Grotto region, which needs can_open_storm_grotto, as the user found 2026-11-23)
-    "Spirit Temple Child Bridge Chest": "Boomerang",
-    "Spirit Temple GS Metal Fence": "Boomerang",
-    // 2026-11-26, players' reports via the user: the Early Torches room (its chest and its five silver rupees) is
-    // only reached through the Bridge Chest's room, so it needs the Boomerang too (its other door doesn't open
-    // from the lobby side). OOTRR: Sticks or Din's Fire for the chest, True for the rupees
-    "Spirit Temple Child Early Torches Chest": "Boomerang and (Sticks or can_use(Dins_Fire))",
-    "Spirit Temple Child Early Torches Silver Rupee Top Right": "Boomerang",
-    "Spirit Temple Child Early Torches Silver Rupee Bottom Right": "Boomerang",
-    "Spirit Temple Child Early Torches Silver Rupee Bottom Left": "Boomerang",
-    "Spirit Temple Child Early Torches Silver Rupee Top Left": "Boomerang",
-    "Spirit Temple Child Early Torches Silver Rupee Near Torch": "Boomerang",
-    // the user, 2026-11-26: the two flying pots are right by the Bridge Chest, and the Anubis room is the next room on
-    // (OOTRR: True, same region)
-    "Spirit Temple Child Bridge Flying Pot 1": "Boomerang",
-    "Spirit Temple Child Bridge Flying Pot 2": "Boomerang",
-    "Spirit Temple Child Anubis Pot 1": "Boomerang",
-    "Spirit Temple Child Anubis Pot 2": "Boomerang",
-    "Spirit Temple Child Anubis Pot 3": "Boomerang",
-    "Spirit Temple Child Anubis Pot 4": "Boomerang",
+    // (Spirit Temple's child area past the metal bridges: OOTRR's 0.9.0-nightly.20261127.23 region rule now needs the
+    // Boomerang or the Early Torches silver rupees, so our Boomerang rules for its checks are dropped)
     // 2026-11-26, players' reports via the user: the chest needs Song of Time as well (OOTRR: the room's five silver
-    // rupees only; its Skulltula already asks for Song of Time)
+    // rupees only)
     "Spirit Temple Early Adult Right Chest": "(Silver_Rupee_Spirit_Temple_Adult_Boulders, 5) and can_play(Song_of_Time)",
     // the user, 2026-11-26: the Bow reaches it too; OOTRR will be fixing it (OOTRR: no Bow). Drop once it lands
     "Ganons Castle Shadow Trial Front Chest": "is_child or can_use(Fire_Arrows) or Hookshot or Hover_Boots or can_play(Song_of_Time) or Bow",

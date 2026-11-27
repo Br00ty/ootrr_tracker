@@ -1,9 +1,9 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261126.19",
+  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
   "seed": "7",
-  "settings": "OOTRR1-AMAQADQBAUJACAAYAECBWAIMEYAQCJYBAEUACARTAEATUAIDJIAQCTABAFHACATHAEEGSAIAQ4AQCADC7Q",
+  "settings": "OOTRR1-AMAQADQBAUJACAAYAECBWAIMEYAQCJYBAEUACARTAEATUAIDJIAQCTQBAJTQCCDJAEAIOAIBAANLK",
   "game": "oot-remake:4d51612e6228acca",
   "placements": {
     "Barinade": "Double Defense",
@@ -94,8 +94,8 @@
     "GF HBA 1000 Points": "Piece of Heart",
     "GF HBA 1500 Points": "Rupees (20)",
     "GF Hideout Hole Chest": "Rupees (20)",
-    "GV Chest": "Light Medallion",
-    "GV Ledge Chest Near Octorok Grotto": "Business Scrub Seed",
+    "GV Chest": "Weird Egg",
+    "GV Ledge Chest Near Octorok Grotto": "Light Medallion",
     "GV Octorok Grotto Chest": "Piece of Heart",
     "GV Storms Grotto Chest": "Piece of Heart",
     "GV Storms Grotto Lens Chest": "Zora Sapphire",
@@ -139,7 +139,7 @@
     "Graveyard Dampe Race Hookshot Chest": "Rupee (1)",
     "Graveyard Freestanding PoH": "Progressive Wallet",
     "Graveyard Heart Piece Grave Chest": "Deku Stick (1)",
-    "Graveyard Shield Grave Chest": "Weird Egg",
+    "Graveyard Shield Grave Chest": "Business Scrub Seed",
     "HC Great Fairy Reward": "Bombs (20)",
     "HC Malon Egg": "Heart Container",
     "HC Zeldas Letter": "Slingshot",
@@ -580,5 +580,5 @@
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "f7266adb0be0faecc0047181d0e237a8d6bec26455ebba3c76b4f4cadcac0509"
+  "checksum": "cbb7ffd4b17ba700932e7dd2ed985f89eca1bb4a1be95ee7bb0cd71bb8b3ff12"
 }
