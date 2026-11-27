@@ -176,6 +176,14 @@ const Seed = (() => {
   function doorOpen(v) { return v.open_door_of_time === true || v.door_of_time_condition === "open"; }
   // seeds from before 0.8 keep the switches their own version used (the generator line reads "ootrr-core 0.7.3")
   function isLegacy(generator) { return before(generator, [0, 8, 0]); }
+  // The stable tracker follows OOTRR 0.8.2. A seed from a newer OOTRR (a nightly, 0.8.3 or 0.9.0 on) has settings this
+  // tracker can't read (its settings string comes out wrong: seen 2026-11-26, Ganon's Boss Key and shop prices) and
+  // checks and logic it doesn't have, so it is turned away towards the Nightly tracker.
+  function tooNew(generator) { return /(\d+)\.(\d+)\.(\d+)/.test(String(generator || "")) && !before(generator, [0, 8, 3]); }
+  function tooNewText(generator) {
+    const v = (/(\d+\.\d+\.\d+\S*)/.exec(String(generator || "")) || [])[1] || "a newer OOTRR";
+    return `this seed was made with OOTRR ${v}, newer than the OOTRR 0.8.2 this tracker follows, so its settings and logic would come out wrong here. Load it on the Nightly tracker (br00ty.github.io/ootrr_tracker/nightly, or Switch to Nightly in the app)`;
+  }
   // whether a seed's generator ("ootrr-core 0.8.0") is older than version v; no version reads as current
   function before(generator, v) {
     const m = /(\d+)\.(\d+)\.(\d+)/.exec(String(generator || ""));
@@ -241,6 +249,7 @@ const Seed = (() => {
     if (!j || j.format !== "ootrr-seed") throw new Error("this is not an ootrr seed file");
     if (j.version !== 1) throw new Error(`seed file version ${j.version} is newer than this tracker understands`);
     if (typeof j.settings !== "string" || !j.placements || typeof j.placements !== "object") throw new Error("the seed file has no settings or placements");
+    if (tooNew(j.generator)) throw new Error(tooNewText(j.generator));
     const legacy = isLegacy(j.generator);
     const { vals, warn } = decodeSettings(j.settings, data.schema, legacy, j.generator);
     const sw = withPlacedPatches(logicSwitches(vals, legacy, j.generator), j.placements, data);
@@ -572,6 +581,6 @@ const Seed = (() => {
     hintRng(`${seedId}/hints`).shuffle(all);
     return H.stones.map((stone, i) => ({ stone, ...all[i % all.length] }));
   }
-  return { enabled, poolOf, kakarikoSkip, isLegacy, before, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf };
+  return { enabled, poolOf, kakarikoSkip, isLegacy, before, tooNew, tooNewText, refresh, decodeSettings, logicSwitches, applySwitches, patchesOf, startItems, parseFile, applyEntrances, withFixes, FIXES, hintsOf };
 })();
 if (typeof module !== "undefined") module.exports = Seed;

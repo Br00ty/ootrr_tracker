@@ -511,6 +511,16 @@ if (S.settings) {
   delete v.trials_random;
 }
 for (const m of [S.done, S.auto && S.auto.done, S.ignore, S.pinFix]) if (m) for (const [o, n] of Object.entries(OLD_NAMES)) if (o in m) { if (!(n in m)) m[n] = m[o]; delete m[o]; }
+function tellTooNew() {
+  if (!tooNewNote) return;
+  const show = () => { $("#dlgBody").replaceChildren(h("h3", {}, "Seed removed"), h("p", {}, `Your loaded seed was removed: ${tooNewNote}.`), h("p", { style: "color:var(--dim)" }, "Your ticked checks and items are kept."),
+    h("div", { class: "foot" }, h("a", { class: "btn", href: "https://br00ty.github.io/ootrr_tracker/nightly/" }, "Open the Nightly tracker"), h("button", { class: "btn", onclick: () => $("#dlg").close() }, "OK"))); $("#dlg").showModal(); tooNewNote = ""; };
+  if ($("#dlg").open) $("#dlg").addEventListener("close", () => setTimeout(show, 50), { once: true }); else show();
+}
+// a nightly seed loaded before the stable tracker turned them away: its settings were read wrong, so it is dropped
+// (progress stays) with a note to load it on the Nightly tracker
+let tooNewNote = "";
+if (S.seed && Seed.tooNew(S.seed.generator)) { tooNewNote = Seed.tooNewText(S.seed.generator); S.seed = null; }
 if (S.seed) S.seed = Seed.refresh(S.seed, DATA);
 // 2026-11-22: the Mirror Shield became the Shield (Deku -> Hylian -> Mirror), a marked Mirror Shield is its 3rd tier
 if (S.items && S.items["Mirror Shield"]) { S.items["Progressive Shield"] = Math.max(S.items["Progressive Shield"] || 0, 3); delete S.items["Mirror Shield"]; }
@@ -3624,7 +3634,7 @@ function openLongshot() {
   if (!$("#dlg").open) $("#dlg").showModal();
 }
 
-try { render(); if (APP) { if (appSaves) appSetSaves(appSaves); if (S.live !== false) liveStart(); } else if (S.live) liveStart(); else restoreFolder(); restoreIcons(); mapsLoad(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
+try { render(); if (APP) { if (appSaves) appSetSaves(appSaves); if (S.live !== false) liveStart(); } else if (S.live) liveStart(); else restoreFolder(); restoreIcons(); mapsLoad(); tellTooNew(); } catch (e) { document.body.append(h("div", { class: "err" }, "Tracker failed to start: " + e.message)); console.error(e); }
 </script>
 </body>
 </html>
