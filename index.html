@@ -3973,7 +3973,8 @@ function renderMode() {
 // and following Link into a ranch of its own switched too early (its frame reaches out into the field).
 // Its checks show on the Hyrule Field map; the Location Tracker keeps its own list.
 // The Temple of Time has no map of its own in the game: its checks show on the Market map.
-const MAP_MERGE = { "Hyrule Field": ["Lon Lon Ranch"], "Market": ["Temple of Time"] };
+// The Thieves' Hideout is drawn on the Gerudo's Fortress map (the same game map): its checks show there (the user, 2026-11-27)
+const MAP_MERGE = { "Hyrule Field": ["Lon Lon Ranch"], "Market": ["Temple of Time"], "Gerudo's Fortress": ["Thieves' Hideout"] };
 const mapAreaOf = (a) => Object.keys(MAP_MERGE).find((k) => MAP_MERGE[k].includes(a)) || a;
 const inMapArea = (area, a) => a === area || (MAP_MERGE[area] || []).includes(a);
 // Single checks the Map Tracker shows on a neighbour's map, where they happen in the game. The Location Tracker
