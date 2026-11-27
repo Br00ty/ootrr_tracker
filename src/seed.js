@@ -522,6 +522,7 @@ const Seed = (() => {
     "Spirit Temple Child Early Torches Chest, its room's five silver rupees, the two Bridge Flying Pots and the four Anubis Pots need the Boomerang too: they're all past the Bridge Chest's room.",
     "Spirit Temple Early Adult Right Chest needs Song of Time as well as the room's silver rupees.",
     "Ganons Castle Shadow Trial Front Chest can also be reached with the Bow (OOTRR's coming fix).",
+    "LLR GS Tower can be taken by both ages: the Boomerang as child, the Hookshot as adult (OOTRR: Boomerang only).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
   ];
@@ -577,6 +578,8 @@ const Seed = (() => {
     "Spirit Temple Early Adult Right Chest": "(Silver_Rupee_Spirit_Temple_Adult_Boulders, 5) and can_play(Song_of_Time)",
     // the user, 2026-11-26: the Bow reaches it too; OOTRR will be fixing it (OOTRR: no Bow). Drop once it lands
     "Ganons Castle Shadow Trial Front Chest": "is_child or can_use(Fire_Arrows) or Hookshot or Hover_Boots or can_play(Song_of_Time) or Bow",
+    // the user, 2026-11-27: both ages can take it (adult with the Hookshot); OOTRR: the Boomerang only, so child only
+    "LLR GS Tower": "(can_use(Boomerang) or can_use(Hookshot)) and can_get_night_gs",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
     // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has its own rule now, is_adult in Hyrule Field; the
