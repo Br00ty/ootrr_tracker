@@ -1622,6 +1622,7 @@ const PIN_FIXES = {
   "Bottom of the Well Freestanding Key": { place: "BottomOfTheWell_B1", u: 0.2922, v: 0.5781 },
   "LH Sun": { place: "LakeHylia", u: 0.6025, v: 0.6093 },
   "LW GS Bean Patch Near Theater": { place: "LostWood", u: 0.5125, v: 0.3253 },
+  "Ice Cavern Compass Chest": { place: "IceCavern_1F", u: 0.7507, v: 0.5116 },
 };
 // pin changes that are now part of the tracker are no longer the player's own
 for (const [n, f] of Object.entries(S.pinFix || {})) if (JSON.stringify(f) === JSON.stringify(PIN_FIXES[n])) delete S.pinFix[n];
