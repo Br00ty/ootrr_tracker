@@ -2645,7 +2645,7 @@ const silverShuffled = () => (S.seed ? S.seed.vals : manualVals()).shuffle_silve
 // Bomb Bag: a user's report (2026-11-25): picking up a bomb in game ticked the Bomb Bag. With a seed, the save's bag
 // counts only as far as the Bomb Bags in done checks (and starting items) go; the three bags are all that raise it
 const autoItem = (n) => (n === "Bomb Bag" && S.seed ? Math.min(S.auto.items[n] || 0, startOf(n) + gotFromChecks(n)) : S.auto.items[n] || 0);
-const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, autoItem(n), startOf(n), keysFound(n), n === "Progressive Shield" ? shieldStart() : 0);
+const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, autoItem(n), startOf(n), keysFound(n), itemsFound(n), n === "Progressive Shield" ? shieldStart() : 0);
 // The shields are one tracker item that goes Deku Shield -> Hylian Shield -> Mirror Shield (the user's choice,
 // 2026-11-22): its tier counts as having that shield and the ones before it, in the logic and for drop checks.
 const SHIELDS = ["Deku Shield", "Hylian Shield", "Mirror Shield"];
@@ -2654,6 +2654,25 @@ const shieldTier = () => have("Progressive Shield");
 // Small keys and silver rupees gotten: every done check that holds one (the seed's item there, or the
 // vanilla one where the seed doesn't shuffle that spot) counts one; a key ring counts them all.
 let KEYS_FOUND = null;
+// With a seed: the items at checks marked done (by hand or from the save) count as found, so ticking a check by hand
+// gives the logic its item (a user's report, 2026-11-27: manual ticks changed nothing). Capped at each tile's most;
+// shields go by their own tiers, keys and silver rupees by keysFound
+let ITEMS_FOUND = null;
+function itemsFound(n) {
+  if (!S.seed) return 0;
+  if (!ITEMS_FOUND) {
+    ITEMS_FOUND = {};
+    const most = {};
+    for (const t of [...INV, ...ARROWS, ...GEAR, ...SONGS, ...REWARDS, ...CHILD_TRADE, ...ADULT_TRADE]) most[t[0]] = typeof t[2] === "number" ? t[2] : 1;
+    for (const [c, it] of Object.entries(S.seed.placements || {})) {
+      if (!DATA.checks[c] || !isDone(c)) continue;
+      const t = tileOf(it);
+      if (!(t in most) || t === "Progressive Shield") continue;
+      ITEMS_FOUND[t] = Math.min(most[t], (ITEMS_FOUND[t] || 0) + 1);
+    }
+  }
+  return ITEMS_FOUND[n] || 0;
+}
 function keysFound(n) {
   if (!n.startsWith("Small Key (") && !n.startsWith("Silver Rupee (")) return 0;
   if (!KEYS_FOUND) {
@@ -2820,7 +2839,7 @@ function compute() {
 // ---------- render ----------
 let R = new Map(), VSONGS = new Map();
 function render() {
-  KEYS_FOUND = null;
+  KEYS_FOUND = null; ITEMS_FOUND = null;
   R = compute();
   if (typeof paintAuto === "function") paintAuto();
   if (typeof paintSeed === "function") paintSeed();
