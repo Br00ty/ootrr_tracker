@@ -5110,6 +5110,11 @@ function paintSeed() {
 // the child fishing prize while the get event didn't). EXTRA_FLAGS are added next to OOTRR's rule: their
 // names say what they are and they are stored in the save, but they haven't been seen changing yet.
 const OWN_FLAGS = {
+  // the Big Poe seller's reward: his sub-event's step reaching Complete (OOTRR flow_locations.json: Playing, then
+  // Complete). OOTRR's tracker target is a guess, the reward item's get event, which any copy of that item sets: a
+  // player's report 2026-11-27, ticked without turning in a Poe; in the user's seed it holds Rupee (1), whose get
+  // event the first green rupee sets. The step reads Ready before any sale (the user's save, 2026-11-27)
+  "Market 5 Big Poes": ["Step_SubEvent_GhostShop=Complete", "SubEvent_GhostShop_IsCompleted_Exp"],
   // The Great Fairies: each by her own fountain's flags only, the fountain scene (OOTRR npc_flags.rs, confirmed)
   // and OOTRR's spare flag after the gift (flow_extra.json). OOTRR's tracker target is the vanilla gift's get
   // event, which also fires when that item comes from anywhere else (2026-11-22: taking the DMT fairy's gift
@@ -5222,7 +5227,6 @@ const EXTRA_FLAGS = {
   // item's event, but from a settings string the placed item isn't known (a user's report, 2026-11-24). Each
   // NPC's own "done" flag as well (from the game's flag list; not yet seen set in a real save):
   "DMT Biggoron": ["SubEvent_GetSwordBigGoron_IsCompleted_Exp"],
-  "Market 5 Big Poes": ["SubEvent_GhostShop_IsCompleted_Exp"],
   "GC Darunias Joy": ["HavePlayedEvent.Meet_Darunia_PlayOcarina"],
   // confirmed 2026-11-24 (Boss Key (Forest Temple) there, whose taking set no get event): Zelda's Light Arrows
   // scene in the Temple of Time ends with this (with Dm_TimeTemple_0090 to 0135)
