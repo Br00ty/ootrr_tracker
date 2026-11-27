@@ -1218,8 +1218,9 @@ const DOORS = {
 };
 const doorKey = (d) => `${d} (entrance)`;
 // doors only one age's map shows: Jabu Jabu is gone from the adult Zora's Fountain, the well is
-// drained only as a child, and the Ice Cavern is reachable once the fountain has frozen over
-const DOOR_AGE = { "Jabu Jabu's Belly": "child", "Bottom of the Well": "child", "Ice Cavern": "adult" };
+// drained only as a child, the Ice Cavern is reachable once the fountain has frozen over, and the Water Temple's
+// door (under the lake) only as an adult (the user, 2026-11-27)
+const DOOR_AGE = { "Jabu Jabu's Belly": "child", "Bottom of the Well": "child", "Ice Cavern": "adult", "Water Temple": "adult" };
 // the dungeon behind a door: with dungeon entrances shuffled, the seed's layout says
 function behindDoor(d) {
   for (const [door, dun] of Object.entries(LAYOUT)) if (areaName(door) === d) return areaName(dun);
@@ -3035,12 +3036,16 @@ const OWN_KEYS = {
   // 0.8.3-nightly.20261123.5 moved the Dampe race Heart Piece to the ground (locations.json: a heart actor,
   // 7277816997830770001); OOTRR's tracker target is still the old chest (kept in EXTRA_FLAGS)
   "Graveyard Dampe Race Freestanding PoH": ["7277816997830770001"],
+  // the bottle under the lake: with anything but Ruto's Letter there, OOTRR swaps in the placed item's pickup and adds
+  // a saved row for the spot's hash (slice/pickups.rs NEW_ROWS / ALWAYS), so the letter's flag (OWN_FLAGS) stays unset.
+  // A player's report 2026-11-27 (desktop app): picked up and not ticked
+  "LH Underwater Item": ["474136620438465634"],
 };
 function detectMap() {
   const out = detectMapBase();
   for (const [n, k] of Object.entries(OWN_KEYS)) out[n] = [{ k }];
   for (const [base, k] of Object.entries(POOL_KEYS)) for (let i = 1; i <= k.length; i++) if (DATA.checks[`${base} ${i}`]) out[`${base} ${i}`] = [{ k, n: i }];
-  for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = [{ f }];
+  for (const [n, f] of Object.entries(OWN_FLAGS)) out[n] = OWN_KEYS[n] ? [{ k: OWN_KEYS[n] }, { f }] : [{ f }];
   for (const [n, f] of Object.entries(EXTRA_FLAGS)) if (out[n]) out[n] = [...out[n], { f }];
   for (const [n, f] of Object.entries(OOTRR_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
   for (const [n, f] of Object.entries(BOSS_FLAGS)) if (DATA.checks[n]) out[n] = [...(out[n] || []), { f }];
