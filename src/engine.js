@@ -458,7 +458,7 @@ const Engine = (() => {
         const text = more ? `(${own || base}) and ${more}` : own || base;
         const rule = cmp.rule(text, { region: r.n, name: n });
         lix.set(n, locs.length); regions[rid].locations.push(locs.length);
-        locs.push({ name: n, region: rid, rule, event: null });
+        locs.push({ name: n, region: rid, rule, event: null, text });
       }
       for (const [ev, text] of Object.entries(r.e || {})) {
         const n = `${ev} from ${r.n}`;

@@ -2496,6 +2496,10 @@ function skullNote(n) {
   return h("div", { class: "cross" }, h("span", { class: "xa" }, "GS"), `${what}: ${sn[1].replace(/^placeholder, /, "")}.`);
 }
 // a check's notes, and with logic (the "Show logic" button) its region, rule and ways in; null when there's nothing
+function ruleShown(n, rule) {
+  const w = worlds && worlds[0], i = w ? w.lix.get(n) : undefined;
+  return i !== undefined && w.locs[i].text != null ? String(w.locs[i].text).replace(/\s+/g, " ").trim() : rule;
+}
 function describe(n, logic = true) {
   const [area, , region, rule] = DATA.checks[n];
   if (!logic) {
@@ -2513,7 +2517,8 @@ function describe(n, logic = true) {
     skullNote(n),
     renamed(n) ? h("div", { class: "cross" }, `OOTRR name: ${n}`) : null,
     h("div", {}, "Region: ", h("b", {}, gpg(region))),
-    h("code", { class: "q" }, rule || "True"),
+    // the rule the logic really uses: OOTRR's, after the seed's patches (strict Skulltula rules…) and the tracker's own fixes
+    h("code", { class: "q" }, ruleShown(n, rule) || "True"),
     ways.length ? h("div", { class: "way" }, `Way in (${ways.length === 1 ? "1 entrance" : ways.length + " entrances"}):`) : null,
     shown.map(([from, q]) => h("code", { class: "q" }, h("span", { class: "from" }, `${gpg(from)} → `), q)),
     ways.length > shown.length ? h("div", { class: "way" }, `+ ${ways.length - shown.length} more`) : null);
