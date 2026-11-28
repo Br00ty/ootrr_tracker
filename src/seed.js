@@ -540,6 +540,7 @@ const Seed = (() => {
     "GF GS Top Floor needs no Gerudo Membership Card (OOTRR's strict Skulltula rules guess it does).",
     "Spirit Temple GS Boulder Room needs no Song of Time: it's free once you're in the room.",
     "Bottom of the Well Front Center Bombable Chest needs Zelda's Lullaby, not explosives.",
+    "HF Rocks Near Cow Grotto Chest can be taken by both ages (OOTRR: adult only).",
     "LH Adult Lakebed Water Temple Gate Blue Rupee and its four Green Rupees need the Iron Boots or the Silver Scale.",
     "LLR GS Tower can be taken by both ages: the Boomerang as child, the Hookshot as adult (OOTRR: Boomerang only).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
@@ -597,7 +598,9 @@ const Seed = (() => {
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
     // (HF Tektite Grotto Freestanding PoH: the 0.8.3 nightly has its own rule now, is_adult in Hyrule Field; the
-    // tracker follows OOTRR's updated logic, the user's call 2026-11-22)
+    // tracker followed OOTRR's updated logic, the user's call 2026-11-22)
+    // 2026-11-28, the user: it shows for both ages (OOTRR: is_adult)
+    "HF Rocks Near Cow Grotto Chest": "True",
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
