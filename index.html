@@ -2810,7 +2810,9 @@ const startOf = (n) => startTable()[n] || 0;
 const silverShuffled = () => (S.seed ? S.seed.vals : manualVals()).shuffle_silver_rupees === true;
 // Bomb Bag: a user's report (2026-11-25): picking up a bomb in game ticked the Bomb Bag. With a seed, the save's bag
 // counts only as far as the Bomb Bags in done checks (and starting items) go; the three bags are all that raise it
-const autoItem = (n) => (n === "Bomb Bag" && S.seed ? Math.min(S.auto.items[n] || 0, startOf(n) + gotFromChecks(n)) : S.auto.items[n] || 0);
+// (not in Archipelago: a Bomb Bag sent from another world is in no check of this seed, the user's AP game 2026-11-27,
+// and the save's IsGet.Item_BombBag_Small was set)
+const autoItem = (n) => (n === "Bomb Bag" && S.seed && !S.seed.ap ? Math.min(S.auto.items[n] || 0, startOf(n) + gotFromChecks(n)) : S.auto.items[n] || 0);
 const have = (n) => SHIELDS.includes(n) ? +(shieldTier() > SHIELDS.indexOf(n)) : Math.max(S.items[n] || 0, autoItem(n), startOf(n), keysFound(n), itemsFound(n), n === "Progressive Shield" ? shieldStart() : 0);
 // The shields are one tracker item that goes Deku Shield -> Hylian Shield -> Mirror Shield (the user's choice,
 // 2026-11-22): its tier counts as having that shield and the ones before it, in the logic and for drop checks.
