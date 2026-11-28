@@ -539,6 +539,7 @@ const Seed = (() => {
     "Ganons Castle Shadow Trial Front Chest can also be reached with the Bow (OOTRR's coming fix).",
     "GF GS Top Floor needs no Gerudo Membership Card (OOTRR's strict Skulltula rules guess it does).",
     "Spirit Temple GS Boulder Room needs no Song of Time: it's free once you're in the room.",
+    "Bottom of the Well Front Center Bombable Chest needs Zelda's Lullaby, not explosives.",
     "LH Adult Lakebed Water Temple Gate Blue Rupee and its four Green Rupees need the Iron Boots or the Silver Scale.",
     "LLR GS Tower can be taken by both ages: the Boomerang as child, the Hookshot as adult (OOTRR: Boomerang only).",
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
@@ -579,6 +580,8 @@ const Seed = (() => {
     "Ganons Castle Shadow Trial Front Chest": "is_child or can_use(Fire_Arrows) or Hookshot or Hover_Boots or can_play(Song_of_Time) or Bow",
     // the user, 2026-11-27: free once you're in the room (OOTRR: can_play(Song_of_Time))
     "Spirit Temple GS Boulder Room": "True",
+    // the user, 2026-11-28: no explosives needed, but Zelda's Lullaby is (OOTRR: has_explosives)
+    "Bottom of the Well Front Center Bombable Chest": "can_play(Zeldas_Lullaby)",
     // the user, 2026-11-28: the lakebed rupees by the Water Temple gate need the Iron Boots or the Silver Scale
     // (OOTRR: is_adult)
     "LH Adult Lakebed Water Temple Gate Blue Rupee": "is_adult and (can_use(Iron_Boots) or Progressive_Scale)",
