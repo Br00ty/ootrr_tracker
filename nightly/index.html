@@ -5241,6 +5241,17 @@ const OWN_FLAGS = {
   // Egg, she gives only her placed item) and can't be read when that item is another Archipelago player's: the user's
   // AP save 2026-11-27 had the quest at Step07 and no Pocket Egg event
   "Kak Anju as Adult": ANJU_ADULT,
+  // The six trap chests, made into real chests when the seed shuffles them (OOTRR slice/trap_chests.rs, nightly .18+):
+  // the game has no IsTreasureBoxOpen row for them, so each gets a spare TestField flag (chest_slot::spares, taken in
+  // order of the chests' hashes). Worked out from the game's GameDataList and confirmed by the user's save
+  // (2026-11-27: the Water Trial Left Chest set TestField DungeonRoom004 ClearAutoSave; OOTRR's own target, the
+  // chest's IsTreasureBoxOpen flag, never fires, so neither the tracker nor the Archipelago client saw it)
+  "Spirit Temple First Mirror Left Chest": ["DungeonRoomStep.TestField.DungeonRoom001.BeenInTheRoom"],
+  "Ganons Castle Water Trial Left Chest": ["DungeonRoomStep.TestField.DungeonRoom004.ClearAutoSave"],
+  "Ganons Castle Light Trial First Right Chest": ["DungeonRoomStep.TestField.DungeonRoom003.ClearRoom"],
+  "Gerudo Training Ground Heavy Block Fourth Chest": ["DungeonRoomStep.TestField.DungeonRoom002.BeenInTheRoom"],
+  "Ganons Castle Light Trial Third Right Chest": ["DungeonRoomStep.TestField.DungeonRoom000.ClearAutoSave"],
+  "Ganons Castle Light Trial Second Left Chest": ["DungeonRoomStep.TestField.DungeonRoom000.BeenInTheRoom"],
   // confirmed in a real save: the Deku Theater elders' scene the first time each mask is shown, which hands over
   // the prize (OOTRR's rule, the get event of the placed item, misses an item placed more than once, e.g. a wallet)
   "Deku Theater Skull Mask": ["HavePlayedEvent.LostWood_ScrubForestStageElder_SkullMaskFirst"],
