@@ -2888,6 +2888,10 @@ function paintSeed() {
 // OWN_FLAGS replaces OOTRR's rule (confirmed in a real save: MiniGame_Fishing_GetHeartPiece went 0 → 1 at
 // the child fishing prize while the get event didn't). EXTRA_FLAGS are added next to OOTRR's rule: their
 // names say what they are and they are stored in the save, but they haven't been seen changing yet.
+// every adult trade quest step after Ready (the game's enum, OOTRR data/flags.json)
+const ANJU_ADULT = ["StartSubEvent", "WaitEggHatch", "EggHatched", "Step01", "Step01_01", "Step02", "Step03", "Step03_01", "Step03_02",
+  "Step03_03", "Step04", "Step05", "Step05_01", "Step06", "Step06_01", "Step06_02", "Step06_03", "Step07", "Step08", "Step08_01", "Step09",
+  "Step09_01", "Step10", "Step11", "Complete"].map((v) => "Step_SubEvent_GetSwordBigGoron=" + v);
 const OWN_FLAGS = {
   // the Big Poe seller's reward: his sub-event's step reaching Complete (OOTRR flow_locations.json: Playing, then
   // Complete). OOTRR's tracker target is a guess, the reward item's get event, which any copy of that item sets: a
@@ -2923,6 +2927,11 @@ const OWN_FLAGS = {
   "LH Adult Fishing": ["MiniGame_Fishing_GetGoldScale"],
   // confirmed in a real save: set when Anju hands over the prize for her cuccos
   "Kak Anju as Child": ["MiniGame_CatchCucco_IsCompleted"],
+  // Anju's first adult gift moves the adult trade quest past Ready (OOTRR open_world/trade_shuffle.rs KEEP), in every
+  // mode. OOTRR's target is the Pocket Egg's get event, which never fires with "Shuffle adult trade items" (no Pocket
+  // Egg, she gives only her placed item) and can't be read when that item is another Archipelago player's: the user's
+  // AP save 2026-11-27 had the quest at Step07 and no Pocket Egg event
+  "Kak Anju as Adult": ANJU_ADULT,
   // confirmed in a real save: the Deku Theater elders' scene the first time each mask is shown, which hands over
   // the prize (OOTRR's rule, the get event of the placed item, misses an item placed more than once, e.g. a wallet)
   "Deku Theater Skull Mask": ["HavePlayedEvent.LostWood_ScrubForestStageElder_SkullMaskFirst"],
