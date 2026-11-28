@@ -3034,6 +3034,20 @@ const BOSS_FLAGS = {
   "Twinrova": ["HavePlayedEvent.Dm_Awake_Spirit_Get"],
 };
 const EXTRA_FLAGS = {
+  // the adult trade hand ins: each NPC's own flag for the first time it was shown its trade item (the game's
+  // GetSwordBigGoron flags). With "Shuffle adult trade items" the hand in gives only its placed item, which in
+  // Archipelago can be another player's with no get event to watch: the user's AP game 2026-11-27, Biggoron's two
+  // hand ins set IsAfterFirstShowBrokenSword / IsAfterFirstShowEyeDrop (and the Step07 / Step10 events) and nothing
+  // the tracker knew. Grog and Fado have no such flag: their hand-in events (Step03, Step05) stand in
+  "Kak Anju Trade Pocket Cucco": ["GetSwordBigGoron_IsAfterFirstShowCucco_Npc_Hylia_049_Adult"],
+  "LW Trade Cojiro": ["HavePlayedEvent.SubEvent_GetSwordBigGoron_Step03"],
+  "Kak Granny Trade Odd Mushroom": ["GetSwordBigGoron_IsAfterFirstShowMushroom_Npc_Hylia_053_Adult"],
+  "LW Trade Odd Potion": ["HavePlayedEvent.SubEvent_GetSwordBigGoron_Step05"],
+  "GV Trade Poachers Saw": ["GetSwordBigGoron_IsAfterFirstShowSaw_Npc_Hylia_012_Adult"],
+  "DMT Trade Broken Sword": ["GetSwordBigGoron_IsAfterFirstShowBrokenSword_Npc_BigGoron", "HavePlayedEvent.SubEvent_GetSwordBigGoron_Step07"],
+  "ZD Trade Prescription": ["GetSwordBigGoron_IsAfterFirstShowPrescription_KingZora"],
+  "LH Trade Eyeball Frog": ["GetSwordBigGoron_IsAfterFirstShowFrog_Npc_Hylia_045_Adult"],
+  "DMT Trade Eyedrops": ["GetSwordBigGoron_IsAfterFirstShowEyeDrop_Npc_BigGoron", "HavePlayedEvent.SubEvent_GetSwordBigGoron_Step10"],
   "Graveyard Dampe Race Freestanding PoH": ["IsTreasureBoxOpen.5534919361313859554"],
   // NPC gifts that OOTRR's data only knows by the vanilla item's get event: with a seed file that becomes the placed
   // item's event, but from a settings string the placed item isn't known (a user's report, 2026-11-24). Each
