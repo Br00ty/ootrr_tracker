@@ -1490,6 +1490,12 @@ const Seed = (() => {
     // the Hammer pillar); the original randomizer also lets Hover Boots cross from the first room to the boss door.
     "Fire Temple Near Boss": { "Fire Temple Before Boss": "can_use(Hover_Boots)" },
   };
+  // ways between regions that need something more (added to OOTRR's rule with "and")
+  const EXIT_AND = {
+    // 2026-11-27, the user: child Link can't get past the enemy blocking the door into the area beyond the metal
+    // bridges without blowing it up. Bombs (or bombchus where they count), not the Hammer: this is the child side
+    "Spirit Temple Lobby": { "Child Spirit Temple Beyond Metal Bridges": "has_explosives" },
+  };
   // checks the tracker puts in another region than OOTRR (the rule is kept, read there)
   const MOVE_REGION = {
     // 2026-11-21, the user: the tree is in Zora's River past the boulders at its entrance, so it needs a way into
@@ -1547,6 +1553,13 @@ const Seed = (() => {
       if (!add) return r;
       const x = { ...(r.x || {}) };
       for (const [to, q] of Object.entries(add)) x[to] = x[to] ? `(${x[to]}) or (${q})` : q;
+      return { ...r, x };
+    });
+    if (regions) regions = regions.map((r) => {
+      const add = EXIT_AND[r.n];
+      if (!add || !r.x) return r;
+      const x = { ...r.x };
+      for (const [to, q] of Object.entries(add)) if (x[to]) x[to] = `(${x[to]}) and (${q})`;
       return { ...r, x };
     });
     if (regions && Object.keys(MOVE_REGION).length) regions = regions.map((r) => {
