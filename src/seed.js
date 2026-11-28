@@ -315,6 +315,7 @@ const Seed = (() => {
     "Ganons Castle Shadow Trial Front Chest can also be reached with the Bow (OOTRR's coming fix).",
     "GF GS Top Floor needs no Gerudo Membership Card (OOTRR's strict Skulltula rules guess it does).",
     "Spirit Temple GS Boulder Room needs no Song of Time: it's free once you're in the room.",
+    "Bottom of the Well Front Center Bombable Chest needs Zelda's Lullaby, not explosives.",
     "The five adult rupees on the Lake Hylia lakebed by the Water Temple gate (Hyrule Field Adult Remake Rupee 1, Lake Hylia Adult Remake Rupee 1–4) need the Iron Boots or the Silver Scale.",
     "LLR GS Back Wall can be taken by both ages: the Boomerang as child, the Hookshot as adult (OOTRR: Boomerang only).",
     "DMT SoS Grotto Rupee 1-6 (OOTRR: DMT Rock Red Rupee, Death Mountain Remake Rupee 1-5) only appear after playing Song of Storms by the grotto.",
@@ -386,6 +387,8 @@ const Seed = (() => {
     "Ganons Castle Shadow Trial Front Chest": "is_child or can_use(Fire_Arrows) or Hookshot or Hover_Boots or can_play(Song_of_Time) or Bow",
     // the user, 2026-11-27: free once you're in the room (OOTRR: can_play(Song_of_Time))
     "Spirit Temple GS Boulder Room": "True",
+    // the user, 2026-11-28: no explosives needed, but Zelda's Lullaby is (OOTRR: has_explosives)
+    "Bottom of the Well Front Center Bombable Chest": "can_play(Zeldas_Lullaby)",
     // the user, 2026-11-28: the lakebed rupees by the Water Temple gate need the Iron Boots or the Silver Scale
     // (OOTRR: is_adult)
     "Hyrule Field Adult Remake Rupee 1": "is_adult and (can_use(Iron_Boots) or Progressive_Scale)",
