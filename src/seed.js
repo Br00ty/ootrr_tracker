@@ -322,7 +322,7 @@ const Seed = (() => {
     "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
     "Spirit Temple GS Statue Room (OOTRR: Spirit Temple GS Sun on Floor Room) needs explosives as child.",
-    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens; it needs both ages and nothing else (OOTRR: in the Tektite grotto, Golden Scale or Iron Boots).",
+    "HF Present/Past Chest (OOTRR: HF Tektite Grotto Freestanding PoH) is a chest in Hyrule Field that adult Link visits first and child Link then opens; either age can take it (OOTRR: in the Tektite grotto, Golden Scale or Iron Boots).",
     "ZR GS Tree is past the boulders at the river's entrance, so it needs a way into Zora's River (OOTRR has it in ZR Front, before them).",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -403,8 +403,9 @@ const Seed = (() => {
     "LLR GS Back Wall": "(can_use(Boomerang) or can_use(Hookshot)) and (at_night or gold_skulls_ignore_daytime)",
     // 2026-11-21, the user: this silver rupee is behind rocks that need an explosive (shown as ... Behind Rocks)
     "Bottom of the Well Basement Silver Rupee Ladders Top": "has_explosives",
-    // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving)
-    "HF Tektite Grotto Freestanding PoH": "is_child and at('Hyrule Field', is_adult)",
+    // 2026-11-21, the user: adult Link visits the chest first, then child Link can open it (no diving); 2026-11-28, the
+    // user: it shows for both ages
+    "HF Tektite Grotto Freestanding PoH": "True",
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
