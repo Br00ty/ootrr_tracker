@@ -985,6 +985,8 @@ const Auto = (() => {
     set("Progressive Scale", tier(["Item_Scale_Silver", "Item_Scale_Gold"]));
     set("Progressive Wallet", tier(["Item_Wallet_Medium", "Item_Wallet_Large"]));
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
+    // the Pocket Egg tile: 1 the egg, 2 the Pocket Cucco (hatched, or straight from Anju with adult trade shuffle)
+    set("Pocket Egg", tier(["Item_PocketEgg", "Item_PocketCucco"]));
     // the Shield: Deku -> Hylian -> Mirror, the best one held (a burnt or eaten shield keeps its IsGet)
     set("Progressive Shield", tier(["Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror"]));
     const mp = p.int("PlayerStatus.MPMax");
@@ -1010,7 +1012,7 @@ const Auto = (() => {
       "Weird Egg": ["Item_WeirdEgg"], "Zeldas Letter": ["Item_ZeldaLetter"], "Rutos Letter": ["Item_Bottle_Letter"],
       "Keaton Mask": ["Armor_Child_Mask_Keaton"], "Skull Mask": ["Armor_Child_Mask_Skull"], "Spooky Mask": ["Armor_Child_Mask_Spooky"],
       "Bunny Hood": ["Armor_Child_Mask_Bunny"], "Mask of Truth": ["Armor_Child_Mask_Truth"],
-      "Pocket Egg": ["Item_PocketEgg"], Cojiro: ["Item_CojiroCucco"], "Odd Mushroom": ["Item_OddMushroom"], "Odd Potion": ["Item_OddPowder"],
+      Cojiro: ["Item_CojiroCucco"], "Odd Mushroom": ["Item_OddMushroom"], "Odd Potion": ["Item_OddPowder"],
       "Poachers Saw": ["Item_PoacherSaw"], "Broken Sword": ["Item_BrokenSword"], Prescription: ["Item_Prescription"],
       "Eyeball Frog": ["Item_EyeballFrog"], Eyedrops: ["Item_EyeDrop"], "Claim Check": ["Item_ClaimCheck"],
       Bottle: ["Item_Bottle", "Item_Bottle_Milk", "Item_Bottle_HalfMilk", "Item_Bottle_RedPotion", "Item_Bottle_GreenPotion", "Item_Bottle_BluePotion", "Item_Bottle_Fairy", "Item_Bottle_Fish", "Item_Bottle_BlueFire", "Item_Bottle_Bug", "Item_Bottle_Poe", "Item_Bottle_BigPoe"],
@@ -2627,7 +2629,7 @@ const CHILD_TRADE = [
   ["Mask of Truth","Mask of Truth",1],
 ];
 const ADULT_TRADE = [
-  ["Pocket Egg","Pocket Egg",1],["Cojiro","Cojiro",1],["Odd Mushroom","Odd Mush-room",1],["Odd Potion","Odd Potion",1],["Poachers Saw","Poacher's Saw",1],["Broken Sword","Broken Sword",1],
+  ["Pocket Egg","Pocket Egg",2],["Cojiro","Cojiro",1],["Odd Mushroom","Odd Mush-room",1],["Odd Potion","Odd Potion",1],["Poachers Saw","Poacher's Saw",1],["Broken Sword","Broken Sword",1],
   ["Prescription","Prescrip-tion",1],["Eyeball Frog","Eyeball Frog",1],["Eyedrops","Eyedrops",1],["Claim Check","Claim Check",1],
 ];
 const SONGS = [
@@ -2806,6 +2808,7 @@ function itemsFound(n) {
       if (!DATA.checks[c] || !isDone(c)) continue;
       const t = tileOf(it);
       if (!(t in most) || t === "Progressive Shield") continue;
+      if (it === "Pocket Cucco") { ITEMS_FOUND[t] = 2; continue; }
       ITEMS_FOUND[t] = Math.min(most[t], (ITEMS_FOUND[t] || 0) + 1);
     }
   }
@@ -2951,7 +2954,9 @@ function compute() {
     // Treasure Chest Game keys aren't given: they're in their vanilla rooms (the seller and each room's top chest),
     // which the logic collects as it reaches them, so the reward needs Lens of Truth like in OOTRR.
     const names = new Set([...Object.keys(S.items), ...Object.keys(S.auto.items), ...Object.keys(startTable()), ...SHIELDS]);
-    for (const n of names) { const i = w.items.find(n), c = have(n); if (i !== undefined && c > 0) counts.push([i, c]); }
+    for (const n of names) { const i = w.items.find(n), c = have(n); if (i !== undefined && c > 0) counts.push([i, n === "Pocket Egg" ? 1 : c]); }
+    // the Pocket Egg tile's second stage is the Pocket Cucco (what wakes Talon)
+    if (have("Pocket Egg") >= 2) { const i = w.items.find("Pocket Cucco"); if (i !== undefined) counts.push([i, 1]); }
     return { w, s: new Engine.Search(w, counts).run(place) };
   });
   const out = new Map();
@@ -3043,6 +3048,9 @@ const TIERS = {
   "Progressive Scale": ["Silver Scale", "Golden Scale"],
   "Progressive Wallet": ["Adult's Wallet", "Giant's Wallet"],
   "Progressive Shield": ["Deku Shield", "Hylian Shield", "Mirror Shield"],
+  // the Pocket Egg hatches into the Pocket Cucco; "Shuffle adult trade items" (OOTRR open_world/trade_shuffle.rs) has
+  // no egg at all, Anju's first gift is the Pocket Cucco, so the tile goes straight to it (the user's call, 2026-11-27)
+  "Pocket Egg": ["Pocket Egg", "Pocket Cucco"],
 };
 // ---------- item pictures ----------
 // The pictures are the game's own art, so they aren't shipped with the tracker: they're decoded from the game's
@@ -3073,7 +3081,7 @@ const ICON = {
   "Rutos Letter": "Item_Bottle_Letter", "Stone of Agony": "Item_AgonyStone",
   "Weird Egg": "Item_WeirdEgg", "Zeldas Letter": "Item_ZeldaLetter", "Keaton Mask": "Armor_Child_Mask_Keaton", "Skull Mask": "Armor_Child_Mask_Skull",
   "Spooky Mask": "Armor_Child_Mask_Spooky", "Bunny Hood": "Armor_Child_Mask_Bunny", "Mask of Truth": "Armor_Child_Mask_Truth",
-  "Pocket Egg": "Item_PocketEgg", "Cojiro": "Item_CojiroCucco", "Odd Mushroom": "Item_OddMushroom", "Odd Potion": "Item_OddPowder",
+  "Pocket Egg": ["Item_PocketEgg", "Item_PocketCucco"], "Cojiro": "Item_CojiroCucco", "Odd Mushroom": "Item_OddMushroom", "Odd Potion": "Item_OddPowder",
   "Poachers Saw": "Item_PoacherSaw", "Broken Sword": "Weapon_Sword_BrokenGiant", "Prescription": "Item_Prescription",
   "Eyeball Frog": "Item_EyeballFrog", "Eyedrops": "Item_EyeDrop", "Claim Check": "Item_ClaimCheck",
   "small key": "Item_Dungeon_SmallKey", "boss key": "Item_Dungeon_BossKey",
@@ -4506,6 +4514,7 @@ function tileOf(item) {
   if (/^Bottle/.test(item)) return "Bottle";
   if (/Shield$/.test(item)) return "Progressive Shield";
   if (item === "Giants Knife") return "Biggoron Sword";
+  if (item === "Pocket Cucco") return "Pocket Egg";
   if (item === "Magic Bean Pack") return "Magic Bean";
   let m = item.match(/^Silver Rupee(?: Pouch)? \((.+)\)$/);
   if (m) return `Silver Rupee (${m[1]})`;

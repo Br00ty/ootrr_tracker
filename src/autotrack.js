@@ -101,6 +101,8 @@ const Auto = (() => {
     set("Progressive Scale", tier(["Item_Scale_Silver", "Item_Scale_Gold"]));
     set("Progressive Wallet", tier(["Item_Wallet_Medium", "Item_Wallet_Large"]));
     set("Ocarina", tier(["Item_Ocarina_Fairy", "Item_Ocarina_Time"]));
+    // the Pocket Egg tile: 1 the egg, 2 the Pocket Cucco (hatched, or straight from Anju with adult trade shuffle)
+    set("Pocket Egg", tier(["Item_PocketEgg", "Item_PocketCucco"]));
     // the Shield: Deku -> Hylian -> Mirror, the best one held (a burnt or eaten shield keeps its IsGet)
     set("Progressive Shield", tier(["Weapon_Shield_Deku", "Weapon_Shield_Hylian", "Weapon_Shield_Mirror"]));
     const mp = p.int("PlayerStatus.MPMax");
@@ -126,7 +128,7 @@ const Auto = (() => {
       "Weird Egg": ["Item_WeirdEgg"], "Zeldas Letter": ["Item_ZeldaLetter"], "Rutos Letter": ["Item_Bottle_Letter"],
       "Keaton Mask": ["Armor_Child_Mask_Keaton"], "Skull Mask": ["Armor_Child_Mask_Skull"], "Spooky Mask": ["Armor_Child_Mask_Spooky"],
       "Bunny Hood": ["Armor_Child_Mask_Bunny"], "Mask of Truth": ["Armor_Child_Mask_Truth"],
-      "Pocket Egg": ["Item_PocketEgg"], Cojiro: ["Item_CojiroCucco"], "Odd Mushroom": ["Item_OddMushroom"], "Odd Potion": ["Item_OddPowder"],
+      Cojiro: ["Item_CojiroCucco"], "Odd Mushroom": ["Item_OddMushroom"], "Odd Potion": ["Item_OddPowder"],
       "Poachers Saw": ["Item_PoacherSaw"], "Broken Sword": ["Item_BrokenSword"], Prescription: ["Item_Prescription"],
       "Eyeball Frog": ["Item_EyeballFrog"], Eyedrops: ["Item_EyeDrop"], "Claim Check": ["Item_ClaimCheck"],
       Bottle: ["Item_Bottle", "Item_Bottle_Milk", "Item_Bottle_HalfMilk", "Item_Bottle_RedPotion", "Item_Bottle_GreenPotion", "Item_Bottle_BluePotion", "Item_Bottle_Fairy", "Item_Bottle_Fish", "Item_Bottle_BlueFire", "Item_Bottle_Bug", "Item_Bottle_Poe", "Item_Bottle_BigPoe"],
