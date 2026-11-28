@@ -442,6 +442,14 @@ const Seed = (() => {
     // 'Poachers Saw Access', events either age can use once they happened)
     "LW Trade Cojiro": "is_adult",
     "LW Trade Odd Potion": "is_adult",
+    // 2026-11-27, the user: every adult trade check is adult only (the rest of OOTRR's 'X Access' events too)
+    "Kak Anju as Adult": "is_adult",
+    "Kak Granny Trade Odd Mushroom": "is_adult",
+    "GV Trade Poachers Saw": "is_adult",
+    "DMT Trade Broken Sword": "is_adult",
+    "ZD Trade Prescription": "is_adult",
+    "LH Trade Eyeball Frog": "is_adult",
+    "DMT Trade Eyedrops": "is_adult",
   };
   // placed: the seed's shuffled locations. A shelf the seed shuffles holds another item, so its vanilla
   // requirement is left off; every other shelf keeps its vanilla item and gets that item's requirement,
