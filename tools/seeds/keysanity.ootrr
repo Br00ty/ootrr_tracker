@@ -1,7 +1,7 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
+  "generator": "ootrr-core 0.9.0-nightly.20261128.27",
   "seed": "7",
   "settings": "OOTRR1-BYAQMDYBAYIACAISAEECMAIBE4AQCMYBAFHACATJAEAIOAIBABXTI",
   "game": "oot-remake:4d51612e6228acca",
@@ -45,7 +45,7 @@
     "Dodongos Cavern King Dodongo Heart": "Small Key (Spirit Temple)",
     "Dodongos Cavern Lobby Bombable Chest": "Rupees (20)",
     "Dodongos Cavern Lower Lizalfos Chest": "Lens of Truth",
-    "Dodongos Cavern Map Chest": "Small Key (Fire Temple)",
+    "Dodongos Cavern Map Chest": "Rupee (1)",
     "Dodongos Cavern Staircase Top Bombable Chest": "Small Key (Shadow Temple)",
     "Dodongos Cavern Upper Lizalfos Chest": "Progressive Hookshot",
     "Fire Temple Big Lava Room Blocked Door Chest": "Boss Key (Water Temple)",
@@ -100,7 +100,7 @@
     "Ganons Castle Light Trial First Left Chest": "Piece of Heart",
     "Ganons Castle Light Trial Invisible Enemies Chest": "Rupee (1)",
     "Ganons Castle Light Trial Lullaby Chest": "Deku Nut Capacity",
-    "Ganons Castle Light Trial Lullaby Room Invisible Chest": "Rupees (20)",
+    "Ganons Castle Light Trial Lullaby Room Invisible Chest": "Small Key (Fire Temple)",
     "Ganons Castle Light Trial Second Right Chest": "Rupees (20)",
     "Ganons Castle Light Trial Third Left Chest": "Double Defense",
     "Ganons Castle Shadow Trial Front Chest": "Rupees (50)",
@@ -247,11 +247,11 @@
     "ZF Bottom Freestanding PoH": "Small Key (Water Temple)",
     "ZF Great Fairy Reward": "Boss Key (Forest Temple)",
     "ZF Iceberg Freestanding PoH": "Small Key (Fire Temple)",
-    "ZF Scarecrow Ledge Chest": "Rupee (1)",
+    "ZF Scarecrow Ledge Chest": "Rupees (20)",
     "ZR Frogs Ocarina Game": "Progressive Scale",
     "ZR Near Domain Freestanding PoH": "Iron Boots",
     "ZR Near Open Grotto Freestanding PoH": "Deku Shield",
     "ZR Open Grotto Chest": "Deku Shield"
   },
-  "checksum": "a831ac9e7d12b38d0f806723193e26ec43ae6960b9a5886a158b5ed45d3d65df"
+  "checksum": "a567f4fd8deb9b78af0c439c56390333f61143eec53387e41984a28919ce89d0"
 }

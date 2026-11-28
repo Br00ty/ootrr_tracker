@@ -8,7 +8,7 @@ const kits={none:{},early:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':1,'Zeldas Lu
   mid:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':2,'Zeldas Lullaby':1,'Sarias Song':1,'Eponas Song':1,'Song of Time':1,'Bomb Bag':2,'Bow':1,'Progressive Hookshot':1,'Progressive Strength Upgrade':1,'Kokiri Emerald':1,'Goron Ruby':1,'Zora Sapphire':1,'Bottle':1,'Rutos Letter':1,'Magic Meter':1,'Dins Fire':1,'Small Key (Forest Temple)':3},
   late:{'Kokiri Sword':1,'Slingshot':1,'Ocarina':2,'Zeldas Lullaby':1,'Sarias Song':1,'Eponas Song':1,'Song of Time':1,'Suns Song':1,'Song of Storms':1,'Minuet of Forest':1,'Bolero of Fire':1,'Serenade of Water':1,'Requiem of Spirit':1,'Nocturne of Shadow':1,'Prelude of Light':1,'Bomb Bag':3,'Bow':3,'Progressive Hookshot':2,'Progressive Strength Upgrade':3,'Progressive Scale':2,'Kokiri Emerald':1,'Goron Ruby':1,'Zora Sapphire':1,'Forest Medallion':1,'Fire Medallion':1,'Water Medallion':1,'Bottle':2,'Rutos Letter':1,'Magic Meter':2,'Dins Fire':1,'Fire Arrows':1,'Lens of Truth':1,'Megaton Hammer':1,'Iron Boots':1,'Hover Boots':1,'Mirror Shield':1,'Goron Tunic':1,'Zora Tunic':1,'Progressive Wallet':2}};
 let bad=0;
-for (const f of ['default','keysanity','wild','dungeons','dungeons_plain','rewards','rewards_own','door08a','door08b','door08c','prel08','night1','night2','night3','night4','night5','night6']) {
+for (const f of ['default','keysanity','wild','dungeons','dungeons_plain','rewards','rewards_own','door08a','door08b','door08c','prel08','night1','night2','night3','night4','night5','night6','night7']) {
   const text=fs.readFileSync(`${SEEDS}/${f}.ootrr`,'utf8'); const sd=Seed.parseFile(text,data);
   const settings=Seed.applySwitches(data.settings,sd.switches);
   if (PLAN) {

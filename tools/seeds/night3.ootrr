@@ -1,7 +1,7 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
+  "generator": "ootrr-core 0.9.0-nightly.20261128.27",
   "seed": "7",
   "settings": "OOTRR1-A4AQCJQBAETQCAJOAEATGAIBGUAQCOQBANHACATJAEAIOAIBACVQCAIBL33Q",
   "game": "oot-remake:4d51612e6228acca",
@@ -210,7 +210,7 @@
     "Market Bombchu Bowling First Prize": "Heart Container",
     "Market Bombchu Bowling Second Prize": "Rupee (1)",
     "Market Bombchu Shop Right Side Top Left": "Piece of Heart",
-    "Market Bombchu Shop Right Side Top Right": "Bombs (20)",
+    "Market Bombchu Shop Right Side Top Right": "Bombs (5)",
     "Market Lost Dog": "Rupees (5)",
     "Market Potion Shop Free Bottle": "Hover Boots",
     "Market Potion Shop Red Potion": "Rupees (5)",
@@ -297,22 +297,22 @@
       "price": 30
     },
     "GC Shop Right Side Bottom Left": {
-      "item": "Buy Bottle Bug",
-      "price": 30
+      "item": "Buy Bombchu (20)",
+      "price": 240
     },
     "GC Shop Right Side Bottom Right": {
       "item": "Buy Fish",
-      "price": 50
+      "price": 30
     },
     "GC Shop Right Side Top Left": {
       "item": "Rupees (20)",
-      "price": 15,
+      "price": 20,
       "deal": true,
       "pool": "Bombs (5)"
     },
     "GC Shop Right Side Top Right": {
       "item": "Arrows (10)",
-      "price": 15,
+      "price": 25,
       "deal": true,
       "pool": "Bombs (10)"
     },
@@ -337,18 +337,18 @@
       "price": 40
     },
     "KF Shop Right Side Bottom Right": {
-      "item": "Buy Arrows (50)",
-      "price": 70
+      "item": "Buy Deku Stick (1)",
+      "price": 10
     },
     "KF Shop Right Side Top Left": {
       "item": "Rupees (5)",
-      "price": 85,
+      "price": 80,
       "deal": true,
       "pool": "Deku Seeds (30)"
     },
     "KF Shop Right Side Top Right": {
       "item": "Rupees (50)",
-      "price": 75,
+      "price": 45,
       "deal": true,
       "pool": "Deku Stick (1)"
     },
@@ -373,18 +373,18 @@
       "price": 80
     },
     "Kak Bazaar Right Side Bottom Right": {
-      "item": "Buy Deku Stick (1)",
-      "price": 10
+      "item": "Buy Arrows (50)",
+      "price": 70
     },
     "Kak Bazaar Right Side Top Left": {
       "item": "Slingshot",
-      "price": 80,
+      "price": 70,
       "deal": true,
       "pool": "Bombs (5)"
     },
     "Kak Bazaar Right Side Top Right": {
       "item": "Biggoron Sword",
-      "price": 45,
+      "price": 55,
       "deal": true,
       "pool": "Deku Nuts (5)"
     },
@@ -405,22 +405,22 @@
       "price": 10
     },
     "Kak Potion Shop Right Side Bottom Left": {
-      "item": "Buy Bottle Bug",
-      "price": 30
+      "item": "Buy Bombs (20)",
+      "price": 80
     },
     "Kak Potion Shop Right Side Bottom Right": {
-      "item": "Buy Bombs (30)",
-      "price": 110
+      "item": "Buy Deku Stick (1)",
+      "price": 10
     },
     "Kak Potion Shop Right Side Top Left": {
       "item": "Arrows (5)",
-      "price": 30,
+      "price": 10,
       "deal": true,
       "pool": "Bombs (5)"
     },
     "Kak Potion Shop Right Side Top Right": {
       "item": "Magic Meter",
-      "price": 20,
+      "price": 10,
       "deal": true,
       "pool": "Bombs (5)"
     },
@@ -441,22 +441,22 @@
       "price": 30
     },
     "Market Bazaar Right Side Bottom Left": {
-      "item": "Buy Bombs (20)",
-      "price": 80
+      "item": "Buy Fish",
+      "price": 50
     },
     "Market Bazaar Right Side Bottom Right": {
-      "item": "Buy Deku Stick (1)",
-      "price": 10
+      "item": "Buy Fish",
+      "price": 50
     },
     "Market Bazaar Right Side Top Left": {
       "item": "Slingshot",
-      "price": 45,
+      "price": 50,
       "deal": true,
       "pool": "Bombs (5)"
     },
     "Market Bazaar Right Side Top Right": {
       "item": "Deku Nuts (5)",
-      "price": 15,
+      "price": 50,
       "deal": true,
       "pool": "Deku Nuts (5)"
     },
@@ -469,30 +469,30 @@
       "price": 50
     },
     "Market Bombchu Shop Left Side Top Left": {
-      "item": "Buy Blue Fire",
-      "price": 200
+      "item": "Buy Bombchu (1)",
+      "price": 15
     },
     "Market Bombchu Shop Left Side Top Right": {
       "item": "Buy Deku Seeds (10)",
       "price": 15
     },
     "Market Bombchu Shop Right Side Bottom Left": {
-      "item": "Buy Hylian Shield",
-      "price": 80
-    },
-    "Market Bombchu Shop Right Side Bottom Right": {
       "item": "Buy Bombchu (30)",
       "price": 300
     },
+    "Market Bombchu Shop Right Side Bottom Right": {
+      "item": "Buy Bottle Bug",
+      "price": 30
+    },
     "Market Bombchu Shop Right Side Top Left": {
       "item": "Piece of Heart",
-      "price": 55,
+      "price": 20,
       "deal": true,
       "pool": "Bombchus (10)"
     },
     "Market Bombchu Shop Right Side Top Right": {
-      "item": "Bombs (20)",
-      "price": 25,
+      "item": "Bombs (5)",
+      "price": 35,
       "deal": true,
       "pool": "Bombchus (20)"
     },
@@ -513,24 +513,24 @@
       "price": 30
     },
     "Market Potion Shop Right Side Bottom Left": {
-      "item": "Buy Fish",
-      "price": 30
-    },
-    "Market Potion Shop Right Side Bottom Right": {
       "item": "Buy Deku Stick (1)",
       "price": 10
     },
+    "Market Potion Shop Right Side Bottom Right": {
+      "item": "Buy Hylian Shield",
+      "price": 80
+    },
     "Market Potion Shop Right Side Top Left": {
       "item": "Rutos Letter",
-      "price": 50,
+      "price": 25,
       "deal": true,
       "pool": "Bombs (5)"
     },
     "Market Potion Shop Right Side Top Right": {
       "item": "Progressive Scale",
-      "price": 60,
+      "price": 75,
       "deal": true,
-      "pool": "Bombs (20)"
+      "pool": "Bombs (5)"
     },
     "ZD Shop Left Side Bottom Left": {
       "item": "Buy Bombchu (5)",
@@ -549,25 +549,25 @@
       "price": 45
     },
     "ZD Shop Right Side Bottom Left": {
-      "item": "Buy Bombchu (20)",
-      "price": 240
+      "item": "Buy Bottle Bug",
+      "price": 30
     },
     "ZD Shop Right Side Bottom Right": {
-      "item": "Buy Fish",
-      "price": 50
+      "item": "Buy Blue Fire",
+      "price": 200
     },
     "ZD Shop Right Side Top Left": {
       "item": "Rupee (1)",
-      "price": 35,
+      "price": 40,
       "deal": true,
       "pool": "Arrows (10)"
     },
     "ZD Shop Right Side Top Right": {
       "item": "Bombchus (5)",
-      "price": 65,
+      "price": 30,
       "deal": true,
       "pool": "Arrows (30)"
     }
   },
-  "checksum": "3574dbb2545aab300f77cad9d8ae72338bc6b3bd37afe7db3f7a86e075264dce"
+  "checksum": "2f3609f5fa2e997830a2a391d10be210828a6af269f2062f4a8155e439457cdf"
 }

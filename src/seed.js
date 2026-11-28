@@ -532,19 +532,16 @@ const Seed = (() => {
     "Adult trade quest checks need the trade item you hand in there (Pocket Egg, Cojiro, Odd Mushroom, Odd Potion, Poacher's Saw, Broken Sword, Prescription, Eyeball Frog, Eyedrops), found or marked: OOTRR's logic assumes the chain from the vanilla trades.",
     "DMC Fire Temple Entrance Green Rupee 1 needs the Longshot (adult Link); OOTRR has it with no requirement.",
     "Market Bombchu Bowling Bombchus needs nothing: the alley lends you its own Bombchus. OOTRR asks for Bombchus of your own (found_bombchus).",
-    "Graveyard Heart Piece Grave Chest needs no Sun's Song: the chest is already there. OOTRR asks for Sun's Song.",
     "HF Ocarina of Time Item and Song from Ocarina of Time need no Ocarina when Zelda's Escape is Not Required. OOTRR asks for an Ocarina.",
     "HF GS Lone Tree East of LLR can be taken by child or adult Link. OOTRR has it child only.",
     "Spirit Temple Early Adult Right Chest needs Song of Time as well as the room's silver rupees.",
     "Ganons Castle Shadow Trial Front Chest can also be reached with the Bow (OOTRR's coming fix).",
     "GF GS Top Floor needs no Gerudo Membership Card (OOTRR's strict Skulltula rules guess it does).",
-    "Spirit Temple GS Boulder Room needs no Song of Time: it's free once you're in the room.",
     "Bottom of the Well Front Center Bombable Chest needs Zelda's Lullaby, not explosives.",
     "Water Temple Map Chest needs no Zelda's Lullaby.",
     "HF Rocks Near Cow Grotto Chest can be taken by both ages (OOTRR: adult only).",
     "LH Adult Lakebed Water Temple Gate Blue Rupee and its four Green Rupees need the Iron Boots or the Silver Scale.",
     "LLR GS Tower can be taken by both ages: the Boomerang as child, the Hookshot as adult (OOTRR: Boomerang only).",
-    "Fire Temple: Hover Boots cross from the first room to the boss door (as in the original randomizer); OOTRR 0.8.2 only reaches it from the top floor with all eight keys.",
     "Bottom of the Well Basement Silver Rupee Behind Rocks (OOTRR: ... Ladders Top) is behind rocks you blow up, so it needs explosives. OOTRR has it with no requirement.",
   ];
   // rules the tracker uses instead of OOTRR's (confirmed in game)
@@ -560,9 +557,8 @@ const Seed = (() => {
     // confirmed in game 2026-11-21: won with the game's rental Bombchus and no Bomb Bag or Bombchus of your own
     // (OOTRR: found_bombchus; in 0.8 the alley is open from the start, the First and Second Prize are already True)
     "Market Bombchu Bowling Bombchus": "True",
-    // confirmed by the user 2026-11-25: the chest in the Heart Piece grave is there without Sun's Song (OOTRR:
-    // can_play(Suns_Song)); getting into the grave keeps OOTRR's rule (adult, or child at night)
-    "Graveyard Heart Piece Grave Chest": "True",
+    // (Graveyard Heart Piece Grave Chest: no Sun's Song, the user 2026-11-25; OOTRR made it True in
+    // 0.9.0-nightly.20261128.27, so ours is dropped)
     // the user, 2026-11-26: with Zelda's Escape Not Required (the Ocarina of Time waiting in the moat from the start),
     // neither needs an Ocarina in hand. OOTRR asks for one either way (open_world.rs: "the Ocarina of Time cutscene
     // needs an ocarina in hand"); its rule stays for the other Zelda's Escape settings
@@ -580,8 +576,7 @@ const Seed = (() => {
     "Spirit Temple Early Adult Right Chest": "(Silver_Rupee_Spirit_Temple_Adult_Boulders, 5) and can_play(Song_of_Time)",
     // the user, 2026-11-26: the Bow reaches it too; OOTRR will be fixing it (OOTRR: no Bow). Drop once it lands
     "Ganons Castle Shadow Trial Front Chest": "is_child or can_use(Fire_Arrows) or Hookshot or Hover_Boots or can_play(Song_of_Time) or Bow",
-    // the user, 2026-11-27: free once you're in the room (OOTRR: can_play(Song_of_Time))
-    "Spirit Temple GS Boulder Room": "True",
+    // (Spirit Temple GS Boulder Room: free once in the room, the user 2026-11-27; OOTRR made it True in .27)
     // the user, 2026-11-28: no explosives needed, but Zelda's Lullaby is (OOTRR: has_explosives)
     "Bottom of the Well Front Center Bombable Chest": "can_play(Zeldas_Lullaby)",
     // the user, 2026-11-28: taken without Zelda's Lullaby (OOTRR: Raise_Water_Level, which needs it); the way into
@@ -608,10 +603,8 @@ const Seed = (() => {
   };
   // ways between regions the tracker adds to OOTRR's (an existing way gets "or" the new rule)
   const EXTRA_EXITS = {
-    // 2026-11-22, confirmed by the user: Volvagia showed out of logic with the Boss Key, Hammer, Goron Tunic and Hover Boots
-    // in hand. OOTRR 0.8.2's rebuilt Fire Temple reaches the boss door only from the top floor (all 8 keys, then
-    // the Hammer pillar); the original randomizer also lets Hover Boots cross from the first room to the boss door.
-    "Fire Temple Near Boss": { "Fire Temple Before Boss": "can_use(Hover_Boots)" },
+    // (Fire Temple Near Boss → boss door with the Hover Boots, the user 2026-11-22: OOTRR added its own way in .27,
+    // Fire Temple Near Boss → Volvagia Boss Room with the Boss Key, adult and the Hover Boots, so ours is dropped)
   };
   // ways between regions that need something more (added to OOTRR's rule with "and")
   const EXIT_AND = {

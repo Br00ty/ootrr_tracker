@@ -1,7 +1,7 @@
 {
   "format": "ootrr-seed",
   "version": 1,
-  "generator": "ootrr-core 0.9.0-nightly.20261127.23",
+  "generator": "ootrr-core 0.9.0-nightly.20261128.27",
   "seed": "7",
   "settings": "OOTRR1-AQAQAJQBAETQCAJTAEAU4AICNEAQBBYBAEANGAIBAAY3I",
   "game": "oot-remake:4d51612e6228acca",
@@ -41,7 +41,7 @@
     "Dodongos Cavern Bomb Flower Platform Chest": "Progressive Wallet",
     "Dodongos Cavern Compass Chest": "Compass (Dodongos Cavern)",
     "Dodongos Cavern End of Bridge Chest": "Rupee (1)",
-    "Dodongos Cavern King Dodongo Heart": "Boomerang",
+    "Dodongos Cavern King Dodongo Heart": "Rupees (5)",
     "Dodongos Cavern Lobby Bombable Chest": "Arrows (5)",
     "Dodongos Cavern Lower Lizalfos Chest": "Map (Dodongos Cavern)",
     "Dodongos Cavern Map Chest": "Piece of Heart",
@@ -148,12 +148,12 @@
     "Ice Cavern Map Chest": "Map (Ice Cavern)",
     "Ice Cavern Push Block Room Chest": "Bomb Bag",
     "Jabu Jabus Belly Barinade Heart": "Deku Nuts (5)",
-    "Jabu Jabus Belly Basement 2 Octoroks Chest": "Rupees (5)",
+    "Jabu Jabus Belly Basement 2 Octoroks Chest": "Rupees (20)",
     "Jabu Jabus Belly Boomerang Chest": "Compass (Jabu Jabus Belly)",
     "Jabu Jabus Belly Compass Chest": "Map (Jabu Jabus Belly)",
     "Jabu Jabus Belly Map Chest": "Arrows (5)",
     "KF Midos Bottom Left Chest": "Bomb Bag",
-    "KF Midos Bottom Right Chest": "Rupees (20)",
+    "KF Midos Bottom Right Chest": "Boomerang",
     "KF Midos Top Left Chest": "Piece of Heart",
     "KF Midos Top Right Chest": "Mirror Shield",
     "KF Storms Grotto Chest": "Goron Tunic",
@@ -250,5 +250,5 @@
     "ZR Near Open Grotto Freestanding PoH": "Deku Shield",
     "ZR Open Grotto Chest": "Double Defense"
   },
-  "checksum": "4cc5092477574839ef28e564d685f832cf4e02131388699125d44d41bcd20aa1"
+  "checksum": "342b7b6a0992364ef8d8ccbe08d4e2262025de32e5fa2ad8cd0ba69b67cd2e0b"
 }
