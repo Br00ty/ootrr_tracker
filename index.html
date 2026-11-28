@@ -2829,6 +2829,10 @@ function compute() {
       // Kak 20 to 40 in logic (2026-11-26, a user's report; even 0 tokens showed Kak 20). Tokens come only from the
       // count: the token rewards are in logic once you actually have the tokens
       if (v === "Gold Skulltula Token") return;
+      // SHOP_UNBOUGHT (the user's call, 2026-11-27): a shop shelf's item counts only once it's bought (the check is
+      // done, or the save holds the item). OOTRR counts every reachable shelf as bought, so a Kokiri Shop Deku Shield
+      // put the Deku Tree Slingshot Room (can_hit_deku_scrub) in logic with only the Kokiri Sword
+      if (v !== undefined && DATA.checks[l.name] && DATA.checks[l.name][1] === "shop" && !isDone(l.name)) return;
       if (v !== undefined) { const i = w.items.find(v); if (i !== undefined) place[k] = i; }
     });
     const counts = [];
