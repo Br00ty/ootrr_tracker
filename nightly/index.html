@@ -1189,7 +1189,12 @@ const Seed = (() => {
     // (0.8.1: only when the string doesn't also choose a Door of Time; older generators always moved it)
     const chosen = !before(gen, [0, 8, 1]) && Object.prototype.hasOwnProperty.call(given, "door_of_time_condition");
     if (vals.open_door_of_time === true) { vals.open_door_of_time = false; if (!chosen) vals.door_of_time_condition = "open"; }
-    if (olderThan(gen, NIGHTLY23)) {
+    // an Archipelago patch has no generator line (fromApPatch calls it .9), so a string that sets one of the settings
+    // added in 0.9.0-nightly.20261127.23 (Skip Zelda Meeting 210, Weird Egg shuffle 211, Full Wallets 610) was written
+    // by .23 or newer whatever the generator says: the user's AP seed (2026-11-27, Full Wallets in the string) read
+    // its open gate as Skip Zelda Meeting, so Talon's chickens and Malon's song were in logic before Talon woke
+    const new23 = [210, 211, 610].some((n) => byNum.has(n) && given[byNum.get(n).id]);
+    if (olderThan(gen, NIGHTLY23) && !new23) {
       // before 0.9.0-nightly.20261127.23 an open Kakariko gate (with the forest open) also skipped the castle visit;
       // since then that is its own setting, Skip Zelda Meeting, and the gate only opens the gate
       if (vals.open_kakariko === "open" && vals.open_forest === "open") vals.skip_child_zelda = true;
